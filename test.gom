@@ -1,0 +1,12 @@
+import io;
+
+fn add(a: i8, b: i8): i8 {
+    return a + b;
+}
+
+fn main() {
+    let a = 1;
+    let b = 2;
+    
+    io.log("Sum:", add(a, b));
+}
