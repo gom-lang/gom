@@ -1,10 +1,9 @@
 import { SyntaxError } from "./error";
 import {
   GOM_KEYWORDS,
-  GOM_PRIMITIVE_TYPES,
+  GOM_BUILT_IN_TYPES,
   GomToken,
   getKeywordType,
-  getPrimitiveType,
 } from "./tokens";
 
 export interface Token {
@@ -25,7 +24,11 @@ export class Lexer {
     this.currentChar = this.src[this.pos];
   }
 
-  nextToken(): Token {
+  public nextToken(): Token {
+    return this._nextToken();
+  }
+
+  private _nextToken(): Token {
     if (this.pos >= this.src.length)
       return {
         type: GomToken.EOF,
@@ -251,9 +254,9 @@ export class Lexer {
               };
             }
 
-            if (GOM_PRIMITIVE_TYPES.has(value)) {
+            if (GOM_BUILT_IN_TYPES.has(value)) {
               return {
-                type: getPrimitiveType(value),
+                type: GomToken.BUILT_IN_TYPE,
                 value,
                 start: this.pos - value.length,
                 end: this.pos - 1,

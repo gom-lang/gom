@@ -10,11 +10,11 @@ export enum GomToken {
   ELSE = "else",
   MAIN = "main",
 
-  // Primitive types
-  I8 = "i8",
-  I16 = "i16",
-  F16 = "f16",
-  STR = "str",
+  // Primitive type
+  BUILT_IN_TYPE = "built_in_type",
+
+  // Complex types
+  STRUCT = "struct",
 
   // Symbols
   LPAREN = "(",
@@ -44,6 +44,10 @@ export enum GomToken {
 
   // End of file
   EOF = "eof",
+
+  // Virtual tokens - used for parsing
+  _CALL_LPAREN = "_call_lparen",
+  _ACCESS_DOT = "_access_dot",
 }
 
 export const GOM_KEYWORDS = new Set([
@@ -83,19 +87,10 @@ export const getKeywordType = (value: string): GomToken => {
   }
 };
 
-export const GOM_PRIMITIVE_TYPES = new Set(["i8", "i16", "f16", "str"]);
-
-export const getPrimitiveType = (value: string): GomToken => {
-  switch (value) {
-    case "i8":
-      return GomToken.I8;
-    case "i16":
-      return GomToken.I16;
-    case "f16":
-      return GomToken.F16;
-    case "str":
-      return GomToken.STR;
-    default:
-      return GomToken.IDENTIFIER;
-  }
-};
+export const GOM_BUILT_IN_TYPES = new Set([
+  "i8",
+  "i16",
+  "f16",
+  "str",
+  "struct",
+]);

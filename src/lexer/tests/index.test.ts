@@ -199,28 +199,28 @@ describe("Lexer", () => {
     const lexer = new Lexer("i8 i16 f16 str");
 
     expect(lexer.nextToken()).toMatchObject({
-      type: GomToken.I8,
+      type: GomToken.BUILT_IN_TYPE,
       value: "i8",
       start: 0,
       end: 1,
     });
 
     expect(lexer.nextToken()).toMatchObject({
-      type: GomToken.I16,
+      type: GomToken.BUILT_IN_TYPE,
       value: "i16",
       start: 3,
       end: 5,
     });
 
     expect(lexer.nextToken()).toMatchObject({
-      type: GomToken.F16,
+      type: GomToken.BUILT_IN_TYPE,
       value: "f16",
       start: 7,
       end: 9,
     });
 
     expect(lexer.nextToken()).toMatchObject({
-      type: GomToken.STR,
+      type: GomToken.BUILT_IN_TYPE,
       value: "str",
       start: 11,
       end: 13,

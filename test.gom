@@ -1,5 +1,11 @@
 import io;
 
+type Sum = i8;
+
+fn square(x: i8): i8 {
+    return x * x;
+}
+
 fn add(a: i8, b: i8): i8 {
     return a + b;
 }
@@ -8,5 +14,6 @@ fn main() {
     let a = 1;
     let b = 2;
     
-    io.log("Sum:", add(a, b));
+    io.log("Sum:", add(a, (1 + b / 2)));
+    io.log("Square:", square(a));
 }

@@ -1,10 +1,12 @@
-program = importDeclaration* , (typeDefinition | functionDeclaration)* , mainFunction;
+program = importDeclaration* , typeOrFunctionDefinition* , mainFunction;
 
 importDeclaration = "import" , identifier , ";";
 
-typeDefinition = "type" , identifier , gomType , ";";
+typeOrFunctionDefinition = typeDefinition | functionDefinition;
 
-functionDeclaration = "fn" , identifier , "(" , argumentItem* , ")" , functionReturnType? ,
+typeDefinition = "type" , identifier , "=" , gomType , ";";
+
+functionDefinition = "fn" , identifier , "(" , argumentItem* , ")" , functionReturnType? ,
 	"{" , statement+ , "}";
 
 mainFunction = "fn" , "main" , "(" , argumentItem* , ")" , functionReturnType? , 
@@ -30,29 +32,36 @@ argumentItem = identifier , ":" , gomType , ","?;
 
 functionReturnType = ":" , gomType;
 
-expr = access
-	| call
-	| "(" , expr , ")"
-	| comparison;
-	
-access = identifier , ("." , (identifier | call))+;
+expr = term , exprTermTail?
+	| "(" , expr , ")";
 
-call = identifier , "(" , term* , ")";
+exprTermTail = accessTail
+	| callTail
+	| opTail;
+
+accessTail = "." , identifier , exprTermTail?;
+
+callTail = "(" , expr? , (expr , ",")* , ")";
+
+
+opTail = comparison
+	| sum
+	| quot
+	| expo;
+
+comparison = "<" , expr
+	| ">" , expr
+	| "<=" , expr
+	| ">=" , expr
+	| "==" , expr;
 	
-comparison = sum , "<" , sum
-	| sum , ">" , sum
-	| sum , "<=" , sum
-	| sum , ">=" , sum
-	| sum , "==" , sum
-	| sum;
-	
-sum = quot , "+" , quot
-	| quot , "-" , quot
-	| quot;
-	
-quot = expo , "/" , expo
-	| expo , "*" , expo
-	| term;
+sum = "+" , expr
+	| "-" , expr;
+
+quot = "/" , expr
+	| "*" , expr;
+
+expo = "^" , expr;
 	
 term = identifier | numLiteral | stringLiteral;
 

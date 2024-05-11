@@ -1,17 +1,15 @@
 import { readFile } from "fs/promises";
 import { Lexer } from "./lexer";
-import { GomToken } from "./lexer/tokens";
+import { RecursiveDescentParser } from "./parser/rd";
 
 export default async (src: string) => {
   const entry = await readFile(src, "utf-8");
   console.time("Compiled in");
   const lexer = new Lexer(entry);
 
-  let token = lexer.nextToken();
-  while (token.type !== GomToken.EOF) {
-    console.log(token);
-    token = lexer.nextToken();
-  }
+  const parser = new RecursiveDescentParser(lexer);
+
+  parser.parse();
 
   console.timeEnd("Compiled in");
 };
