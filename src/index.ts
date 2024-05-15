@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { Lexer } from "./lexer";
 import { RecursiveDescentParser } from "./parser/rd";
 
@@ -9,7 +9,8 @@ export default async (src: string) => {
 
   const parser = new RecursiveDescentParser(lexer);
 
-  parser.parse();
-
+  const program = parser.parse();
   console.timeEnd("Compiled in");
+
+  await writeFile("tree.json", JSON.stringify(program, null, 2), "utf-8");
 };

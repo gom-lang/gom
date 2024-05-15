@@ -18,7 +18,7 @@ statement = ifStatement
 	| letStatement
 	| expressionStatement;
 	
-forStatement = "for" , "(" , expr , ";" , expr , ";" , ")" , "{" , statement* , "}";
+forStatement = "for" , "(" , expr? , ";" , expr? , ";" , expr? , ")" , "{" , statement+ , "}";
 
 returnStatement = "return" , expr , ";";
 
@@ -32,6 +32,8 @@ argumentItem = identifier , ":" , gomType , ","?;
 
 functionReturnType = ":" , gomType;
 
+assignment = identifier , "=" , expr;
+
 expr = term , exprTermTail?
 	| "(" , expr , ")";
 
@@ -41,13 +43,16 @@ exprTermTail = accessTail
 
 accessTail = "." , identifier , exprTermTail?;
 
-callTail = "(" , expr? , (expr , ",")* , ")";
+callTail = "(" , expr? , (expr , ",")* , ")" , exprTermTail?;
 
 
-opTail = comparison
+opTail = assignment
+	| comparison
 	| sum
 	| quot
 	| expo;
+
+assignment = "=" , expr;
 
 comparison = "<" , expr
 	| ">" , expr

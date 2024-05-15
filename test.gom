@@ -10,10 +10,19 @@ fn add(a: i8, b: i8): i8 {
     return a + b;
 }
 
+fn print_to_n(n: i8) {
+    let i = 0;
+    for(; i < n; i = i + 1) {
+        io.log("i:", i);
+    }
+}
+
 fn main() {
     let a = 1;
     let b = 2;
     
     io.log("Sum:", add(a, (1 + b / 2)));
     io.log("Square:", square(a));
+
+    print_to_n(5);
 }

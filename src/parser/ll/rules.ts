@@ -185,5 +185,5 @@ export const GOM_GRAMMAR_FOLLOW_SETS: {
   ],
   [GomRule.QUOT]: [GomToken.PLUS, GomToken.MINUS],
   [GomRule.EXPO]: [GomToken.DIV, GomToken.MUL],
-  [GomRule.TERM]: [GomToken.EXP],
+  [GomRule.TERM]: [GomToken.EXPO],
 };

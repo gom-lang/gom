@@ -1,5 +1,33 @@
 import { Lexer, Token } from "../../lexer";
 import { GomToken } from "../../lexer/tokens";
+import {
+  NodeAccessTail,
+  NodeArgumentItem,
+  NodeAssignmentTail,
+  NodeCallTail,
+  NodeComparisonTail,
+  NodeExpoTail,
+  NodeExpr,
+  NodeExprBasic,
+  NodeExprBracketed,
+  NodeExprTermTail,
+  NodeExpressionStatement,
+  NodeForStatement,
+  NodeFunctionDefinition,
+  NodeFunctionReturnType,
+  NodeIfStatement,
+  NodeImportDeclaration,
+  NodeLetStatement,
+  NodeMainFunction,
+  NodeOpTail,
+  NodeProgram,
+  NodeQuotTail,
+  NodeReturnStatement,
+  NodeStatement,
+  NodeSumTail,
+  NodeTypeDefinition,
+} from "./nodes";
+import { NodeType } from "./tree";
 
 export class RecursiveDescentParser {
   lexer: Lexer;
@@ -15,14 +43,14 @@ export class RecursiveDescentParser {
   }
 
   parse() {
-    this.parseProgram();
+    return this.parseProgram();
   }
 
   private match(type: GomToken) {
-    console.log("Matching: ", type, this.token.value);
     if (this.token.type === type) {
-      console.log("Matched: ", type);
+      const matched = this.token;
       this.nextToken();
+      return matched;
     } else {
       throw new Error(`Unexpected token: ${this.token.value}`);
     }
@@ -55,7 +83,6 @@ export class RecursiveDescentParser {
 
   private accept(type: GomToken) {
     if (this.token.type === type) {
-      console.log("Accepted: ", type, this.token.value);
       this.nextToken();
       return true;
     }
@@ -69,46 +96,69 @@ export class RecursiveDescentParser {
     }
   }
 
-  private parseOneOrNone<T>(parseFn: () => T) {
+  private parseOneOrNone<T>(parseFn: () => T): T | undefined {
     try {
-      parseFn.call(this);
+      return parseFn.call(this);
     } catch (e) {
       return;
     }
   }
 
-  private parseZeroOrMore<T>(parseFn: () => T) {
+  private parseZeroOrMore<T>(parseFn: () => T): T[] {
+    let nodes: T[] = [];
     while (1) {
       try {
-        parseFn.call(this);
+        nodes.push(parseFn.call(this));
       } catch (e) {
-        return;
+        return nodes;
       }
     }
+
+    return nodes;
   }
 
-  private parseOneOrMore<T>(parseFn: () => T) {
-    parseFn.call(this);
-    this.parseZeroOrMore(parseFn);
+  private parseOneOrMore<T>(parseFn: () => T): T[] {
+    const nodes: T[] = [];
+    nodes.push(parseFn.call(this));
+    nodes.push(...this.parseZeroOrMore(parseFn));
+    return nodes;
   }
 
   parseProgram() {
-    this.parseZeroOrMore(this.parseImportDeclaration);
-    this.parseZeroOrMore(this.parseTypeOrFunctionDefinition);
-    this.parseMainFunction();
+    const importDeclarations = this.parseZeroOrMore(
+      this.parseImportDeclaration
+    );
+    const typeOrFunctionDefinitions = this.parseZeroOrMore(
+      this.parseTypeOrFunctionDefinition
+    );
+    const mainFunction = this.parseMainFunction();
+
+    return new NodeProgram({
+      importDeclarations,
+      typeDefinitions: typeOrFunctionDefinitions.filter(
+        (def): def is NodeTypeDefinition =>
+          def.type === NodeType.TYPE_DEFINITION
+      ),
+      functionDeclarations: typeOrFunctionDefinitions.filter(
+        (def): def is NodeFunctionDefinition =>
+          def.type === NodeType.FUNCTION_DEFINITION
+      ),
+      mainFunction,
+    });
   }
 
   parseImportDeclaration() {
     this.match(GomToken.IMPORT);
-    this.match(GomToken.IDENTIFIER);
+    const id = this.match(GomToken.IDENTIFIER);
     this.match(GomToken.SEMICOLON);
+    return new NodeImportDeclaration(id);
   }
 
   parseTypeOrFunctionDefinition() {
     if (this.peek(GomToken.TYPE)) {
-      this.parseTypeDefinition();
+      return this.parseTypeDefinition();
     } else if (this.peek(GomToken.FN)) {
-      this.parseFunctionDefinition();
+      return this.parseFunctionDefinition();
     } else {
       throw new SyntaxError(`Unexpected token: ${this.token.value}`);
     }
@@ -116,34 +166,53 @@ export class RecursiveDescentParser {
 
   parseTypeDefinition() {
     this.match(GomToken.TYPE);
-    this.match(GomToken.IDENTIFIER);
+    const name = this.match(GomToken.IDENTIFIER);
     this.match(GomToken.EQ);
-    this.match(GomToken.BUILT_IN_TYPE);
+    const rhs = this.match(GomToken.BUILT_IN_TYPE);
     this.match(GomToken.SEMICOLON);
+
+    return new NodeTypeDefinition({
+      name,
+      rhs,
+    });
   }
 
   parseFunctionDefinition() {
     this.match(GomToken.FN);
-    this.match(GomToken.IDENTIFIER);
+    const name = this.match(GomToken.IDENTIFIER);
     this.match(GomToken.LPAREN);
-    this.parseZeroOrMore(this.parseArgumentItem);
+    const args = this.parseZeroOrMore(this.parseArgumentItem);
     this.match(GomToken.RPAREN);
-    this.parseOneOrNone(this.parseFunctionReturnType);
+    const returnType = this.parseOneOrNone(this.parseFunctionReturnType);
     this.match(GomToken.LBRACE);
-    this.parseOneOrMore(this.parseStatement);
+    const body = this.parseOneOrMore(this.parseStatement);
     this.match(GomToken.RBRACE);
+
+    return new NodeFunctionDefinition({
+      name,
+      args,
+      returnType,
+      body,
+    });
   }
 
   parseArgumentItem() {
-    this.match(GomToken.IDENTIFIER);
+    const name = this.match(GomToken.IDENTIFIER);
     this.match(GomToken.COLON);
-    this.match(GomToken.BUILT_IN_TYPE); // can be custom type
+    const expectedType = this.match(GomToken.BUILT_IN_TYPE); // can be custom type
     this.matchOneOrNone(GomToken.COMMA);
+
+    return new NodeArgumentItem({
+      name,
+      expectedType,
+    });
   }
 
   parseFunctionReturnType() {
     this.match(GomToken.COLON);
-    this.match(GomToken.BUILT_IN_TYPE); // can be custom type
+    const type = this.match(GomToken.BUILT_IN_TYPE); // can be custom type
+
+    return new NodeFunctionReturnType(type);
   }
 
   parseMainFunction() {
@@ -152,105 +221,180 @@ export class RecursiveDescentParser {
     this.parseZeroOrMore(this.parseArgumentItem);
     this.match(GomToken.RPAREN);
     this.match(GomToken.LBRACE);
-    this.parseOneOrMore(this.parseStatement);
+    const body = this.parseOneOrMore(this.parseStatement);
     this.match(GomToken.RBRACE);
+
+    return new NodeMainFunction(body);
   }
 
-  parseStatement() {
+  parseStatement(): NodeStatement {
     if (this.accept(GomToken.LET)) {
-      this.match(GomToken.IDENTIFIER);
+      const name = this.match(GomToken.IDENTIFIER);
       this.match(GomToken.EQ);
-      this.parseExpression();
+      const expr = this.parseExpression();
       this.match(GomToken.SEMICOLON);
+
+      return new NodeLetStatement({
+        name,
+        rhs: expr,
+      });
     } else if (this.accept(GomToken.RETURN)) {
-      this.parseExpression();
+      const expr = this.parseExpression();
       this.match(GomToken.SEMICOLON);
+
+      return new NodeReturnStatement(expr);
     } else if (this.accept(GomToken.IF)) {
-      this.parseExpression();
-      this.parseStatement();
+      const conditionExpr = this.parseExpression();
+      const body = this.parseOneOrMore(this.parseStatement);
+      let elseBody;
       if (this.accept(GomToken.ELSE)) {
-        this.parseStatement();
+        elseBody = this.parseOneOrMore(this.parseStatement);
       }
+
+      return new NodeIfStatement({
+        conditionExpr,
+        body,
+        elseBody,
+      });
     } else if (this.accept(GomToken.FOR)) {
-      this.match(GomToken.IDENTIFIER);
-      this.match(GomToken.COLON);
-      this.parseExpression();
-      this.match(GomToken.LBRACE);
-      this.parseOneOrMore(this.parseStatement);
-      this.match(GomToken.RBRACE);
-    } else {
-      this.parseExpression();
+      this.match(GomToken.LPAREN);
+      const initExpr = this.parseOneOrNone(this.parseExpression);
       this.match(GomToken.SEMICOLON);
+      const conditionExpr = this.parseOneOrNone(this.parseExpression);
+      this.match(GomToken.SEMICOLON);
+      const updateExpr = this.parseOneOrNone(this.parseExpression);
+      this.match(GomToken.RPAREN);
+      this.match(GomToken.LBRACE);
+      const body = this.parseOneOrMore(this.parseStatement);
+      this.match(GomToken.RBRACE);
+
+      return new NodeForStatement({
+        initExpr,
+        conditionExpr,
+        updateExpr,
+        body,
+      });
+    } else {
+      const expr = this.parseExpression();
+      this.match(GomToken.SEMICOLON);
+
+      return new NodeExpressionStatement(expr);
     }
   }
 
-  parseExpression() {
+  parseExpression(): NodeExpr {
     if (
-      this.accept(GomToken.IDENTIFIER) ||
-      this.accept(GomToken.NUMLITERAL) ||
-      this.accept(GomToken.STRLITERAL)
+      this.peek(GomToken.IDENTIFIER) ||
+      this.peek(GomToken.NUMLITERAL) ||
+      this.peek(GomToken.STRLITERAL)
     ) {
-      this.parseOneOrNone(this.parseExprTermTail);
+      const term = this.parseTerm();
+      const exprTermTail = this.parseOneOrNone(this.parseExprTermTail);
+
+      return new NodeExprBasic({
+        term,
+        exprTermTail,
+      });
     } else if (this.accept(GomToken.LPAREN)) {
-      this.parseExpression();
+      const expr = this.parseExpression();
       this.match(GomToken.RPAREN);
+
+      return new NodeExprBracketed(expr);
     } else {
       throw new SyntaxError(`Unexpected token: ${this.token.value}`);
     }
   }
 
-  parseExprTermTail() {
+  parseExprTermTail(): NodeExprTermTail {
     if (this.peek(GomToken.DOT)) {
-      this.parseAccessTail();
+      return this.parseAccessTail();
     } else if (this.peek(GomToken.LPAREN)) {
-      this.parseCallTail();
+      return this.parseCallTail();
     } else {
-      this.parseOpTail();
+      return this.parseOpTail();
     }
   }
 
   parseAccessTail() {
     this.match(GomToken.DOT);
-    this.match(GomToken.IDENTIFIER);
-    this.parseOneOrNone(this.parseExprTermTail);
+    const id = this.match(GomToken.IDENTIFIER);
+    const exprTermTail = this.parseOneOrNone(this.parseExprTermTail);
+
+    return new NodeAccessTail({
+      id,
+      tail: exprTermTail,
+    });
   }
 
   parseCallTail() {
+    const args: NodeExpr[] = [];
     this.match(GomToken.LPAREN);
     if (!this.peek(GomToken.RPAREN)) {
-      this.parseExpression();
+      args.push(this.parseExpression());
       this.parseZeroOrMore(() => {
         this.match(GomToken.COMMA);
-        this.parseExpression();
+        args.push(this.parseExpression());
       });
     }
     this.match(GomToken.RPAREN);
+    const tail = this.parseOneOrNone(this.parseExprTermTail);
+
+    return new NodeCallTail({
+      args,
+      tail,
+    });
   }
 
-  parseOpTail() {
-    if (
+  parseOpTail(): NodeOpTail {
+    if (this.accept(GomToken.EQ)) {
+      const expr = this.parseExpression();
+      return new NodeAssignmentTail(expr);
+    } else if (
       this.accept(GomToken.LT) ||
       this.accept(GomToken.GT) ||
       this.accept(GomToken.LTE) ||
       this.accept(GomToken.GTE) ||
-      this.accept(GomToken.EQEQ) ||
-      this.accept(GomToken.PLUS) ||
-      this.accept(GomToken.MINUS) ||
-      this.accept(GomToken.MUL) ||
-      this.accept(GomToken.DIV) ||
-      this.accept(GomToken.EXP)
+      this.accept(GomToken.EQEQ)
     ) {
-      this.parseExpression();
+      const op = this.token;
+      const expr = this.parseExpression();
+      return new NodeComparisonTail({
+        op,
+        rhs: expr,
+      });
+    } else if (this.accept(GomToken.PLUS) || this.accept(GomToken.MINUS)) {
+      const op = this.token;
+      const expr = this.parseExpression();
+      return new NodeSumTail({
+        op,
+        rhs: expr,
+      });
+    } else if (this.accept(GomToken.MUL) || this.accept(GomToken.DIV)) {
+      const op = this.token;
+      const expr = this.parseExpression();
+      return new NodeQuotTail({
+        op,
+        rhs: expr,
+      });
+    } else if (this.accept(GomToken.EXPO)) {
+      const op = this.token;
+      const expr = this.parseExpression();
+      return new NodeExpoTail({
+        op,
+        rhs: expr,
+      });
+    } else {
+      throw new SyntaxError(`Unexpected token: ${this.token.value}`);
     }
   }
 
   parseTerm() {
-    if (
-      this.accept(GomToken.IDENTIFIER) ||
-      this.accept(GomToken.NUMLITERAL) ||
-      this.accept(GomToken.STRLITERAL)
-    ) {
-      return;
+    if (this.peek(GomToken.IDENTIFIER)) {
+      return this.match(GomToken.IDENTIFIER);
+    } else if (this.peek(GomToken.NUMLITERAL)) {
+      return this.match(GomToken.NUMLITERAL);
+    } else if (this.peek(GomToken.STRLITERAL)) {
+      return this.match(GomToken.STRLITERAL);
     } else {
       throw new SyntaxError(`Unexpected token: ${this.token.value}`);
     }

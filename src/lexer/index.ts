@@ -152,7 +152,7 @@ export class Lexer {
         case "^":
           this.pos++;
           return {
-            type: GomToken.EXP,
+            type: GomToken.EXPO,
             value: this.currentChar,
             start: this.pos - 1,
             end: this.pos - 1,

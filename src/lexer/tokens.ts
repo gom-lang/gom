@@ -30,7 +30,7 @@ export enum GomToken {
   MINUS = "-",
   MUL = "*",
   DIV = "/",
-  EXP = "^",
+  EXPO = "^",
   GT = ">",
   LT = "<",
   GTE = ">=",

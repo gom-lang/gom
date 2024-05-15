@@ -1,0 +1,574 @@
+{
+  "importDeclarations": [
+    {
+      "type": 1,
+      "path": {
+        "type": "identifier",
+        "value": "io",
+        "start": 7,
+        "end": 8
+      }
+    }
+  ],
+  "typeDefinitions": [
+    {
+      "type": 2,
+      "name": {
+        "type": "identifier",
+        "value": "Sum",
+        "start": 17,
+        "end": 19
+      },
+      "rhs": {
+        "type": "built_in_type",
+        "value": "i8",
+        "start": 23,
+        "end": 24
+      }
+    }
+  ],
+  "functionDeclarations": [
+    {
+      "type": 3,
+      "name": {
+        "type": "identifier",
+        "value": "square",
+        "start": 31,
+        "end": 36
+      },
+      "args": [
+        {
+          "type": 11,
+          "name": {
+            "type": "identifier",
+            "value": "x",
+            "start": 38,
+            "end": 38
+          },
+          "expectedType": {
+            "type": "built_in_type",
+            "value": "i8",
+            "start": 41,
+            "end": 42
+          }
+        }
+      ],
+      "returnType": {
+        "type": 12,
+        "returnType": {
+          "type": "built_in_type",
+          "value": "i8",
+          "start": 46,
+          "end": 47
+        }
+      },
+      "body": [
+        {
+          "type": 7,
+          "expr": {
+            "type": 13,
+            "term": {
+              "type": "identifier",
+              "value": "x",
+              "start": 62,
+              "end": 62
+            },
+            "exprTermTail": {
+              "type": 20,
+              "op": {
+                "type": "identifier",
+                "value": "x",
+                "start": 66,
+                "end": 66
+              },
+              "rhs": {
+                "type": 13,
+                "term": {
+                  "type": "identifier",
+                  "value": "x",
+                  "start": 66,
+                  "end": 66
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": 3,
+      "name": {
+        "type": "identifier",
+        "value": "add",
+        "start": 75,
+        "end": 77
+      },
+      "args": [
+        {
+          "type": 11,
+          "name": {
+            "type": "identifier",
+            "value": "a",
+            "start": 79,
+            "end": 79
+          },
+          "expectedType": {
+            "type": "built_in_type",
+            "value": "i8",
+            "start": 82,
+            "end": 83
+          }
+        },
+        {
+          "type": 11,
+          "name": {
+            "type": "identifier",
+            "value": "b",
+            "start": 86,
+            "end": 86
+          },
+          "expectedType": {
+            "type": "built_in_type",
+            "value": "i8",
+            "start": 89,
+            "end": 90
+          }
+        }
+      ],
+      "returnType": {
+        "type": 12,
+        "returnType": {
+          "type": "built_in_type",
+          "value": "i8",
+          "start": 94,
+          "end": 95
+        }
+      },
+      "body": [
+        {
+          "type": 7,
+          "expr": {
+            "type": 13,
+            "term": {
+              "type": "identifier",
+              "value": "a",
+              "start": 110,
+              "end": 110
+            },
+            "exprTermTail": {
+              "type": 19,
+              "op": {
+                "type": "identifier",
+                "value": "b",
+                "start": 114,
+                "end": 114
+              },
+              "rhs": {
+                "type": 13,
+                "term": {
+                  "type": "identifier",
+                  "value": "b",
+                  "start": 114,
+                  "end": 114
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": 3,
+      "name": {
+        "type": "identifier",
+        "value": "print_to_n",
+        "start": 123,
+        "end": 132
+      },
+      "args": [
+        {
+          "type": 11,
+          "name": {
+            "type": "identifier",
+            "value": "n",
+            "start": 134,
+            "end": 134
+          },
+          "expectedType": {
+            "type": "built_in_type",
+            "value": "i8",
+            "start": 137,
+            "end": 138
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": 8,
+          "name": {
+            "type": "identifier",
+            "value": "i",
+            "start": 151,
+            "end": 151
+          },
+          "rhs": {
+            "type": 13,
+            "term": {
+              "type": "numliteral",
+              "value": "0",
+              "start": 155,
+              "end": 155
+            }
+          }
+        },
+        {
+          "type": 6,
+          "conditionExpr": {
+            "type": 13,
+            "term": {
+              "type": "identifier",
+              "value": "i",
+              "start": 168,
+              "end": 168
+            },
+            "exprTermTail": {
+              "type": 18,
+              "op": {
+                "type": "identifier",
+                "value": "n",
+                "start": 172,
+                "end": 172
+              },
+              "rhs": {
+                "type": 13,
+                "term": {
+                  "type": "identifier",
+                  "value": "n",
+                  "start": 172,
+                  "end": 172
+                }
+              }
+            }
+          },
+          "updateExpr": {
+            "type": 13,
+            "term": {
+              "type": "identifier",
+              "value": "i",
+              "start": 175,
+              "end": 175
+            },
+            "exprTermTail": {
+              "type": 15,
+              "rhs": {
+                "type": 13,
+                "term": {
+                  "type": "identifier",
+                  "value": "i",
+                  "start": 179,
+                  "end": 179
+                },
+                "exprTermTail": {
+                  "type": 19,
+                  "op": {
+                    "type": "numliteral",
+                    "value": "1",
+                    "start": 183,
+                    "end": 183
+                  },
+                  "rhs": {
+                    "type": 13,
+                    "term": {
+                      "type": "numliteral",
+                      "value": "1",
+                      "start": 183,
+                      "end": 183
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "body": [
+            {
+              "type": 9,
+              "expr": {
+                "type": 13,
+                "term": {
+                  "type": "identifier",
+                  "value": "io",
+                  "start": 196,
+                  "end": 197
+                },
+                "exprTermTail": {
+                  "type": 16,
+                  "id": {
+                    "type": "identifier",
+                    "value": "log",
+                    "start": 199,
+                    "end": 201
+                  },
+                  "tail": {
+                    "type": 17,
+                    "args": [
+                      {
+                        "type": 13,
+                        "term": {
+                          "type": "strliteral",
+                          "value": "\"i:\"",
+                          "start": 203,
+                          "end": 206
+                        }
+                      },
+                      {
+                        "type": 13,
+                        "term": {
+                          "type": "identifier",
+                          "value": "i",
+                          "start": 209,
+                          "end": 209
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "type": 0,
+  "mainFunction": {
+    "type": 4,
+    "body": [
+      {
+        "type": 8,
+        "name": {
+          "type": "identifier",
+          "value": "a",
+          "start": 242,
+          "end": 242
+        },
+        "rhs": {
+          "type": 13,
+          "term": {
+            "type": "numliteral",
+            "value": "1",
+            "start": 246,
+            "end": 246
+          }
+        }
+      },
+      {
+        "type": 8,
+        "name": {
+          "type": "identifier",
+          "value": "b",
+          "start": 257,
+          "end": 257
+        },
+        "rhs": {
+          "type": 13,
+          "term": {
+            "type": "numliteral",
+            "value": "2",
+            "start": 261,
+            "end": 261
+          }
+        }
+      },
+      {
+        "type": 9,
+        "expr": {
+          "type": 13,
+          "term": {
+            "type": "identifier",
+            "value": "io",
+            "start": 273,
+            "end": 274
+          },
+          "exprTermTail": {
+            "type": 16,
+            "id": {
+              "type": "identifier",
+              "value": "log",
+              "start": 276,
+              "end": 278
+            },
+            "tail": {
+              "type": 17,
+              "args": [
+                {
+                  "type": 13,
+                  "term": {
+                    "type": "strliteral",
+                    "value": "\"Sum:\"",
+                    "start": 280,
+                    "end": 285
+                  }
+                },
+                {
+                  "type": 13,
+                  "term": {
+                    "type": "identifier",
+                    "value": "add",
+                    "start": 288,
+                    "end": 290
+                  },
+                  "exprTermTail": {
+                    "type": 17,
+                    "args": [
+                      {
+                        "type": 13,
+                        "term": {
+                          "type": "identifier",
+                          "value": "a",
+                          "start": 292,
+                          "end": 292
+                        }
+                      },
+                      {
+                        "type": 14,
+                        "expr": {
+                          "type": 13,
+                          "term": {
+                            "type": "numliteral",
+                            "value": "1",
+                            "start": 296,
+                            "end": 296
+                          },
+                          "exprTermTail": {
+                            "type": 19,
+                            "op": {
+                              "type": "identifier",
+                              "value": "b",
+                              "start": 300,
+                              "end": 300
+                            },
+                            "rhs": {
+                              "type": 13,
+                              "term": {
+                                "type": "identifier",
+                                "value": "b",
+                                "start": 300,
+                                "end": 300
+                              },
+                              "exprTermTail": {
+                                "type": 20,
+                                "op": {
+                                  "type": "numliteral",
+                                  "value": "2",
+                                  "start": 304,
+                                  "end": 304
+                                },
+                                "rhs": {
+                                  "type": 13,
+                                  "term": {
+                                    "type": "numliteral",
+                                    "value": "2",
+                                    "start": 304,
+                                    "end": 304
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "type": 9,
+        "expr": {
+          "type": 13,
+          "term": {
+            "type": "identifier",
+            "value": "io",
+            "start": 314,
+            "end": 315
+          },
+          "exprTermTail": {
+            "type": 16,
+            "id": {
+              "type": "identifier",
+              "value": "log",
+              "start": 317,
+              "end": 319
+            },
+            "tail": {
+              "type": 17,
+              "args": [
+                {
+                  "type": 13,
+                  "term": {
+                    "type": "strliteral",
+                    "value": "\"Square:\"",
+                    "start": 321,
+                    "end": 329
+                  }
+                },
+                {
+                  "type": 13,
+                  "term": {
+                    "type": "identifier",
+                    "value": "square",
+                    "start": 332,
+                    "end": 337
+                  },
+                  "exprTermTail": {
+                    "type": 17,
+                    "args": [
+                      {
+                        "type": 13,
+                        "term": {
+                          "type": "identifier",
+                          "value": "a",
+                          "start": 339,
+                          "end": 339
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "type": 9,
+        "expr": {
+          "type": 13,
+          "term": {
+            "type": "identifier",
+            "value": "print_to_n",
+            "start": 349,
+            "end": 358
+          },
+          "exprTermTail": {
+            "type": 17,
+            "args": [
+              {
+                "type": 13,
+                "term": {
+                  "type": "numliteral",
+                  "value": "5",
+                  "start": 360,
+                  "end": 360
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
