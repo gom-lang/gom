@@ -1,14 +1,18 @@
 import { Lexer, Token } from "../../lexer";
 import { GomToken } from "../../lexer/tokens";
 import {
+  NodeAccess,
   NodeAccessTail,
   NodeArgumentItem,
+  NodeAssignment,
   NodeAssignmentTail,
+  NodeCall,
   NodeCallTail,
+  NodeComparison,
   NodeComparisonTail,
+  NodeExpo,
   NodeExpoTail,
   NodeExpr,
-  NodeExprBasic,
   NodeExprBracketed,
   NodeExprTermTail,
   NodeExpressionStatement,
@@ -21,10 +25,13 @@ import {
   NodeMainFunction,
   NodeOpTail,
   NodeProgram,
+  NodeQuot,
   NodeQuotTail,
   NodeReturnStatement,
   NodeStatement,
+  NodeSum,
   NodeSumTail,
+  NodeTerm,
   NodeTypeDefinition,
 } from "./nodes";
 import { NodeType } from "./tree";
@@ -290,11 +297,39 @@ export class RecursiveDescentParser {
     ) {
       const term = this.parseTerm();
       const exprTermTail = this.parseOneOrNone(this.parseExprTermTail);
+      if (!exprTermTail) {
+        return term;
+      }
 
-      return new NodeExprBasic({
-        term,
-        exprTermTail,
-      });
+      if (exprTermTail instanceof NodeAccessTail) {
+        return new NodeAccess(term, exprTermTail);
+      } else if (exprTermTail instanceof NodeCallTail) {
+        return new NodeCall(term, exprTermTail);
+      } else if (exprTermTail instanceof NodeAssignmentTail) {
+        return new NodeAssignment(term, exprTermTail);
+      } else if (exprTermTail instanceof NodeComparisonTail) {
+        return new NodeComparison({
+          lhs: term,
+          tail: exprTermTail,
+        });
+      } else if (exprTermTail instanceof NodeSumTail) {
+        return new NodeSum({
+          lhs: term,
+          tail: exprTermTail,
+        });
+      } else if (exprTermTail instanceof NodeQuotTail) {
+        return new NodeQuot({
+          lhs: term,
+          tail: exprTermTail,
+        });
+      } else if (exprTermTail instanceof NodeExpoTail) {
+        return new NodeExpo({
+          base: term,
+          tail: exprTermTail,
+        });
+      } else {
+        throw new SyntaxError(`Unexpected token: ${this.token.value}`);
+      }
     } else if (this.accept(GomToken.LPAREN)) {
       const expr = this.parseExpression();
       this.match(GomToken.RPAREN);
@@ -317,11 +352,11 @@ export class RecursiveDescentParser {
 
   parseAccessTail() {
     this.match(GomToken.DOT);
-    const id = this.match(GomToken.IDENTIFIER);
+    const expr = this.parseExpression();
     const exprTermTail = this.parseOneOrNone(this.parseExprTermTail);
 
     return new NodeAccessTail({
-      id,
+      rhs: expr,
       tail: exprTermTail,
     });
   }
@@ -350,34 +385,49 @@ export class RecursiveDescentParser {
       const expr = this.parseExpression();
       return new NodeAssignmentTail(expr);
     } else if (
-      this.accept(GomToken.LT) ||
-      this.accept(GomToken.GT) ||
-      this.accept(GomToken.LTE) ||
-      this.accept(GomToken.GTE) ||
-      this.accept(GomToken.EQEQ)
+      this.peek(GomToken.LT) ||
+      this.peek(GomToken.GT) ||
+      this.peek(GomToken.LTE) ||
+      this.peek(GomToken.GTE) ||
+      this.peek(GomToken.EQEQ)
     ) {
-      const op = this.token;
+      let op: Token;
+      if (this.peek(GomToken.LT)) {
+        op = this.match(GomToken.LT);
+      } else if (this.peek(GomToken.GT)) {
+        op = this.match(GomToken.GT);
+      } else if (this.peek(GomToken.LTE)) {
+        op = this.match(GomToken.LTE);
+      } else if (this.peek(GomToken.GTE)) {
+        op = this.match(GomToken.GTE);
+      } else {
+        op = this.match(GomToken.EQEQ);
+      }
       const expr = this.parseExpression();
       return new NodeComparisonTail({
         op,
         rhs: expr,
       });
-    } else if (this.accept(GomToken.PLUS) || this.accept(GomToken.MINUS)) {
-      const op = this.token;
+    } else if (this.peek(GomToken.PLUS) || this.peek(GomToken.MINUS)) {
+      const op = this.peek(GomToken.PLUS)
+        ? this.match(GomToken.PLUS)
+        : this.match(GomToken.MINUS);
       const expr = this.parseExpression();
       return new NodeSumTail({
         op,
         rhs: expr,
       });
-    } else if (this.accept(GomToken.MUL) || this.accept(GomToken.DIV)) {
-      const op = this.token;
+    } else if (this.peek(GomToken.MUL) || this.peek(GomToken.DIV)) {
+      const op = this.peek(GomToken.MUL)
+        ? this.match(GomToken.MUL)
+        : this.match(GomToken.DIV);
       const expr = this.parseExpression();
       return new NodeQuotTail({
         op,
         rhs: expr,
       });
-    } else if (this.accept(GomToken.EXPO)) {
-      const op = this.token;
+    } else if (this.peek(GomToken.EXPO)) {
+      const op = this.match(GomToken.EXPO);
       const expr = this.parseExpression();
       return new NodeExpoTail({
         op,
@@ -390,11 +440,14 @@ export class RecursiveDescentParser {
 
   parseTerm() {
     if (this.peek(GomToken.IDENTIFIER)) {
-      return this.match(GomToken.IDENTIFIER);
+      const token = this.match(GomToken.IDENTIFIER);
+      return new NodeTerm(token);
     } else if (this.peek(GomToken.NUMLITERAL)) {
-      return this.match(GomToken.NUMLITERAL);
+      const token = this.match(GomToken.NUMLITERAL);
+      return new NodeTerm(token);
     } else if (this.peek(GomToken.STRLITERAL)) {
-      return this.match(GomToken.STRLITERAL);
+      const token = this.match(GomToken.STRLITERAL);
+      return new NodeTerm(token);
     } else {
       throw new SyntaxError(`Unexpected token: ${this.token.value}`);
     }

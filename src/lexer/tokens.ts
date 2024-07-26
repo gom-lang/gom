@@ -89,7 +89,7 @@ export const getKeywordType = (value: string): GomToken => {
 
 export const GOM_BUILT_IN_TYPES = new Set([
   "i8",
-  "i16",
+  "bool",
   "f16",
   "str",
   "struct",

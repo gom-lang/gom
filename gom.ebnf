@@ -76,7 +76,7 @@ numLiteral = digit+;
 
 stringLiteral = '"' , (letter | digit)* , '"';
 
-primitiveType = "i8" | "i16" | "f16" | "str";
+primitiveType = "i8" | "bool" | "f16" | "str";
 
 compositeType = identifier;
 

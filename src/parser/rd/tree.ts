@@ -1,8 +1,27 @@
 import { Token } from "../../lexer";
+import { Visitor } from "./visitor";
 
 export interface Node {
   type: NodeType;
+  parent?: Node;
+  children: Node[];
   token?: Token;
+}
+
+export abstract class AbstractNode implements Node {
+  type: NodeType;
+  parent?: Node;
+  children: Node[];
+  token?: Token;
+
+  constructor() {
+    this.type = NodeType.PROGRAM;
+    this.children = [];
+  }
+
+  accept<T>(visitor: Visitor<T>): void {
+    visitor.visit(this);
+  }
 }
 
 export enum NodeType {
@@ -22,12 +41,19 @@ export enum NodeType {
   EXPR_BASIC,
   EXPR_BRACKETED,
   ASSIGNMENT,
+  ASSIGNMENT_TAIL,
   ACCESS,
+  ACCESS_TAIL,
   CALL,
+  CALL_TAIL,
   COMPARISON,
+  COMPARISON_TAIL,
   SUM,
+  SUM_TAIL,
   QUOT,
+  QUOT_TAIL,
   EXPO,
+  EXPO_TAIL,
   TERM,
   TERMINAL,
 }

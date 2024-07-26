@@ -1,8 +1,23 @@
 import { Token } from "../../../lexer";
-import { Node, NodeType } from "../tree";
+import { AbstractNode, Node, NodeType } from "../tree";
 
-export class NodeProgram implements Node {
+function formChildrenArray(...nodes: (Node | Node[] | undefined)[]): Node[] {
+  let children: Node[] = [];
+
+  nodes.forEach((item) => {
+    if (Array.isArray(item)) {
+      children.push(...item);
+    } else if (item) {
+      children.push(item);
+    }
+  });
+
+  return children;
+}
+
+export class NodeProgram extends AbstractNode {
   type: NodeType;
+  children: Node[];
   importDeclarations: NodeImportDeclaration[] = [];
   typeDefinitions: NodeTypeDefinition[] = [];
   functionDeclarations: NodeFunctionDefinition[] = [];
@@ -19,38 +34,52 @@ export class NodeProgram implements Node {
     functionDeclarations: NodeFunctionDefinition[];
     mainFunction: NodeMainFunction;
   }) {
+    super();
     this.type = NodeType.PROGRAM;
     this.importDeclarations = importDeclarations;
     this.typeDefinitions = typeDefinitions;
     this.functionDeclarations = functionDeclarations;
     this.mainFunction = mainFunction;
+    this.children = formChildrenArray(
+      importDeclarations,
+      typeDefinitions,
+      functionDeclarations,
+      mainFunction
+    );
   }
 }
 
-export class NodeImportDeclaration implements Node {
+export class NodeImportDeclaration extends AbstractNode {
   type: NodeType;
+  children: Node[];
   path: Token;
 
   constructor(path: Token) {
+    super();
     this.type = NodeType.IMPORT_DECLARATION;
     this.path = path;
+    this.children = [];
   }
 }
 
-export class NodeTypeDefinition implements Node {
+export class NodeTypeDefinition extends AbstractNode {
   type: NodeType;
   name: Token;
   rhs: Token;
+  children: Node[];
 
   constructor({ name, rhs }: { name: Token; rhs: Token }) {
+    super();
     this.type = NodeType.TYPE_DEFINITION;
     this.name = name;
     this.rhs = rhs;
+    this.children = [];
   }
 }
 
-export class NodeFunctionDefinition implements Node {
+export class NodeFunctionDefinition extends AbstractNode {
   type: NodeType;
+  children: Node[];
   name: Token;
   args: NodeArgumentItem[];
   returnType?: NodeFunctionReturnType;
@@ -67,21 +96,26 @@ export class NodeFunctionDefinition implements Node {
     returnType?: NodeFunctionReturnType;
     body: NodeStatement[];
   }) {
+    super();
     this.type = NodeType.FUNCTION_DEFINITION;
     this.name = name;
     this.args = args;
     this.returnType = returnType;
     this.body = body;
+    this.children = formChildrenArray(args, returnType, body);
   }
 }
 
-export class NodeMainFunction implements Node {
+export class NodeMainFunction extends AbstractNode {
   type: NodeType;
   body: NodeStatement[];
+  children: Node[];
 
   constructor(body: NodeStatement[]) {
+    super();
     this.type = NodeType.MAIN_FUNCTION;
     this.body = body;
+    this.children = formChildrenArray(body);
   }
 }
 
@@ -92,11 +126,12 @@ export type NodeStatement =
   | NodeLetStatement
   | NodeExpressionStatement;
 
-export class NodeIfStatement implements Node {
+export class NodeIfStatement extends AbstractNode {
   type: NodeType;
   conditionExpr: NodeExpr;
   body: NodeStatement[];
   elseBody?: NodeStatement[];
+  children: Node[];
 
   constructor({
     conditionExpr,
@@ -107,19 +142,22 @@ export class NodeIfStatement implements Node {
     body: NodeStatement[];
     elseBody?: NodeStatement[];
   }) {
+    super();
     this.type = NodeType.IF_STATEMENT;
     this.conditionExpr = conditionExpr;
     this.body = body;
     this.elseBody = elseBody;
+    this.children = formChildrenArray(conditionExpr, body, elseBody);
   }
 }
 
-export class NodeForStatement implements Node {
+export class NodeForStatement extends AbstractNode {
   type: NodeType;
   initExpr?: NodeExpr;
   conditionExpr?: NodeExpr;
   updateExpr?: NodeExpr;
   body: NodeStatement[];
+  children: Node[];
 
   constructor({
     initExpr,
@@ -132,131 +170,261 @@ export class NodeForStatement implements Node {
     updateExpr?: NodeExpr;
     body: NodeStatement[];
   }) {
+    super();
     this.type = NodeType.FOR_STATEMENT;
     this.initExpr = initExpr;
     this.conditionExpr = conditionExpr;
     this.updateExpr = updateExpr;
     this.body = body;
+    this.children = formChildrenArray(
+      initExpr,
+      conditionExpr,
+      updateExpr,
+      body
+    );
   }
 }
 
-export class NodeReturnStatement implements Node {
+export class NodeReturnStatement extends AbstractNode {
   type: NodeType;
   expr: NodeExpr;
+  children: Node[];
 
   constructor(expr: NodeExpr) {
+    super();
     this.type = NodeType.RETURN_STATEMENT;
     this.expr = expr;
+    this.children = formChildrenArray(expr);
   }
 }
 
-export class NodeLetStatement implements Node {
+export class NodeLetStatement extends AbstractNode {
   type: NodeType;
   name: Token;
   rhs: NodeExpr;
+  children: Node[];
 
   constructor({ name, rhs }: { name: Token; rhs: NodeExpr }) {
+    super();
     this.type = NodeType.LET_STATEMENT;
     this.name = name;
     this.rhs = rhs;
+    this.children = formChildrenArray(rhs);
   }
 }
 
-export class NodeExpressionStatement implements Node {
+export class NodeExpressionStatement extends AbstractNode {
   type: NodeType;
   expr: NodeExpr;
+  children: Node[];
 
   constructor(expr: NodeExpr) {
+    super();
     this.type = NodeType.EXPRESSION_STATEMENT;
     this.expr = expr;
+    this.children = formChildrenArray(expr);
   }
 }
 
-export class NodeArgumentItem implements Node {
+export class NodeArgumentItem extends AbstractNode {
   type: NodeType;
   name: Token;
   expectedType: Token;
+  children: Node[];
 
   constructor({ name, expectedType }: { name: Token; expectedType: Token }) {
+    super();
     this.type = NodeType.ARGUMENT_ITEM;
     this.name = name;
     this.expectedType = expectedType;
+    this.children = [];
   }
 }
 
-export class NodeFunctionReturnType implements Node {
+export class NodeFunctionReturnType extends AbstractNode {
   type: NodeType;
   returnType: Token;
+  children: Node[];
 
   constructor(returnType: Token) {
+    super();
     this.type = NodeType.FUNCTION_RETURN_TYPE;
     this.returnType = returnType;
+    this.children = [];
   }
 }
 
-export class NodeGomType implements Node {
+export class NodeGomType extends AbstractNode {
   type: NodeType;
   name: Token;
+  children: Node[];
 
   constructor(name: Token) {
+    super();
     this.type = NodeType.GOM_TYPE;
     this.name = name;
+    this.children = [];
   }
 }
 
 export type NodeExpr = NodeExprBasic | NodeExprBracketed;
 
-export class NodeExprBasic implements Node {
-  type: NodeType;
-  term: Token;
-  exprTermTail?: NodeExprTermTail;
-
-  constructor({
-    term,
-    exprTermTail,
-  }: {
-    term: Token;
-    exprTermTail?: NodeExprTermTail;
-  }) {
-    this.type = NodeType.EXPR_BASIC;
-    this.term = term;
-    this.exprTermTail = exprTermTail;
-  }
-}
-
-export class NodeExprBracketed implements Node {
+export class NodeExprBracketed extends AbstractNode {
   type: NodeType;
   expr: NodeExpr;
+  children: Node[];
 
   constructor(expr: NodeExpr) {
+    super();
     this.type = NodeType.EXPR_BRACKETED;
     this.expr = expr;
+    this.children = formChildrenArray(expr);
   }
 }
 
 export type NodeExprTermTail = NodeAccessTail | NodeCallTail | NodeOpTail;
 
-export class NodeAccessTail implements Node {
+export class NodeAccessTail extends AbstractNode {
   type: NodeType;
-  id: Token;
+  rhs: NodeExpr;
   tail?: NodeExprTermTail;
+  children: Node[];
 
-  constructor({ id, tail }: { id: Token; tail?: NodeExprTermTail }) {
-    this.type = NodeType.ACCESS;
-    this.id = id;
+  constructor({ rhs, tail }: { rhs: NodeExpr; tail?: NodeExprTermTail }) {
+    super();
+    this.type = NodeType.ACCESS_TAIL;
+    this.rhs = rhs;
     this.tail = tail;
+    this.children = formChildrenArray(rhs, tail);
   }
 }
 
-export class NodeCallTail implements Node {
+export type NodeExprBasic = NodeAccess | NodeCall | NodeOp | NodeTerm;
+
+export class NodeAccess extends AbstractNode {
+  type: NodeType;
+  lhs: NodeTerm;
+  rhs: NodeAccessTail;
+  children: Node[];
+
+  constructor(lhs: NodeTerm, rhs: NodeAccessTail) {
+    super();
+    this.type = NodeType.ACCESS;
+    this.lhs = lhs;
+    this.rhs = rhs;
+    this.children = formChildrenArray(lhs, rhs);
+  }
+}
+
+export class NodeCall extends AbstractNode {
+  type: NodeType;
+  id: NodeTerm;
+  tail: NodeCallTail;
+  children: Node[];
+
+  constructor(id: NodeTerm, tail: NodeCallTail) {
+    super();
+    this.type = NodeType.CALL;
+    this.id = id;
+    this.tail = tail;
+    this.children = formChildrenArray(id, tail);
+  }
+}
+
+export type NodeOp =
+  | NodeAssignment
+  | NodeComparison
+  | NodeSum
+  | NodeQuot
+  | NodeExpo;
+
+export class NodeAssignment extends AbstractNode {
+  type: NodeType;
+  lhs: NodeTerm;
+  rhs: NodeAssignmentTail;
+  children: Node[];
+
+  constructor(lhs: NodeTerm, rhs: NodeAssignmentTail) {
+    super();
+    this.type = NodeType.ASSIGNMENT;
+    this.lhs = lhs;
+    this.rhs = rhs;
+    this.children = formChildrenArray(lhs, rhs);
+  }
+}
+
+export class NodeComparison extends AbstractNode {
+  type: NodeType;
+  lhs: NodeTerm;
+  tail: NodeComparisonTail;
+  children: Node[];
+
+  constructor({ lhs, tail }: { lhs: NodeTerm; tail: NodeComparisonTail }) {
+    super();
+    this.type = NodeType.COMPARISON;
+    this.lhs = lhs;
+    this.tail = tail;
+    this.children = formChildrenArray(lhs, tail);
+  }
+}
+
+export class NodeSum extends AbstractNode {
+  type: NodeType;
+  lhs: NodeTerm;
+  tail: NodeSumTail;
+  children: Node[];
+
+  constructor({ lhs, tail }: { lhs: NodeTerm; tail: NodeSumTail }) {
+    super();
+    this.type = NodeType.SUM;
+    this.lhs = lhs;
+    this.tail = tail;
+    this.children = formChildrenArray(lhs, tail);
+  }
+}
+
+export class NodeQuot extends AbstractNode {
+  type: NodeType;
+  lhs: NodeTerm;
+  tail: NodeQuotTail;
+  children: Node[];
+
+  constructor({ lhs, tail }: { lhs: NodeTerm; tail: NodeQuotTail }) {
+    super();
+    this.type = NodeType.QUOT;
+    this.lhs = lhs;
+    this.tail = tail;
+    this.children = formChildrenArray(lhs, tail);
+  }
+}
+
+export class NodeExpo extends AbstractNode {
+  type: NodeType;
+  base: NodeTerm;
+  tail: NodeExpoTail;
+  children: Node[];
+
+  constructor({ base, tail }: { base: NodeTerm; tail: NodeExpoTail }) {
+    super();
+    this.type = NodeType.EXPO;
+    this.base = base;
+    this.tail = tail;
+    this.children = formChildrenArray(base, tail);
+  }
+}
+
+export class NodeCallTail extends AbstractNode {
   type: NodeType;
   args: NodeExpr[];
   tail?: NodeExprTermTail;
+  children: Node[];
 
   constructor({ args, tail }: { args: NodeExpr[]; tail?: NodeExprTermTail }) {
-    this.type = NodeType.CALL;
+    super();
+    this.type = NodeType.CALL_TAIL;
     this.args = args;
     this.tail = tail;
+    this.children = formChildrenArray(args, tail);
   }
 }
 
@@ -267,60 +435,88 @@ export type NodeOpTail =
   | NodeQuotTail
   | NodeExpoTail;
 
-export class NodeAssignmentTail implements Node {
+export class NodeAssignmentTail extends AbstractNode {
   type: NodeType;
   rhs: NodeExpr;
+  children: Node[];
 
   constructor(rhs: NodeExpr) {
-    this.type = NodeType.ASSIGNMENT;
+    super();
+    this.type = NodeType.ASSIGNMENT_TAIL;
     this.rhs = rhs;
+    this.children = formChildrenArray(rhs);
   }
 }
 
-export class NodeComparisonTail implements Node {
+export class NodeComparisonTail extends AbstractNode {
   type: NodeType;
   op: Token;
   rhs: NodeExpr;
+  children: Node[];
 
   constructor({ op, rhs }: { op: Token; rhs: NodeExpr }) {
-    this.type = NodeType.COMPARISON;
+    super();
+    this.type = NodeType.COMPARISON_TAIL;
     this.op = op;
     this.rhs = rhs;
+    this.children = formChildrenArray(rhs);
   }
 }
 
-export class NodeSumTail implements Node {
+export class NodeSumTail extends AbstractNode {
   type: NodeType;
   op: Token;
   rhs: NodeExpr;
+  children: Node[];
 
   constructor({ op, rhs }: { op: Token; rhs: NodeExpr }) {
-    this.type = NodeType.SUM;
+    super();
+    this.type = NodeType.SUM_TAIL;
     this.op = op;
     this.rhs = rhs;
+    this.children = formChildrenArray(rhs);
   }
 }
 
-export class NodeQuotTail implements Node {
+export class NodeQuotTail extends AbstractNode {
   type: NodeType;
   op: Token;
   rhs: NodeExpr;
+  children: Node[];
 
   constructor({ op, rhs }: { op: Token; rhs: NodeExpr }) {
-    this.type = NodeType.QUOT;
+    super();
+    this.type = NodeType.QUOT_TAIL;
     this.op = op;
     this.rhs = rhs;
+    this.children = formChildrenArray(rhs);
   }
 }
 
-export class NodeExpoTail implements Node {
+export class NodeExpoTail extends AbstractNode {
   type: NodeType;
   op: Token;
   rhs: NodeExpr;
+  children: Node[];
 
   constructor({ op, rhs }: { op: Token; rhs: NodeExpr }) {
-    this.type = NodeType.EXPO;
+    super();
+    this.type = NodeType.EXPO_TAIL;
     this.op = op;
     this.rhs = rhs;
+    this.children = formChildrenArray(rhs);
+  }
+}
+
+export class NodeTerm extends AbstractNode {
+  type: NodeType;
+  token: Token;
+  children: Node[];
+
+  constructor(token: Token) {
+    super();
+    this.type = NodeType.TERM;
+    this.token = token;
+    this.children = [];
   }
 }
