@@ -22,7 +22,9 @@ forStatement = "for" , "(" , expr? , ";" , expr? , ";" , expr? , ")" , "{" , sta
 
 returnStatement = "return" , expr , ";";
 
-letStatement = "let" , identifier , "=" , expr , ";";
+letStatement = "let" , assignment+ , ";";
+
+constStatement = "const" , assignment+ , ";";
 
 expressionStatement = expr , ";";
 
@@ -34,42 +36,26 @@ functionReturnType = ":" , gomType;
 
 assignment = identifier , "=" , expr;
 
-expr = term , exprTermTail?
-	| "(" , expr , ")";
+(* Precedence *)
 
-exprTermTail = accessTail
-	| callTail
-	| opTail;
+expr = assignment;
 
-accessTail = "." , identifier , exprTermTail?;
+(* (identifier , ".")? is not implemented yet *)
+assignment = (identifier , ".")? , identifier ,  "=" , assignment
+	| comparison;
 
-callTail = "(" , expr? , (expr , ",")* , ")" , exprTermTail?;
+comparison = sum , (("<" | ">" | "<=" | ">=" | "==") , comparison)?;
 
+sum = quot , (("+" | "-") , quot)?;
 
-opTail = assignment
-	| comparison
-	| sum
-	| quot
-	| expo;
+quot = expo , (("/" | "*") , expo)?;
 
-assignment = "=" , expr;
+expo = call , ("^" , call)?;
 
-comparison = "<" , expr
-	| ">" , expr
-	| "<=" , expr
-	| ">=" , expr
-	| "==" , expr;
+call = term , ("(" , expr? , (expr , ",")* , ")" | "." call)?;
+
+term = identifier | numLiteral | stringLiteral | "(" , expr , ")" | "true" | "false";
 	
-sum = "+" , expr
-	| "-" , expr;
-
-quot = "/" , expr
-	| "*" , expr;
-
-expo = "^" , expr;
-	
-term = identifier | numLiteral | stringLiteral;
-
 identifier = letter , (letter | digit)*;
 
 numLiteral = digit+;

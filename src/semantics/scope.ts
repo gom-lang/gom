@@ -3,7 +3,7 @@ import {
   NodeTerm,
   NodeTypeDefinition,
 } from "../parser/rd/nodes";
-import { Node } from "../parser/rd/tree";
+import { GomPrimitiveTypeOrAlias, GomType } from "./type";
 
 class Stack<T> {
   private stack: T[] = [];
@@ -19,27 +19,36 @@ class Stack<T> {
 }
 
 type AllowedNodeTypes = NodeFunctionDefinition | NodeTerm | NodeTypeDefinition;
-type ScopeBaseEntry = TypeEntry | IdentifierEntry;
 
 class TypeEntry {
   name: string;
   node: NodeTypeDefinition;
+  gomType: GomPrimitiveTypeOrAlias;
 
   constructor(name: string, node: NodeTypeDefinition) {
     this.name = name;
     this.node = node;
+    this.gomType = new GomPrimitiveTypeOrAlias(node.rhs.value);
   }
 
-  getValue() {}
+  getValue() {
+    return this.name;
+  }
 }
 
 class IdentifierEntry {
   name: string;
   node: NodeTerm | NodeFunctionDefinition;
+  type: GomType;
 
-  constructor(name: string, node: NodeTerm | NodeFunctionDefinition) {
+  constructor(
+    name: string,
+    node: NodeTerm | NodeFunctionDefinition,
+    type: GomType
+  ) {
     this.name = name;
     this.node = node;
+    this.type = type;
   }
 
   isFunction() {
@@ -55,35 +64,64 @@ class IdentifierEntry {
   }
 }
 
+interface StackEntries {
+  types: Record<string, TypeEntry>;
+  identifiers: Record<string, IdentifierEntry>;
+}
+
 export class Scope {
-  private entries: Map<string, Stack<AllowedNodeTypes>> = new Map();
+  private entries: StackEntries = {
+    types: {},
+    identifiers: {},
+  };
 
   constructor(parent?: Scope) {
     if (parent) {
-      this.entries = new Map(parent.entries);
+      this.entries = structuredClone(parent.entries);
     }
   }
 
-  put(name: string, value: AllowedNodeTypes) {
-    if (!this.entries.has(name)) {
-      this.entries.set(name, new Stack());
+  putType(name: string, node: NodeTypeDefinition) {
+    const existingEntry =
+      this.entries.types[name] ?? this.entries.identifiers[name];
+    if (existingEntry) {
+      throw new SyntaxError(
+        `Block-scoped value "${name}" already declared: Name: ${name}, Value: ${existingEntry.getValue()}`
+      );
     }
-
-    this.entries.get(name)!.push(value);
+    this.entries.types[name] = new TypeEntry(name, node);
   }
 
-  get(name: string) {
-    return this.entries.get(name)?.peek();
+  putIdentifier(
+    name: string,
+    node: NodeTerm | NodeFunctionDefinition,
+    type: GomType
+  ) {
+    const existingEntry =
+      this.entries.types[name] ?? this.entries.identifiers[name];
+    if (existingEntry) {
+      throw new SyntaxError(
+        `Block-scoped value "${name}" already declared: Name: ${name}, Value: ${existingEntry.getValue()}`
+      );
+    }
+    this.entries.identifiers[name] = new IdentifierEntry(name, node, type);
   }
 
-  has(name: string): boolean {
-    return this.entries.has(name);
+  getIdentifier(name: string) {
+    return this.entries.identifiers[name];
+  }
+
+  hasIdentifier(name: string): boolean {
+    return this.entries.identifiers[name] !== undefined;
+  }
+
+  getType(name: string) {
+    return this.entries.types[name];
   }
 }
 
 export class ScopeManager {
   private stack: Stack<Scope> = new Stack();
-  private baseEntries: Map<string, ScopeBaseEntry> = new Map();
 
   constructor() {
     this.stack.push(new Scope());
@@ -97,19 +135,23 @@ export class ScopeManager {
     this.stack.pop();
   }
 
-  put(name: string, value: AllowedNodeTypes) {
-    if (!this.stack.peek().has(name)) {
-      this.baseEntries.set(
-        name,
-        value instanceof NodeTypeDefinition
-          ? new TypeEntry(name, value)
-          : new IdentifierEntry(name, value)
-      );
-    }
-    this.stack.peek().put(name, value);
+  putType(name: string, node: NodeTypeDefinition) {
+    this.stack.peek().putType(name, node);
   }
 
-  get(name: string) {
-    return this.stack.peek().get(name);
+  putIdentifier(
+    name: string,
+    node: NodeTerm | NodeFunctionDefinition,
+    type: GomType
+  ) {
+    this.stack.peek().putIdentifier(name, node, type);
+  }
+
+  getIdentifier(name: string) {
+    return this.stack.peek().getIdentifier(name);
+  }
+
+  getType(name: string) {
+    return this.stack.peek().getType(name);
   }
 }

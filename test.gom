@@ -18,10 +18,11 @@ fn print_to_n(n: i8) {
 }
 
 fn main() {
-    let a = 1;
-    let b = 2;
-    
+    let a = 1 + 2, b = 2;
+
     io.log("Sum:", add(a, (1 + b / 2)));
+
+    a = 2;
     io.log("Square:", square(a));
 
     print_to_n(5);
