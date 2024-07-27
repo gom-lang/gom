@@ -1,4 +1,10 @@
 import { Token } from "../../../lexer";
+import { GomToken } from "../../../lexer/tokens";
+import {
+  GomFunctionType,
+  GomPrimitiveTypeOrAlias,
+  GomType,
+} from "../../../semantics/type";
 import { AbstractNode, Node, NodeType } from "../tree";
 
 function formChildrenArray(...nodes: (Node | Node[] | undefined)[]): Node[] {
@@ -84,6 +90,7 @@ export class NodeFunctionDefinition extends AbstractNode {
   args: NodeArgumentItem[];
   returnType?: NodeFunctionReturnType;
   body: NodeStatement[];
+  gomType: GomFunctionType;
 
   constructor({
     name,
@@ -103,6 +110,12 @@ export class NodeFunctionDefinition extends AbstractNode {
     this.returnType = returnType;
     this.body = body;
     this.children = formChildrenArray(args, returnType, body);
+    this.gomType = new GomFunctionType(
+      args.map((arg) => arg.gomType),
+      returnType
+        ? new GomPrimitiveTypeOrAlias(returnType.returnType.value)
+        : null
+    );
   }
 }
 
@@ -200,16 +213,27 @@ export class NodeReturnStatement extends AbstractNode {
 
 export class NodeLetStatement extends AbstractNode {
   type: NodeType;
-  name: Token;
-  rhs: NodeExpr;
+  decls: NodeAssignment[];
   children: Node[];
 
-  constructor({ name, rhs }: { name: Token; rhs: NodeExpr }) {
+  constructor({ decls }: { decls: NodeAssignment[] }) {
     super();
     this.type = NodeType.LET_STATEMENT;
-    this.name = name;
-    this.rhs = rhs;
-    this.children = formChildrenArray(rhs);
+    this.decls = decls;
+    this.children = formChildrenArray(decls);
+  }
+}
+
+export class NodeConstStatement extends AbstractNode {
+  type: NodeType;
+  decls: NodeAssignment[];
+  children: Node[];
+
+  constructor({ decls }: { decls: NodeAssignment[] }) {
+    super();
+    this.type = NodeType.CONST_STATEMENT;
+    this.decls = decls;
+    this.children = formChildrenArray(decls);
   }
 }
 
@@ -231,6 +255,7 @@ export class NodeArgumentItem extends AbstractNode {
   name: Token;
   expectedType: Token;
   children: Node[];
+  gomType: GomType;
 
   constructor({ name, expectedType }: { name: Token; expectedType: Token }) {
     super();
@@ -238,6 +263,7 @@ export class NodeArgumentItem extends AbstractNode {
     this.name = name;
     this.expectedType = expectedType;
     this.children = [];
+    this.gomType = new GomPrimitiveTypeOrAlias(expectedType.value);
   }
 }
 
@@ -269,6 +295,77 @@ export class NodeGomType extends AbstractNode {
 
 export type NodeExpr = NodeExprBasic | NodeExprBracketed;
 
+export type NodeExprBasic = NodeAccess | NodeCall | NodeTerm;
+
+export class NodeAssignment extends AbstractNode {
+  type: NodeType;
+  lhs: NodeExpr;
+  rhs: NodeExpr;
+
+  constructor(lhs: NodeExpr, rhs: NodeExpr) {
+    super();
+    this.type = NodeType.ASSIGNMENT;
+    this.lhs = lhs;
+    this.rhs = rhs;
+    this.children = formChildrenArray(lhs, rhs);
+  }
+}
+
+export class NodeBinaryOp extends AbstractNode {
+  type: NodeType;
+  lhs: NodeExpr;
+  op: Token;
+  rhs: NodeExpr;
+
+  constructor({
+    type,
+    lhs,
+    op,
+    rhs,
+  }: {
+    type: NodeType;
+    lhs: NodeExpr;
+    op: Token;
+    rhs: NodeExpr;
+  }) {
+    super();
+    this.type = type;
+    this.lhs = lhs;
+    this.op = op;
+    this.rhs = rhs;
+    this.children = formChildrenArray(lhs, rhs);
+  }
+}
+
+export class NodeAccess extends AbstractNode {
+  type: NodeType;
+  lhs: NodeExpr;
+  rhs: NodeExpr;
+  children: Node[];
+
+  constructor(lhs: NodeExpr, rhs: NodeExpr) {
+    super();
+    this.type = NodeType.ACCESS;
+    this.lhs = lhs;
+    this.rhs = rhs;
+    this.children = formChildrenArray(lhs, rhs);
+  }
+}
+
+export class NodeCall extends AbstractNode {
+  type: NodeType;
+  id: NodeExpr;
+  args: NodeExpr[];
+
+  constructor(id: NodeExpr, args: NodeExpr[]) {
+    super();
+    this.type = NodeType.CALL;
+    this.id = id;
+    this.args = args;
+    this.children = formChildrenArray(id, args);
+  }
+}
+
 export class NodeExprBracketed extends AbstractNode {
   type: NodeType;
   expr: NodeExpr;
@@ -282,241 +379,34 @@ export class NodeExprBracketed extends AbstractNode {
   }
 }
 
-export type NodeExprTermTail = NodeAccessTail | NodeCallTail | NodeOpTail;
-
-export class NodeAccessTail extends AbstractNode {
-  type: NodeType;
-  rhs: NodeExpr;
-  tail?: NodeExprTermTail;
-  children: Node[];
-
-  constructor({ rhs, tail }: { rhs: NodeExpr; tail?: NodeExprTermTail }) {
-    super();
-    this.type = NodeType.ACCESS_TAIL;
-    this.rhs = rhs;
-    this.tail = tail;
-    this.children = formChildrenArray(rhs, tail);
-  }
-}
-
-export type NodeExprBasic = NodeAccess | NodeCall | NodeOp | NodeTerm;
-
-export class NodeAccess extends AbstractNode {
-  type: NodeType;
-  lhs: NodeTerm;
-  rhs: NodeAccessTail;
-  children: Node[];
-
-  constructor(lhs: NodeTerm, rhs: NodeAccessTail) {
-    super();
-    this.type = NodeType.ACCESS;
-    this.lhs = lhs;
-    this.rhs = rhs;
-    this.children = formChildrenArray(lhs, rhs);
-  }
-}
-
-export class NodeCall extends AbstractNode {
-  type: NodeType;
-  id: NodeTerm;
-  tail: NodeCallTail;
-  children: Node[];
-
-  constructor(id: NodeTerm, tail: NodeCallTail) {
-    super();
-    this.type = NodeType.CALL;
-    this.id = id;
-    this.tail = tail;
-    this.children = formChildrenArray(id, tail);
-  }
-}
-
-export type NodeOp =
-  | NodeAssignment
-  | NodeComparison
-  | NodeSum
-  | NodeQuot
-  | NodeExpo;
-
-export class NodeAssignment extends AbstractNode {
-  type: NodeType;
-  lhs: NodeTerm;
-  rhs: NodeAssignmentTail;
-  children: Node[];
-
-  constructor(lhs: NodeTerm, rhs: NodeAssignmentTail) {
-    super();
-    this.type = NodeType.ASSIGNMENT;
-    this.lhs = lhs;
-    this.rhs = rhs;
-    this.children = formChildrenArray(lhs, rhs);
-  }
-}
-
-export class NodeComparison extends AbstractNode {
-  type: NodeType;
-  lhs: NodeTerm;
-  tail: NodeComparisonTail;
-  children: Node[];
-
-  constructor({ lhs, tail }: { lhs: NodeTerm; tail: NodeComparisonTail }) {
-    super();
-    this.type = NodeType.COMPARISON;
-    this.lhs = lhs;
-    this.tail = tail;
-    this.children = formChildrenArray(lhs, tail);
-  }
-}
-
-export class NodeSum extends AbstractNode {
-  type: NodeType;
-  lhs: NodeTerm;
-  tail: NodeSumTail;
-  children: Node[];
-
-  constructor({ lhs, tail }: { lhs: NodeTerm; tail: NodeSumTail }) {
-    super();
-    this.type = NodeType.SUM;
-    this.lhs = lhs;
-    this.tail = tail;
-    this.children = formChildrenArray(lhs, tail);
-  }
-}
-
-export class NodeQuot extends AbstractNode {
-  type: NodeType;
-  lhs: NodeTerm;
-  tail: NodeQuotTail;
-  children: Node[];
-
-  constructor({ lhs, tail }: { lhs: NodeTerm; tail: NodeQuotTail }) {
-    super();
-    this.type = NodeType.QUOT;
-    this.lhs = lhs;
-    this.tail = tail;
-    this.children = formChildrenArray(lhs, tail);
-  }
-}
-
-export class NodeExpo extends AbstractNode {
-  type: NodeType;
-  base: NodeTerm;
-  tail: NodeExpoTail;
-  children: Node[];
-
-  constructor({ base, tail }: { base: NodeTerm; tail: NodeExpoTail }) {
-    super();
-    this.type = NodeType.EXPO;
-    this.base = base;
-    this.tail = tail;
-    this.children = formChildrenArray(base, tail);
-  }
-}
-
-export class NodeCallTail extends AbstractNode {
-  type: NodeType;
-  args: NodeExpr[];
-  tail?: NodeExprTermTail;
-  children: Node[];
-
-  constructor({ args, tail }: { args: NodeExpr[]; tail?: NodeExprTermTail }) {
-    super();
-    this.type = NodeType.CALL_TAIL;
-    this.args = args;
-    this.tail = tail;
-    this.children = formChildrenArray(args, tail);
-  }
-}
-
-export type NodeOpTail =
-  | NodeAssignmentTail
-  | NodeComparisonTail
-  | NodeSumTail
-  | NodeQuotTail
-  | NodeExpoTail;
-
-export class NodeAssignmentTail extends AbstractNode {
-  type: NodeType;
-  rhs: NodeExpr;
-  children: Node[];
-
-  constructor(rhs: NodeExpr) {
-    super();
-    this.type = NodeType.ASSIGNMENT_TAIL;
-    this.rhs = rhs;
-    this.children = formChildrenArray(rhs);
-  }
-}
-
-export class NodeComparisonTail extends AbstractNode {
-  type: NodeType;
-  op: Token;
-  rhs: NodeExpr;
-  children: Node[];
-
-  constructor({ op, rhs }: { op: Token; rhs: NodeExpr }) {
-    super();
-    this.type = NodeType.COMPARISON_TAIL;
-    this.op = op;
-    this.rhs = rhs;
-    this.children = formChildrenArray(rhs);
-  }
-}
-
-export class NodeSumTail extends AbstractNode {
-  type: NodeType;
-  op: Token;
-  rhs: NodeExpr;
-  children: Node[];
-
-  constructor({ op, rhs }: { op: Token; rhs: NodeExpr }) {
-    super();
-    this.type = NodeType.SUM_TAIL;
-    this.op = op;
-    this.rhs = rhs;
-    this.children = formChildrenArray(rhs);
-  }
-}
-
-export class NodeQuotTail extends AbstractNode {
-  type: NodeType;
-  op: Token;
-  rhs: NodeExpr;
-  children: Node[];
-
-  constructor({ op, rhs }: { op: Token; rhs: NodeExpr }) {
-    super();
-    this.type = NodeType.QUOT_TAIL;
-    this.op = op;
-    this.rhs = rhs;
-    this.children = formChildrenArray(rhs);
-  }
-}
-
-export class NodeExpoTail extends AbstractNode {
-  type: NodeType;
-  op: Token;
-  rhs: NodeExpr;
-  children: Node[];
-
-  constructor({ op, rhs }: { op: Token; rhs: NodeExpr }) {
-    super();
-    this.type = NodeType.EXPO_TAIL;
-    this.op = op;
-    this.rhs = rhs;
-    this.children = formChildrenArray(rhs);
-  }
-}
-
 export class NodeTerm extends AbstractNode {
   type: NodeType;
   token: Token;
   children: Node[];
+  gomType: GomPrimitiveTypeOrAlias;
 
   constructor(token: Token) {
     super();
     this.type = NodeType.TERM;
     this.token = token;
     this.children = [];
+    this.gomType = this.getGomType();
+  }
+
+  private getGomType() {
+    if (this.token.type === GomToken.IDENTIFIER) {
+      return new GomPrimitiveTypeOrAlias(`resolve_type@@${this.token.value}`);
+    } else if (this.token.type === GomToken.NUMLITERAL) {
+      return new GomPrimitiveTypeOrAlias("i8");
+    } else if (this.token.type === GomToken.STRLITERAL) {
+      return new GomPrimitiveTypeOrAlias("str");
+    } else if (
+      this.token.type === GomToken.TRUE ||
+      this.token.type === GomToken.FALSE
+    ) {
+      return new GomPrimitiveTypeOrAlias("bool");
+    }
+
+    throw new Error(`Cannot determine type for token: ${this.token.type}`);
   }
 }

@@ -2,9 +2,8 @@ import {
   NodeAccess,
   NodeArgumentItem,
   NodeAssignment,
+  NodeBinaryOp,
   NodeCall,
-  NodeComparison,
-  NodeExpo,
   NodeExprBracketed,
   NodeExpressionStatement,
   NodeForStatement,
@@ -15,9 +14,7 @@ import {
   NodeLetStatement,
   NodeMainFunction,
   NodeProgram,
-  NodeQuot,
   NodeReturnStatement,
-  NodeSum,
   NodeTerm,
   NodeTypeDefinition,
 } from "./nodes";
@@ -38,10 +35,7 @@ export interface Visitor<StateType> {
   visitAccess(node: NodeAccess): void;
   visitCall(node: NodeCall): void;
   visitAssignment(node: NodeAssignment): void;
-  visitComparison(node: NodeComparison): void;
-  visitSum(node: NodeSum): void;
-  visitQuot(node: NodeQuot): void;
-  visitExpo(node: NodeExpo): void;
+  visitBinaryOp(node: NodeBinaryOp): void;
   visitIfStatement(node: NodeIfStatement): void;
   visitForStatement(node: NodeForStatement): void;
   visitReturnStatement(node: NodeReturnStatement): void;
@@ -96,25 +90,10 @@ export class SimpleVisitor<T> implements Visitor<T> {
         this.visitAssignment(node as NodeAssignment);
         return;
       case NodeType.COMPARISON:
-        this.visitComparison(node as NodeComparison);
-        return;
       case NodeType.SUM:
-        this.visitSum(node as NodeSum);
-        return;
       case NodeType.QUOT:
-        this.visitQuot(node as NodeQuot);
-        return;
       case NodeType.EXPO:
-        this.visitExpo(node as NodeExpo);
-        return;
-      case NodeType.CALL_TAIL:
-      case NodeType.ACCESS_TAIL:
-      case NodeType.ASSIGNMENT_TAIL:
-      case NodeType.COMPARISON_TAIL:
-      case NodeType.SUM_TAIL:
-      case NodeType.QUOT_TAIL:
-      case NodeType.EXPO_TAIL:
-        this.visitChildren(node);
+        this.visitBinaryOp(node as NodeBinaryOp);
         return;
       case NodeType.IF_STATEMENT:
         this.visitIfStatement(node as NodeIfStatement);
@@ -176,16 +155,7 @@ export class SimpleVisitor<T> implements Visitor<T> {
   visitAssignment(node: NodeAssignment) {
     this.visitChildren(node);
   }
-  visitComparison(node: NodeComparison) {
-    this.visitChildren(node);
-  }
-  visitSum(node: NodeSum) {
-    this.visitChildren(node);
-  }
-  visitQuot(node: NodeQuot) {
-    this.visitChildren(node);
-  }
-  visitExpo(node: NodeExpo) {
+  visitBinaryOp(node: NodeBinaryOp) {
     this.visitChildren(node);
   }
   visitIfStatement(node: NodeIfStatement) {

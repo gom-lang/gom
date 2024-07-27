@@ -1,50 +1,29 @@
 import {
-  NodeAccessTail,
-  NodeArgumentItem,
-  NodeAssignmentTail,
-  NodeCallTail,
-  NodeComparisonTail,
-  NodeExpoTail,
-  NodeExprBasic,
-  NodeExprBracketed,
-  NodeExpressionStatement,
-  NodeForStatement,
-  NodeFunctionDefinition,
-  NodeFunctionReturnType,
-  NodeIfStatement,
   NodeImportDeclaration,
-  NodeLetStatement,
-  NodeMainFunction,
   NodeProgram,
-  NodeQuotTail,
-  NodeReturnStatement,
-  NodeSumTail,
   NodeTerm,
   NodeTypeDefinition,
 } from "../parser/rd/nodes";
 import { ScopeManager } from "./scope";
 import { SimpleVisitor } from "../parser/rd/visitor";
 
-class SemanticAnalyzer extends SimpleVisitor<void> {
+export class SemanticAnalyzer extends SimpleVisitor<void> {
   scopeManager: ScopeManager;
+  clonedAST: NodeProgram;
 
-  constructor() {
+  constructor(ast: NodeProgram) {
     super();
     this.scopeManager = new ScopeManager();
+    this.clonedAST = structuredClone(ast);
+  }
+
+  analyze() {
+    this.visit(this.clonedAST);
   }
 
   visitProgram(node: NodeProgram): void {
     this.scopeManager.beginScope();
-    node.importDeclarations.forEach((importDeclaration) =>
-      this.visitImportDeclaration(importDeclaration)
-    );
-    node.typeDefinitions.forEach((typeDefinition) =>
-      this.visitTypeDefinition(typeDefinition)
-    );
-    node.functionDeclarations.forEach((functionDeclaration) =>
-      this.visitFunctionDefinition(functionDeclaration)
-    );
-    this.visitMainFunction(node.mainFunction);
+    this.visitChildren(node);
     this.scopeManager.endScope();
   }
 
@@ -53,52 +32,11 @@ class SemanticAnalyzer extends SimpleVisitor<void> {
   }
 
   visitTypeDefinition(node: NodeTypeDefinition): void {
-    this.scopeManager.put(node.name.value, node);
+    this.scopeManager.putType(node.name.value, node);
   }
 
-  visitFunctionDefinition(node: NodeFunctionDefinition): void {
-    this.scopeManager.put(node.name.value, node);
+  visitTerm(node: NodeTerm): void {
+    const type = node.gomType;
+    console.log(`Term: ${node.token.value} has type ${type.typeString}`);
   }
-
-  visitMainFunction(node: NodeMainFunction): void {
-    node.body.forEach((statement) => this.visit(statement));
-  }
-
-  visitArgumentItem(node: NodeArgumentItem): void {}
-
-  visitFunctionReturnType(node: NodeFunctionReturnType): void {}
-
-  visitExprBasic(node: NodeExprBasic): void {}
-
-  visitExprBracketed(node: NodeExprBracketed): void {
-    this.visit(node.expr);
-  }
-
-  visitCallTail(node: NodeCallTail): void {}
-
-  visitAccessTail(node: NodeAccessTail): void {}
-
-  visitAssignmentTail(node: NodeAssignmentTail): void {}
-
-  visitComparisonTail(node: NodeComparisonTail): void {}
-
-  visitSumTail(node: NodeSumTail): void {}
-
-  visitQuotTail(node: NodeQuotTail): void {}
-
-  visitExpoTail(node: NodeExpoTail): void {}
-
-  visitIfStatement(node: NodeIfStatement): void {}
-
-  visitForStatement(node: NodeForStatement): void {}
-
-  visitReturnStatement(node: NodeReturnStatement): void {
-    this.visit(node.expr);
-  }
-
-  visitLetStatement(node: NodeLetStatement): void {}
-
-  visitExpressionStatement(node: NodeExpressionStatement): void {}
-
-  visitTerm(node: NodeTerm): void {}
 }

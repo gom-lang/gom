@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "fs/promises";
 import { Lexer } from "./lexer";
 import { RecursiveDescentParser } from "./parser/rd";
-import { LoggingVisitor } from "./parser/rd/logging-visitor";
+import { SemanticAnalyzer } from "./semantics";
 
 export default async (src: string) => {
   const entry = await readFile(src, "utf-8");
@@ -12,8 +12,8 @@ export default async (src: string) => {
 
   const program = parser.parse();
 
-  const loggingVisitor = new LoggingVisitor();
-  loggingVisitor.visit(program);
+  const semanticAnalyzer = new SemanticAnalyzer(program);
+  semanticAnalyzer.analyze();
 
   console.timeEnd("Compiled in");
 

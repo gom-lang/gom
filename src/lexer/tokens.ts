@@ -4,11 +4,14 @@ export enum GomToken {
   TYPE = "type",
   FN = "fn",
   LET = "let",
+  CONST = "const",
   FOR = "for",
   RETURN = "return",
   IF = "if",
   ELSE = "else",
   MAIN = "main",
+  TRUE = "true",
+  FALSE = "false",
 
   // Primitive type
   BUILT_IN_TYPE = "built_in_type",
@@ -55,11 +58,14 @@ export const GOM_KEYWORDS = new Set([
   "type",
   "fn",
   "let",
+  "const",
   "for",
   "return",
   "if",
   "else",
   "main",
+  "true",
+  "false",
 ]);
 
 export const getKeywordType = (value: string): GomToken => {
@@ -72,6 +78,8 @@ export const getKeywordType = (value: string): GomToken => {
       return GomToken.FN;
     case "let":
       return GomToken.LET;
+    case "const":
+      return GomToken.CONST;
     case "for":
       return GomToken.FOR;
     case "return":
@@ -82,6 +90,10 @@ export const getKeywordType = (value: string): GomToken => {
       return GomToken.ELSE;
     case "main":
       return GomToken.MAIN;
+    case "true":
+      return GomToken.TRUE;
+    case "false":
+      return GomToken.FALSE;
     default:
       return GomToken.IDENTIFIER;
   }
