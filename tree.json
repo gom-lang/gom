@@ -16,16 +16,87 @@
       "type": 2,
       "name": {
         "type": "identifier",
-        "value": "Sum",
+        "value": "Point",
         "start": 17,
-        "end": 19
+        "end": 21
       },
       "rhs": {
-        "type": "built_in_type",
-        "value": "i8",
-        "start": 23,
-        "end": 24
+        "type": 12,
+        "fields": [
+          {
+            "type": 13,
+            "name": {
+              "type": "identifier",
+              "value": "x",
+              "start": 38,
+              "end": 38
+            },
+            "fieldType": {
+              "type": 11,
+              "id": {
+                "type": "built_in_type",
+                "value": "i8",
+                "start": 41,
+                "end": 42
+              }
+            }
+          },
+          {
+            "type": 13,
+            "name": {
+              "type": "identifier",
+              "value": "y",
+              "start": 49,
+              "end": 49
+            },
+            "fieldType": {
+              "type": 11,
+              "id": {
+                "type": "built_in_type",
+                "value": "i8",
+                "start": 52,
+                "end": 53
+              }
+            }
+          }
+        ]
       }
+    }
+  ],
+  "globalVariables": [
+    {
+      "type": 8,
+      "decls": [
+        {
+          "type": 18,
+          "lhs": {
+            "type": 25,
+            "token": {
+              "type": "identifier",
+              "value": "GLOBAL",
+              "start": 63,
+              "end": 68
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "resolve_type@@GLOBAL"
+            }
+          },
+          "rhs": {
+            "type": 25,
+            "token": {
+              "type": "numliteral",
+              "value": "1",
+              "start": 72,
+              "end": 72
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "i8"
+            }
+          }
+        }
+      ]
     }
   ],
   "functionDeclarations": [
@@ -34,23 +105,30 @@
       "name": {
         "type": "identifier",
         "value": "square",
-        "start": 31,
-        "end": 36
+        "start": 79,
+        "end": 84
       },
       "args": [
         {
-          "type": 12,
+          "type": 14,
           "name": {
-            "type": "identifier",
-            "value": "x",
-            "start": 38,
-            "end": 38
+            "type": 25,
+            "token": {
+              "type": "identifier",
+              "value": "x",
+              "start": 86,
+              "end": 86
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "resolve_type@@x"
+            }
           },
           "expectedType": {
             "type": "built_in_type",
             "value": "i8",
-            "start": 41,
-            "end": 42
+            "start": 89,
+            "end": 90
           },
           "gomType": {
             "kind": "PrimitiveOrAlias",
@@ -59,26 +137,26 @@
         }
       ],
       "returnType": {
-        "type": 13,
+        "type": 15,
         "returnType": {
           "type": "built_in_type",
           "value": "i8",
-          "start": 46,
-          "end": 47
+          "start": 94,
+          "end": 95
         }
       },
       "body": [
         {
           "type": 7,
           "expr": {
-            "type": 21,
+            "type": 23,
             "lhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "x",
-                "start": 62,
-                "end": 62
+                "start": 110,
+                "end": 110
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -88,16 +166,16 @@
             "op": {
               "type": "*",
               "value": "*",
-              "start": 64,
-              "end": 64
+              "start": 112,
+              "end": 112
             },
             "rhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "x",
-                "start": 66,
-                "end": 66
+                "start": 114,
+                "end": 114
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -126,23 +204,30 @@
       "name": {
         "type": "identifier",
         "value": "add",
-        "start": 75,
-        "end": 77
+        "start": 123,
+        "end": 125
       },
       "args": [
         {
-          "type": 12,
+          "type": 14,
           "name": {
-            "type": "identifier",
-            "value": "a",
-            "start": 79,
-            "end": 79
+            "type": 25,
+            "token": {
+              "type": "identifier",
+              "value": "a",
+              "start": 127,
+              "end": 127
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "resolve_type@@a"
+            }
           },
           "expectedType": {
             "type": "built_in_type",
             "value": "i8",
-            "start": 82,
-            "end": 83
+            "start": 130,
+            "end": 131
           },
           "gomType": {
             "kind": "PrimitiveOrAlias",
@@ -150,18 +235,25 @@
           }
         },
         {
-          "type": 12,
+          "type": 14,
           "name": {
-            "type": "identifier",
-            "value": "b",
-            "start": 86,
-            "end": 86
+            "type": 25,
+            "token": {
+              "type": "identifier",
+              "value": "b",
+              "start": 134,
+              "end": 134
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "resolve_type@@b"
+            }
           },
           "expectedType": {
             "type": "built_in_type",
             "value": "i8",
-            "start": 89,
-            "end": 90
+            "start": 137,
+            "end": 138
           },
           "gomType": {
             "kind": "PrimitiveOrAlias",
@@ -170,26 +262,26 @@
         }
       ],
       "returnType": {
-        "type": 13,
+        "type": 15,
         "returnType": {
           "type": "built_in_type",
           "value": "i8",
-          "start": 94,
-          "end": 95
+          "start": 142,
+          "end": 143
         }
       },
       "body": [
         {
           "type": 7,
           "expr": {
-            "type": 20,
+            "type": 22,
             "lhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "a",
-                "start": 110,
-                "end": 110
+                "start": 158,
+                "end": 158
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -199,16 +291,16 @@
             "op": {
               "type": "+",
               "value": "+",
-              "start": 112,
-              "end": 112
+              "start": 160,
+              "end": 160
             },
             "rhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "b",
-                "start": 114,
-                "end": 114
+                "start": 162,
+                "end": 162
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -241,23 +333,30 @@
       "name": {
         "type": "identifier",
         "value": "print_to_n",
-        "start": 123,
-        "end": 132
+        "start": 207,
+        "end": 216
       },
       "args": [
         {
-          "type": 12,
+          "type": 14,
           "name": {
-            "type": "identifier",
-            "value": "n",
-            "start": 134,
-            "end": 134
+            "type": 25,
+            "token": {
+              "type": "identifier",
+              "value": "n",
+              "start": 218,
+              "end": 218
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "resolve_type@@n"
+            }
           },
           "expectedType": {
             "type": "built_in_type",
             "value": "i8",
-            "start": 137,
-            "end": 138
+            "start": 221,
+            "end": 222
           },
           "gomType": {
             "kind": "PrimitiveOrAlias",
@@ -270,14 +369,14 @@
           "type": 8,
           "decls": [
             {
-              "type": 16,
+              "type": 18,
               "lhs": {
-                "type": 23,
+                "type": 25,
                 "token": {
                   "type": "identifier",
                   "value": "i",
-                  "start": 151,
-                  "end": 151
+                  "start": 235,
+                  "end": 235
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
@@ -285,12 +384,12 @@
                 }
               },
               "rhs": {
-                "type": 23,
+                "type": 25,
                 "token": {
                   "type": "numliteral",
                   "value": "0",
-                  "start": 155,
-                  "end": 155
+                  "start": 239,
+                  "end": 239
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
@@ -303,14 +402,14 @@
         {
           "type": 6,
           "conditionExpr": {
-            "type": 19,
+            "type": 21,
             "lhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "i",
-                "start": 168,
-                "end": 168
+                "start": 252,
+                "end": 252
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -320,16 +419,16 @@
             "op": {
               "type": "<",
               "value": "<",
-              "start": 170,
-              "end": 170
+              "start": 254,
+              "end": 254
             },
             "rhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "n",
-                "start": 172,
-                "end": 172
+                "start": 256,
+                "end": 256
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -338,14 +437,14 @@
             }
           },
           "updateExpr": {
-            "type": 16,
+            "type": 18,
             "lhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "i",
-                "start": 175,
-                "end": 175
+                "start": 259,
+                "end": 259
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -353,14 +452,14 @@
               }
             },
             "rhs": {
-              "type": 20,
+              "type": 22,
               "lhs": {
-                "type": 23,
+                "type": 25,
                 "token": {
                   "type": "identifier",
                   "value": "i",
-                  "start": 179,
-                  "end": 179
+                  "start": 263,
+                  "end": 263
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
@@ -370,16 +469,16 @@
               "op": {
                 "type": "+",
                 "value": "+",
-                "start": 181,
-                "end": 181
+                "start": 265,
+                "end": 265
               },
               "rhs": {
-                "type": 23,
+                "type": 25,
                 "token": {
                   "type": "numliteral",
                   "value": "1",
-                  "start": 183,
-                  "end": 183
+                  "start": 267,
+                  "end": 267
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
@@ -392,14 +491,14 @@
             {
               "type": 10,
               "expr": {
-                "type": 17,
+                "type": 19,
                 "lhs": {
-                  "type": 23,
+                  "type": 25,
                   "token": {
                     "type": "identifier",
                     "value": "io",
-                    "start": 196,
-                    "end": 197
+                    "start": 280,
+                    "end": 281
                   },
                   "gomType": {
                     "kind": "PrimitiveOrAlias",
@@ -407,14 +506,14 @@
                   }
                 },
                 "rhs": {
-                  "type": 18,
+                  "type": 20,
                   "id": {
-                    "type": 23,
+                    "type": 25,
                     "token": {
                       "type": "identifier",
                       "value": "log",
-                      "start": 199,
-                      "end": 201
+                      "start": 283,
+                      "end": 285
                     },
                     "gomType": {
                       "kind": "PrimitiveOrAlias",
@@ -423,12 +522,12 @@
                   },
                   "args": [
                     {
-                      "type": 23,
+                      "type": 25,
                       "token": {
                         "type": "strliteral",
                         "value": "\"i:\"",
-                        "start": 203,
-                        "end": 206
+                        "start": 287,
+                        "end": 290
                       },
                       "gomType": {
                         "kind": "PrimitiveOrAlias",
@@ -436,12 +535,12 @@
                       }
                     },
                     {
-                      "type": 23,
+                      "type": 25,
                       "token": {
                         "type": "identifier",
                         "value": "i",
-                        "start": 209,
-                        "end": 209
+                        "start": 293,
+                        "end": 293
                       },
                       "gomType": {
                         "kind": "PrimitiveOrAlias",
@@ -463,7 +562,10 @@
             "typeString": "i8"
           }
         ],
-        "returnType": null
+        "returnType": {
+          "kind": "PrimitiveOrAlias",
+          "typeString": "void"
+        }
       }
     }
   ],
@@ -474,14 +576,14 @@
         "type": 8,
         "decls": [
           {
-            "type": 16,
+            "type": 18,
             "lhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "a",
-                "start": 242,
-                "end": 242
+                "start": 326,
+                "end": 326
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -489,14 +591,14 @@
               }
             },
             "rhs": {
-              "type": 20,
+              "type": 22,
               "lhs": {
-                "type": 23,
+                "type": 25,
                 "token": {
                   "type": "numliteral",
                   "value": "1",
-                  "start": 246,
-                  "end": 246
+                  "start": 330,
+                  "end": 330
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
@@ -506,16 +608,16 @@
               "op": {
                 "type": "+",
                 "value": "+",
-                "start": 248,
-                "end": 248
+                "start": 332,
+                "end": 332
               },
               "rhs": {
-                "type": 23,
+                "type": 25,
                 "token": {
                   "type": "numliteral",
                   "value": "2",
-                  "start": 250,
-                  "end": 250
+                  "start": 334,
+                  "end": 334
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
@@ -525,14 +627,14 @@
             }
           },
           {
-            "type": 16,
+            "type": 18,
             "lhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "b",
-                "start": 253,
-                "end": 253
+                "start": 337,
+                "end": 337
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -540,12 +642,12 @@
               }
             },
             "rhs": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "numliteral",
                 "value": "2",
-                "start": 257,
-                "end": 257
+                "start": 341,
+                "end": 341
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -558,14 +660,14 @@
       {
         "type": 10,
         "expr": {
-          "type": 17,
+          "type": 19,
           "lhs": {
-            "type": 23,
+            "type": 25,
             "token": {
               "type": "identifier",
               "value": "io",
-              "start": 265,
-              "end": 266
+              "start": 349,
+              "end": 350
             },
             "gomType": {
               "kind": "PrimitiveOrAlias",
@@ -573,14 +675,14 @@
             }
           },
           "rhs": {
-            "type": 18,
+            "type": 20,
             "id": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "log",
-                "start": 268,
-                "end": 270
+                "start": 352,
+                "end": 354
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -589,12 +691,12 @@
             },
             "args": [
               {
-                "type": 23,
+                "type": 25,
                 "token": {
                   "type": "strliteral",
                   "value": "\"Sum:\"",
-                  "start": 272,
-                  "end": 277
+                  "start": 356,
+                  "end": 361
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
@@ -602,14 +704,14 @@
                 }
               },
               {
-                "type": 18,
+                "type": 20,
                 "id": {
-                  "type": 23,
+                  "type": 25,
                   "token": {
                     "type": "identifier",
                     "value": "add",
-                    "start": 280,
-                    "end": 282
+                    "start": 364,
+                    "end": 366
                   },
                   "gomType": {
                     "kind": "PrimitiveOrAlias",
@@ -618,29 +720,29 @@
                 },
                 "args": [
                   {
-                    "type": 23,
+                    "type": 25,
                     "token": {
-                      "type": "identifier",
-                      "value": "a",
-                      "start": 284,
-                      "end": 284
+                      "type": "numliteral",
+                      "value": "1",
+                      "start": 368,
+                      "end": 368
                     },
                     "gomType": {
                       "kind": "PrimitiveOrAlias",
-                      "typeString": "resolve_type@@a"
+                      "typeString": "i8"
                     }
                   },
                   {
-                    "type": 15,
+                    "type": 17,
                     "expr": {
-                      "type": 20,
+                      "type": 22,
                       "lhs": {
-                        "type": 23,
+                        "type": 25,
                         "token": {
                           "type": "numliteral",
                           "value": "1",
-                          "start": 288,
-                          "end": 288
+                          "start": 372,
+                          "end": 372
                         },
                         "gomType": {
                           "kind": "PrimitiveOrAlias",
@@ -650,18 +752,18 @@
                       "op": {
                         "type": "+",
                         "value": "+",
-                        "start": 290,
-                        "end": 290
+                        "start": 374,
+                        "end": 374
                       },
                       "rhs": {
-                        "type": 21,
+                        "type": 23,
                         "lhs": {
-                          "type": 23,
+                          "type": 25,
                           "token": {
                             "type": "identifier",
                             "value": "b",
-                            "start": 292,
-                            "end": 292
+                            "start": 376,
+                            "end": 376
                           },
                           "gomType": {
                             "kind": "PrimitiveOrAlias",
@@ -671,16 +773,16 @@
                         "op": {
                           "type": "/",
                           "value": "/",
-                          "start": 294,
-                          "end": 294
+                          "start": 378,
+                          "end": 378
                         },
                         "rhs": {
-                          "type": 23,
+                          "type": 25,
                           "token": {
                             "type": "numliteral",
                             "value": "2",
-                            "start": 296,
-                            "end": 296
+                            "start": 380,
+                            "end": 380
                           },
                           "gomType": {
                             "kind": "PrimitiveOrAlias",
@@ -699,14 +801,77 @@
       {
         "type": 10,
         "expr": {
-          "type": 16,
+          "type": 19,
           "lhs": {
-            "type": 23,
+            "type": 25,
+            "token": {
+              "type": "identifier",
+              "value": "io",
+              "start": 390,
+              "end": 391
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "resolve_type@@io"
+            }
+          },
+          "rhs": {
+            "type": 20,
+            "id": {
+              "type": 25,
+              "token": {
+                "type": "identifier",
+                "value": "log",
+                "start": 393,
+                "end": 395
+              },
+              "gomType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "resolve_type@@log"
+              }
+            },
+            "args": [
+              {
+                "type": 25,
+                "token": {
+                  "type": "strliteral",
+                  "value": "\"Global:\"",
+                  "start": 397,
+                  "end": 405
+                },
+                "gomType": {
+                  "kind": "PrimitiveOrAlias",
+                  "typeString": "str"
+                }
+              },
+              {
+                "type": 25,
+                "token": {
+                  "type": "identifier",
+                  "value": "GLOBAL",
+                  "start": 408,
+                  "end": 413
+                },
+                "gomType": {
+                  "kind": "PrimitiveOrAlias",
+                  "typeString": "resolve_type@@GLOBAL"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "type": 10,
+        "expr": {
+          "type": 18,
+          "lhs": {
+            "type": 25,
             "token": {
               "type": "identifier",
               "value": "a",
-              "start": 307,
-              "end": 307
+              "start": 422,
+              "end": 422
             },
             "gomType": {
               "kind": "PrimitiveOrAlias",
@@ -714,12 +879,12 @@
             }
           },
           "rhs": {
-            "type": 23,
+            "type": 25,
             "token": {
               "type": "numliteral",
               "value": "2",
-              "start": 311,
-              "end": 311
+              "start": 426,
+              "end": 426
             },
             "gomType": {
               "kind": "PrimitiveOrAlias",
@@ -731,14 +896,14 @@
       {
         "type": 10,
         "expr": {
-          "type": 17,
+          "type": 19,
           "lhs": {
-            "type": 23,
+            "type": 25,
             "token": {
               "type": "identifier",
               "value": "io",
-              "start": 318,
-              "end": 319
+              "start": 433,
+              "end": 434
             },
             "gomType": {
               "kind": "PrimitiveOrAlias",
@@ -746,14 +911,14 @@
             }
           },
           "rhs": {
-            "type": 18,
+            "type": 20,
             "id": {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "identifier",
                 "value": "log",
-                "start": 321,
-                "end": 323
+                "start": 436,
+                "end": 438
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -762,12 +927,12 @@
             },
             "args": [
               {
-                "type": 23,
+                "type": 25,
                 "token": {
                   "type": "strliteral",
                   "value": "\"Square:\"",
-                  "start": 325,
-                  "end": 333
+                  "start": 440,
+                  "end": 448
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
@@ -775,14 +940,14 @@
                 }
               },
               {
-                "type": 18,
+                "type": 20,
                 "id": {
-                  "type": 23,
+                  "type": 25,
                   "token": {
                     "type": "identifier",
                     "value": "square",
-                    "start": 336,
-                    "end": 341
+                    "start": 451,
+                    "end": 456
                   },
                   "gomType": {
                     "kind": "PrimitiveOrAlias",
@@ -791,12 +956,12 @@
                 },
                 "args": [
                   {
-                    "type": 23,
+                    "type": 25,
                     "token": {
                       "type": "identifier",
                       "value": "a",
-                      "start": 343,
-                      "end": 343
+                      "start": 458,
+                      "end": 458
                     },
                     "gomType": {
                       "kind": "PrimitiveOrAlias",
@@ -812,14 +977,14 @@
       {
         "type": 10,
         "expr": {
-          "type": 18,
+          "type": 20,
           "id": {
-            "type": 23,
+            "type": 25,
             "token": {
               "type": "identifier",
               "value": "print_to_n",
-              "start": 353,
-              "end": 362
+              "start": 468,
+              "end": 477
             },
             "gomType": {
               "kind": "PrimitiveOrAlias",
@@ -828,12 +993,12 @@
           },
           "args": [
             {
-              "type": 23,
+              "type": 25,
               "token": {
                 "type": "numliteral",
                 "value": "5",
-                "start": 364,
-                "end": 364
+                "start": 479,
+                "end": 479
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",

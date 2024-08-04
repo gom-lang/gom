@@ -26,17 +26,20 @@ export class NodeProgram extends AbstractNode {
   children: Node[];
   importDeclarations: NodeImportDeclaration[] = [];
   typeDefinitions: NodeTypeDefinition[] = [];
+  globalVariables: NodeLetStatement[] = [];
   functionDeclarations: NodeFunctionDefinition[] = [];
   mainFunction: NodeMainFunction;
 
   constructor({
     importDeclarations,
     typeDefinitions,
+    globalVariables,
     functionDeclarations,
     mainFunction,
   }: {
     importDeclarations: NodeImportDeclaration[];
     typeDefinitions: NodeTypeDefinition[];
+    globalVariables: NodeLetStatement[];
     functionDeclarations: NodeFunctionDefinition[];
     mainFunction: NodeMainFunction;
   }) {
@@ -44,11 +47,13 @@ export class NodeProgram extends AbstractNode {
     this.type = NodeType.PROGRAM;
     this.importDeclarations = importDeclarations;
     this.typeDefinitions = typeDefinitions;
+    this.globalVariables = globalVariables;
     this.functionDeclarations = functionDeclarations;
     this.mainFunction = mainFunction;
     this.children = formChildrenArray(
       importDeclarations,
       typeDefinitions,
+      globalVariables,
       functionDeclarations,
       mainFunction
     );
@@ -71,10 +76,10 @@ export class NodeImportDeclaration extends AbstractNode {
 export class NodeTypeDefinition extends AbstractNode {
   type: NodeType;
   name: Token;
-  rhs: Token;
+  rhs: NodeGomType;
   children: Node[];
 
-  constructor({ name, rhs }: { name: Token; rhs: Token }) {
+  constructor({ name, rhs }: { name: Token; rhs: NodeGomType }) {
     super();
     this.type = NodeType.TYPE_DEFINITION;
     this.name = name;
@@ -114,7 +119,7 @@ export class NodeFunctionDefinition extends AbstractNode {
       args.map((arg) => arg.gomType),
       returnType
         ? new GomPrimitiveTypeOrAlias(returnType.returnType.value)
-        : null
+        : new GomPrimitiveTypeOrAlias("void")
     );
   }
 }
@@ -252,12 +257,12 @@ export class NodeExpressionStatement extends AbstractNode {
 
 export class NodeArgumentItem extends AbstractNode {
   type: NodeType;
-  name: Token;
+  name: NodeTerm;
   expectedType: Token;
   children: Node[];
   gomType: GomType;
 
-  constructor({ name, expectedType }: { name: Token; expectedType: Token }) {
+  constructor({ name, expectedType }: { name: NodeTerm; expectedType: Token }) {
     super();
     this.type = NodeType.ARGUMENT_ITEM;
     this.name = name;
@@ -280,16 +285,46 @@ export class NodeFunctionReturnType extends AbstractNode {
   }
 }
 
-export class NodeGomType extends AbstractNode {
+export type NodeGomType = NodeGomTypeIdOrArray | NodeGomTypeStruct;
+export class NodeGomTypeIdOrArray extends AbstractNode {
   type: NodeType;
-  name: Token;
+  id: Token;
+  arrSize?: Token;
   children: Node[];
 
-  constructor(name: Token) {
+  constructor(id: Token, arrSize?: Token) {
     super();
-    this.type = NodeType.GOM_TYPE;
-    this.name = name;
+    this.type = NodeType.GOM_TYPE_ID_OR_ARRAY;
+    this.id = id;
+    this.arrSize = arrSize;
     this.children = [];
+  }
+}
+
+export class NodeGomTypeStruct extends AbstractNode {
+  type: NodeType;
+  fields: NodeGomTypeStructField[];
+
+  constructor(fields: NodeGomTypeStructField[]) {
+    super();
+    this.type = NodeType.GOM_TYPE_STRUCT;
+    this.fields = fields;
+    this.children = formChildrenArray(fields);
+  }
+}
+
+export class NodeGomTypeStructField extends AbstractNode {
+  type: NodeType;
+  name: Token;
+  fieldType: NodeGomTypeIdOrArray;
+  children: Node[];
+
+  constructor(name: Token, fieldType: NodeGomTypeIdOrArray) {
+    super();
+    this.type = NodeType.GOM_TYPE_STRUCT_FIELD;
+    this.name = name;
+    this.fieldType = fieldType;
+    this.children = formChildrenArray(fieldType);
   }
 }
 
@@ -405,6 +440,8 @@ export class NodeTerm extends AbstractNode {
       this.token.type === GomToken.FALSE
     ) {
       return new GomPrimitiveTypeOrAlias("bool");
+    } else if (this.token.type === GomToken.BUILT_IN_TYPE) {
+      return new GomPrimitiveTypeOrAlias(`primitive_type@@${this.token.value}`);
     }
 
     throw new Error(`Cannot determine type for token: ${this.token.type}`);

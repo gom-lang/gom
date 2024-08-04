@@ -13,6 +13,9 @@ import {
   NodeForStatement,
   NodeFunctionDefinition,
   NodeFunctionReturnType,
+  NodeGomTypeIdOrArray,
+  NodeGomTypeStruct,
+  NodeGomTypeStructField,
   NodeIfStatement,
   NodeImportDeclaration,
   NodeLetStatement,
@@ -48,7 +51,9 @@ export class RecursiveDescentParser {
       this.nextToken();
       return matched;
     } else {
-      throw new Error(`Unexpected token: ${this.token.value}`);
+      throw new Error(
+        `Unexpected token at ${this.token.start}: ${this.token.value}`
+      );
     }
   }
 
@@ -124,18 +129,21 @@ export class RecursiveDescentParser {
     const importDeclarations = this.parseZeroOrMore(
       this.parseImportDeclaration
     );
-    const typeOrFunctionDefinitions = this.parseZeroOrMore(
-      this.parseTypeOrFunctionDefinition
+    const typeGlobalOrFunctionDefinitions = this.parseZeroOrMore(
+      this.parseTypeGlobalOrFunctionDefinition
     );
     const mainFunction = this.parseMainFunction();
 
     return new NodeProgram({
       importDeclarations,
-      typeDefinitions: typeOrFunctionDefinitions.filter(
+      typeDefinitions: typeGlobalOrFunctionDefinitions.filter(
         (def): def is NodeTypeDefinition =>
           def.type === NodeType.TYPE_DEFINITION
       ),
-      functionDeclarations: typeOrFunctionDefinitions.filter(
+      globalVariables: typeGlobalOrFunctionDefinitions.filter(
+        (def): def is NodeLetStatement => def.type === NodeType.LET_STATEMENT
+      ),
+      functionDeclarations: typeGlobalOrFunctionDefinitions.filter(
         (def): def is NodeFunctionDefinition =>
           def.type === NodeType.FUNCTION_DEFINITION
       ),
@@ -150,11 +158,13 @@ export class RecursiveDescentParser {
     return new NodeImportDeclaration(id);
   }
 
-  parseTypeOrFunctionDefinition() {
+  parseTypeGlobalOrFunctionDefinition() {
     if (this.peek(GomToken.TYPE)) {
       return this.parseTypeDefinition();
     } else if (this.peek(GomToken.FN)) {
       return this.parseFunctionDefinition();
+    } else if (this.peek(GomToken.LET)) {
+      return this.parseStatement();
     } else {
       throw new SyntaxError(`Unexpected token: ${this.token.value}`);
     }
@@ -164,13 +174,58 @@ export class RecursiveDescentParser {
     this.match(GomToken.TYPE);
     const name = this.match(GomToken.IDENTIFIER);
     this.match(GomToken.EQ);
-    const rhs = this.match(GomToken.BUILT_IN_TYPE);
+    const rhs = this.parseGomType();
     this.match(GomToken.SEMICOLON);
 
     return new NodeTypeDefinition({
       name,
       rhs,
     });
+  }
+
+  parseGomType() {
+    if (this.peek(GomToken.STRUCT)) {
+      return this.parseStructType();
+    } else if (
+      this.peek(GomToken.IDENTIFIER) ||
+      this.peek(GomToken.BUILT_IN_TYPE)
+    ) {
+      return this.parseTypeIdOrArray();
+    }
+
+    throw new Error(`Unexpected token: ${this.token.value}`);
+  }
+
+  parseStructType() {
+    this.match(GomToken.STRUCT);
+    this.match(GomToken.LBRACE);
+    const fields = this.parseOneOrMore(this.parseStructTypeField);
+    this.match(GomToken.RBRACE);
+
+    return new NodeGomTypeStruct(fields);
+  }
+
+  parseStructTypeField() {
+    const name = this.match(GomToken.IDENTIFIER);
+    this.match(GomToken.COLON);
+    const type = this.parseTypeIdOrArray();
+    if (!this.peek(GomToken.RBRACE)) {
+      this.match(GomToken.COMMA);
+    }
+
+    return new NodeGomTypeStructField(name, type);
+  }
+
+  parseTypeIdOrArray() {
+    const baseType = this.parseTerm() as NodeTerm;
+
+    if (this.accept(GomToken.LBRACKET)) {
+      const size = this.match(GomToken.NUMLITERAL);
+      this.match(GomToken.RBRACKET);
+      return new NodeGomTypeIdOrArray(baseType.token, size);
+    }
+
+    return new NodeGomTypeIdOrArray(baseType.token);
   }
 
   parseFunctionDefinition() {
@@ -193,7 +248,7 @@ export class RecursiveDescentParser {
   }
 
   parseArgumentItem() {
-    const name = this.match(GomToken.IDENTIFIER);
+    const name = this.parseTerm() as NodeTerm;
     this.match(GomToken.COLON);
     const expectedType = this.match(GomToken.BUILT_IN_TYPE); // can be custom type
     this.matchOneOrNone(GomToken.COMMA);
@@ -415,6 +470,9 @@ export class RecursiveDescentParser {
       return new NodeTerm(token);
     } else if (this.peek(GomToken.STRLITERAL)) {
       const token = this.match(GomToken.STRLITERAL);
+      return new NodeTerm(token);
+    } else if (this.peek(GomToken.BUILT_IN_TYPE)) {
+      const token = this.match(GomToken.BUILT_IN_TYPE);
       return new NodeTerm(token);
     } else {
       throw new SyntaxError(`Unexpected token: ${this.token.value}`);

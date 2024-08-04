@@ -24,6 +24,8 @@ export enum GomToken {
   RPAREN = ")",
   LBRACE = "{",
   RBRACE = "}",
+  LBRACKET = "[",
+  RBRACKET = "]",
   COLON = ":",
   SEMICOLON = ";",
   COMMA = ",",
@@ -66,6 +68,7 @@ export const GOM_KEYWORDS = new Set([
   "main",
   "true",
   "false",
+  "struct",
 ]);
 
 export const getKeywordType = (value: string): GomToken => {
@@ -94,15 +97,11 @@ export const getKeywordType = (value: string): GomToken => {
       return GomToken.TRUE;
     case "false":
       return GomToken.FALSE;
+    case "struct":
+      return GomToken.STRUCT;
     default:
       return GomToken.IDENTIFIER;
   }
 };
 
-export const GOM_BUILT_IN_TYPES = new Set([
-  "i8",
-  "bool",
-  "f16",
-  "str",
-  "struct",
-]);
+export const GOM_BUILT_IN_TYPES = new Set(["i8", "bool", "f16", "str"]);

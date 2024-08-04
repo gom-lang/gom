@@ -29,13 +29,14 @@ export class Lexer {
   }
 
   private _nextToken(): Token {
-    if (this.pos >= this.src.length)
+    if (this.pos >= this.src.length) {
       return {
         type: GomToken.EOF,
         value: "eof",
         start: this.pos,
         end: this.pos,
       };
+    }
     while (1) {
       if (this.pos >= this.src.length)
         return {
@@ -81,6 +82,22 @@ export class Lexer {
           this.pos++;
           return {
             type: GomToken.RBRACE,
+            value: this.currentChar,
+            start: this.pos - 1,
+            end: this.pos - 1,
+          };
+        case "[":
+          this.pos++;
+          return {
+            type: GomToken.LBRACKET,
+            value: this.currentChar,
+            start: this.pos - 1,
+            end: this.pos - 1,
+          };
+        case "]":
+          this.pos++;
+          return {
+            type: GomToken.RBRACKET,
             value: this.currentChar,
             start: this.pos - 1,
             end: this.pos - 1,
@@ -142,6 +159,25 @@ export class Lexer {
             end: this.pos - 1,
           };
         case "/":
+          if (this.src[this.pos + 1] === "/") {
+            // Comment
+            this.pos += 2;
+            while (this.src[this.pos] !== "\n") {
+              this.pos++;
+            }
+            continue;
+          } else if (this.src[this.pos + 1] === "*") {
+            // Multi-line comment
+            this.pos += 2;
+            while (
+              this.src[this.pos] !== "*" ||
+              this.src[this.pos + 1] !== "/"
+            ) {
+              this.pos++;
+            }
+            this.pos += 2;
+            continue;
+          }
           this.pos++;
           return {
             type: GomToken.DIV,
