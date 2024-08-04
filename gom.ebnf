@@ -28,7 +28,13 @@ constStatement = "const" , assignment+ , ";";
 
 expressionStatement = expr , ";";
 
-gomType = primitiveType | compositeType , primitiveType?;
+gomType = typeIdOrArray | structType;
+
+typeIdOrArray = typeId ("[" , numLiteral , "]")?;
+
+structType = "struct" , "{" , structTypeItem+ , "}";
+
+structTypeItem = identifier , ":" , gomType , ","?;
 
 argumentItem = identifier , ":" , gomType , ","?;
 
