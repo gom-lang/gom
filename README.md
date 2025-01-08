@@ -61,3 +61,34 @@ Apart from the built-in types, custom types can be created using the `type` keyw
 type Count = i8;
 type Name = str;
 ```
+
+## Development Status
+
+| Stage | Status |
+| --- | --- |
+| Base grammar definition | ✅ Done |
+| Lexical Analysis | ✅ Done |
+| Syntactic Analysis (parsing) | ✅ Done |
+| Semantic Analysis & preliminary type system | ✅ Done |
+| LLVM IR Code Generation | ⚙️ In progress |
+| Complex data structures | ⏳ Not started |
+
+## Trying out Gom
+
+The `src/index.ts` file is the entry point for the Gom compiler. To execute the compiler, clone and set up the repository locally:
+
+```bash
+npm install
+```
+
+To compile a Gom program, run:
+
+```bash
+npm run compile <path-to-gom-file>
+# e.g.
+npm run compile test_2.gom
+```
+
+## Updates
+
+https://github.com/gom-lang/gom/commits/main/
