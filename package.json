@@ -11,8 +11,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bitcode": "^1.2.0",
-    "llvm-bindings": "^0.4.2",
     "typescript": "^5.4.5"
   },
   "devDependencies": {
