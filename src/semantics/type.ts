@@ -1,6 +1,6 @@
 /**
  * Gom type can be:
- * - Primitive, e.g. i8, bool, f16, str
+ * - Primitive, e.g. i8, bool, f32, str, void
  * - Struct e.g. struct { x: i8, y: i8 }
  * - Custom, e.g. type Number = i8
  * - Function, e.g. fn add(a: i8, b: i8): i8
@@ -24,7 +24,7 @@ export interface GomType {
 export type GomPrimitiveTypeOrAliasValue =
   | "i8"
   | "bool"
-  | "f16"
+  | "f32"
   | "str"
   | "void"
   | string;

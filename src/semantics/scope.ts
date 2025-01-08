@@ -5,6 +5,7 @@ import {
   NodeTerm,
   NodeTypeDefinition,
 } from "../parser/rd/nodes";
+import { GomInternalError, SyntaxError } from "../util/error";
 import {
   GomArrayType,
   GomPrimitiveTypeOrAlias,
@@ -128,9 +129,10 @@ export class Scope {
     const existingEntry =
       this.entries.types[name] ?? this.entries.identifiers[name];
     if (existingEntry) {
-      throw new SyntaxError(
-        `Block-scoped value "${name}" already declared: Name: ${name}, Value: ${existingEntry.getValue()}`
-      );
+      throw new SyntaxError({
+        message: `Block-scoped value "${name}" already declared: Name: ${name}, Value: ${existingEntry.getValue()}`,
+        loc: [1, node.loc],
+      });
     }
     this.entries.types[name] = new TypeEntry(name, node);
   }
@@ -144,9 +146,10 @@ export class Scope {
     const existingEntry =
       this.entries.types[name] ?? this.entries.identifiers[name];
     if (existingEntry) {
-      throw new SyntaxError(
-        `Block-scoped value "${name}" already declared: Name: ${name}, Value: ${existingEntry.getValue()}`
-      );
+      throw new SyntaxError({
+        message: `Block-scoped value "${name}" already declared: Name: ${name}, Value: ${existingEntry.getValue()}`,
+        loc: [1, node.loc],
+      });
     }
 
     this.entries.identifiers[name] = new IdentifierEntry(
@@ -214,7 +217,9 @@ export class ScopeManager {
     if (parent) {
       this.currentSymbolTableNode = parent;
     } else {
-      throw new Error("SemanticError: Cannot end root scope");
+      throw new GomInternalError({
+        message: "Cannot end root scope",
+      });
     }
   }
 
@@ -259,6 +264,10 @@ export class SymbolTableReader {
     this.currentSymbolTable = rootSymbolTable;
   }
 
+  getScopeName() {
+    return this.currentSymbolTable.getName();
+  }
+
   getIdentifier(name: string) {
     let currentSymbolTable = this.currentSymbolTable;
     while (currentSymbolTable) {
@@ -266,7 +275,12 @@ export class SymbolTableReader {
       if (entry) {
         return entry;
       }
-      currentSymbolTable = currentSymbolTable.getChildren()[0];
+      const parent = currentSymbolTable.getParent();
+      if (parent) {
+        currentSymbolTable = parent;
+      } else {
+        break;
+      }
     }
     return null;
   }
@@ -278,7 +292,12 @@ export class SymbolTableReader {
       if (entry) {
         return entry;
       }
-      currentSymbolTable = currentSymbolTable.getChildren()[0];
+      const parent = currentSymbolTable.getParent();
+      if (parent) {
+        currentSymbolTable = parent;
+      } else {
+        break;
+      }
     }
     return null;
   }
@@ -290,7 +309,12 @@ export class SymbolTableReader {
       if (entry) {
         return entry;
       }
-      currentSymbolTable = currentSymbolTable.getChildren()[0];
+      const parent = currentSymbolTable.getParent();
+      if (parent) {
+        currentSymbolTable = parent;
+      } else {
+        break;
+      }
     }
     return null;
   }
@@ -303,7 +327,9 @@ export class SymbolTableReader {
     if (child) {
       this.currentSymbolTable = child;
     } else {
-      throw new Error(`CodeGen: Scope "${name}" not found`);
+      throw new GomInternalError({
+        message: `Scope ${name} not found`,
+      });
     }
   }
 
@@ -312,7 +338,9 @@ export class SymbolTableReader {
     if (parent) {
       this.currentSymbolTable = parent;
     } else {
-      throw new Error("CodeGen: Cannot exit root scope");
+      throw new GomInternalError({
+        message: `Cannot exit root scope`,
+      });
     }
   }
 

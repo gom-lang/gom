@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "compile": "tsx run.ts"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +14,7 @@
     "typescript": "^5.4.5"
   },
   "devDependencies": {
+    "tsx": "^4.19.2",
     "vitest": "^1.5.2"
   }
 }

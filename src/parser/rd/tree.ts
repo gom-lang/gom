@@ -3,6 +3,7 @@ import { Visitor } from "./visitor";
 
 export interface Node {
   type: NodeType;
+  loc: number;
   parent?: Node;
   children: Node[];
   token?: Token;
@@ -10,12 +11,14 @@ export interface Node {
 
 export abstract class AbstractNode implements Node {
   type: NodeType;
+  loc: number;
   parent?: Node;
   children: Node[];
   token?: Token;
 
   constructor() {
     this.type = NodeType.PROGRAM;
+    this.loc = 0;
     this.children = [];
   }
 

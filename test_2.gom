@@ -1,0 +1,31 @@
+import io;
+
+type Point = struct {
+    x: i8,
+    y: i8
+};
+
+let GLOBAL = 1;
+
+fn square(x: i8): i8 {
+    return x * x;
+}
+
+fn add(a: i8, b: i8): i8 {
+    return a + b;
+}
+
+fn main() {
+    let a = 1 + 2, b = 2;
+
+    add(1, (1 + b / 2));
+
+    a = 2;
+    let sq = square(a);
+    if(sq == 4) {
+        let i = 0;
+        for(i = 0; i < 5; i = i + 1) {
+            add(i, 1);
+        }
+    }
+}

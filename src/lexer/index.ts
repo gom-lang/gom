@@ -1,4 +1,4 @@
-import { SyntaxError } from "./error";
+import { GomErrorManager } from "./../util/error";
 import {
   GOM_KEYWORDS,
   GOM_BUILT_IN_TYPES,
@@ -17,11 +17,13 @@ export class Lexer {
   src: string;
   pos: number;
   currentChar: string;
+  errorManager: GomErrorManager;
 
-  constructor(src: string) {
+  constructor(src: string, errorManager: GomErrorManager) {
     this.src = src;
     this.pos = 0;
     this.currentChar = this.src[this.pos];
+    this.errorManager = errorManager;
   }
 
   public nextToken(): Token {
@@ -320,8 +322,8 @@ export class Lexer {
             }
 
             if (/A-Za-z_/.test(this.src[this.pos])) {
-              throw new SyntaxError({
-                start: this.pos - value.length,
+              this.errorManager.throwSyntaxError({
+                loc: this.pos - value.length,
                 message: `Identifier can only start with a character matching [A-Za-z_]: '${value}'`,
               });
             }
@@ -334,16 +336,16 @@ export class Lexer {
             };
           }
 
-          throw new SyntaxError({
-            start: this.pos,
+          this.errorManager.throwSyntaxError({
+            loc: this.pos,
             message: `Unidentified character '${this.currentChar}'`,
           });
         }
       }
     }
 
-    throw new SyntaxError({
-      start: this.pos,
+    this.errorManager.throwSyntaxError({
+      loc: this.pos,
       message: `Unidentified character '${this.src[this.pos]}'`,
     });
   }

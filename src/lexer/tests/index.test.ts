@@ -1,10 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { Lexer } from "../index";
 import { GomToken } from "../tokens";
+import { GomErrorManager } from "../../util/error";
+
+const errorManager = new GomErrorManager("test");
 
 describe("Lexer", () => {
   test("returns correct tokens", () => {
-    const lexer = new Lexer("1 + 2");
+    const lexer = new Lexer("1 + 2", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.NUMLITERAL,
@@ -36,7 +39,7 @@ describe("Lexer", () => {
   });
 
   test("ignores whitespace", () => {
-    const lexer = new Lexer(" 1 + 2 ");
+    const lexer = new Lexer(" 1 + 2 ", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.NUMLITERAL,
@@ -68,7 +71,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for multiple digits", () => {
-    const lexer = new Lexer("123 + 456");
+    const lexer = new Lexer("123 + 456", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.NUMLITERAL,
@@ -100,7 +103,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for strings", () => {
-    const lexer = new Lexer('"hello" , "world"');
+    const lexer = new Lexer('"hello" , "world"', errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.STRLITERAL,
@@ -132,7 +135,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for identifiers", () => {
-    const lexer = new Lexer("let x = 1");
+    const lexer = new Lexer("let x = 1", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.LET,
@@ -171,7 +174,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for keywords", () => {
-    const lexer = new Lexer("import main");
+    const lexer = new Lexer("import main", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.IMPORT,
@@ -196,7 +199,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for primitive types", () => {
-    const lexer = new Lexer("i8 bool f16 str");
+    const lexer = new Lexer("i8 bool f32 str", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.BUILT_IN_TYPE,
@@ -214,7 +217,7 @@ describe("Lexer", () => {
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.BUILT_IN_TYPE,
-      value: "f16",
+      value: "f32",
       start: 8,
       end: 10,
     });
@@ -235,7 +238,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for operators", () => {
-    const lexer = new Lexer("+-*/");
+    const lexer = new Lexer("+-*/", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.PLUS,
@@ -274,7 +277,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for parentheses", () => {
-    const lexer = new Lexer("()");
+    const lexer = new Lexer("()", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.LPAREN,
@@ -299,7 +302,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for braces", () => {
-    const lexer = new Lexer("{}");
+    const lexer = new Lexer("{}", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.LBRACE,
@@ -324,7 +327,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for comparison operators", () => {
-    const lexer = new Lexer("== >= <= > <");
+    const lexer = new Lexer("== >= <= > <", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.EQEQ,
@@ -370,7 +373,7 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for symbols", () => {
-    const lexer = new Lexer(", .");
+    const lexer = new Lexer(", .", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: ",",
@@ -395,13 +398,13 @@ describe("Lexer", () => {
   });
 
   test.skip("throws error for invalid tokens", () => {
-    const lexer = new Lexer("1 % 2");
+    const lexer = new Lexer("1 % 2", errorManager);
 
     expect(() => lexer.nextToken()).toThrowError(
       "Syntax Error at 2: Unidentified character '%'"
     );
 
-    const lexer2 = new Lexer("1abcs");
+    const lexer2 = new Lexer("1abcs", errorManager);
 
     expect(() => lexer2.nextToken()).toThrowError(
       "Syntax Error at 1: Identifier can only start with a character matching [A-Za-z_]: 1a"

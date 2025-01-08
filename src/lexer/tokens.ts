@@ -104,4 +104,4 @@ export const getKeywordType = (value: string): GomToken => {
   }
 };
 
-export const GOM_BUILT_IN_TYPES = new Set(["i8", "bool", "f16", "str"]);
+export const GOM_BUILT_IN_TYPES = new Set(["i8", "bool", "f32", "str", "void"]);
