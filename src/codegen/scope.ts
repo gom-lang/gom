@@ -1,4 +1,4 @@
-import { LLVMType } from ".";
+import { LLVMType } from "./llvm";
 import { NodeTerm } from "../parser/rd/nodes";
 
 class Scope {

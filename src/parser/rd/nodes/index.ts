@@ -390,7 +390,12 @@ export class NodeGomTypeStructField extends AbstractNode {
 
 export type NodeExpr = NodeExprBasic | NodeExprBracketed;
 
-export type NodeExprBasic = NodeAccess | NodeCall | NodeBinaryOp | NodeTerm;
+export type NodeExprBasic =
+  | NodeAssignment
+  | NodeAccess
+  | NodeCall
+  | NodeBinaryOp
+  | NodeTerm;
 
 export class NodeAssignment extends AbstractNode {
   type: NodeType;

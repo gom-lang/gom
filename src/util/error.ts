@@ -58,4 +58,9 @@ export class GomErrorManager {
   throwInternalError(message: string): never {
     throw new GomInternalError({ message });
   }
+
+  throwCodegenError({ loc, message }: { loc: number; message: string }): never {
+    const { line, column } = this.getLineAndColumn(loc);
+    throw new Error(`CodegenError at ${line}:${column}: ${message}`);
+  }
 }

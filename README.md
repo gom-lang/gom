@@ -1,6 +1,6 @@
 # The Gom Programming Language
 
-**Gom** is a statically typed, multi-paradigm programming language based on a subset of the ECMAScript (and Rust) syntax but providing type-safety and concise syntax. It can be interpreted or compiled to LLVM IR. It takes inspiration from AssemblyScript and makes it more approachable to learn compiler construction.
+**Gom** is a statically typed, multi-paradigm programming language based on a subset of the ECMAScript (and Rust) syntax but providing type-safety and concise syntax. It can be interpreted or compiled to C code or LLVM IR. It takes inspiration from AssemblyScript and makes it more approachable to learn compiler construction.
 
 Here’s a typical hello world program in Gom:
 
@@ -70,7 +70,7 @@ type Name = str;
 | Lexical Analysis | ✅ Done |
 | Syntactic Analysis (parsing) | ✅ Done |
 | Semantic Analysis & preliminary type system | ✅ Done |
-| LLVM IR Code Generation | ⚙️ In progress |
+| C Code Generation | ⚙️ In progress |
 | Complex data structures | ⏳ Not started |
 
 ## Trying out Gom
