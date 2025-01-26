@@ -11,9 +11,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "llvm-bindings": "github:TypeFox/llvm-bindings",
     "typescript": "^5.4.5"
   },
   "devDependencies": {
+    "segfault-handler": "^1.3.0",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "vitest": "^1.5.2"
   }

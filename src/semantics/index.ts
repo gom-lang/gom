@@ -1,4 +1,5 @@
 import {
+  NodeAccess,
   NodeBinaryOp,
   NodeCall,
   NodeExpr,
@@ -98,6 +99,12 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
     this.scopeManager.beginScope("if");
     node.body.forEach((stmt) => this.visit(stmt));
     this.scopeManager.endScope();
+
+    if (node.elseBody) {
+      this.scopeManager.beginScope("else");
+      node.elseBody.forEach((stmt) => this.visit(stmt));
+      this.scopeManager.endScope();
+    }
   }
 
   visitLetStatement(node: NodeLetStatement): void {
@@ -123,6 +130,11 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
         );
       }
     });
+  }
+
+  visitAccess(node: NodeAccess): void {
+    const typeResolver = new TypeResolver(this.scopeManager, this.errorManager);
+    typeResolver.resolveType(node);
   }
 
   visitBinaryOp(node: NodeBinaryOp): void {

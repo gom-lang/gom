@@ -1,3 +1,4 @@
+import llvm from "llvm-bindings";
 import {
   NodeExpr,
   NodeFunctionDefinition,
@@ -82,6 +83,7 @@ class IdentifierEntry {
   node: NodeTerm | NodeFunctionDefinition;
   type: GomType;
   valueExpr?: NodeExpr;
+  allocaInst?: llvm.AllocaInst;
 
   constructor(
     name: string,
@@ -328,7 +330,10 @@ export class SymbolTableReader {
       this.currentSymbolTable = child;
     } else {
       throw new GomInternalError({
-        message: `Scope ${name} not found`,
+        message: `Scope ${name} not found. Available scopes: ${this.currentSymbolTable
+          .getChildren()
+          .map((child) => child.getName())
+          .join(", ")}`,
       });
     }
   }
