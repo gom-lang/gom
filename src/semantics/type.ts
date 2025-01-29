@@ -1,9 +1,9 @@
 /**
  * Gom type can be:
- * - Primitive, e.g. i8, bool, f32, str, void
- * - Struct e.g. struct { x: i8, y: i8 }
- * - Custom, e.g. type Number = i8
- * - Function, e.g. fn add(a: i8, b: i8): i8
+ * - Primitive, e.g. int, bool, float, str, void
+ * - Struct e.g. struct { x: int, y: int }
+ * - Custom, e.g. type Number = int
+ * - Function, e.g. fn add(a: int, b: int): int
  *
  * For now, structs are not supported & custom types can only be aliases to primitives.
  */
@@ -22,9 +22,9 @@ export interface GomType {
 }
 
 export type GomPrimitiveTypeOrAliasValue =
-  | "i8"
+  | "int"
   | "bool"
-  | "f32"
+  | "float"
   | "str"
   | "void"
   | string;

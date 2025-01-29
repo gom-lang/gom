@@ -171,6 +171,25 @@ class TypeResolver extends SimpleVisitor<void> {
     return this.currentType;
   }
 
+  visitAccess(node: NodeAccess): void {
+    const idName = node.lhs.token.value;
+    const id = this.symbolTableReader.getIdentifier(idName);
+    if (id && !id.isFunction()) {
+      this.visit(node.rhs);
+    } else {
+      if (idName === "io") {
+        // skip for now until modules are implemented
+        this.visit(node.rhs);
+
+        return;
+      }
+      this.errorManager.throwTypeError({
+        message: `Identifier ${idName} not found`,
+        loc: node.loc,
+      });
+    }
+  }
+
   visitBinaryOp(node: NodeBinaryOp): void {
     this.visit(node.lhs);
     const lhsType = this.currentType;
@@ -185,12 +204,12 @@ class TypeResolver extends SimpleVisitor<void> {
         });
       }
 
-      const testI8 = new GomPrimitiveTypeOrAlias("i8"),
+      const testInt = new GomPrimitiveTypeOrAlias("int"),
         testBool = new GomPrimitiveTypeOrAlias("bool");
 
       if (
-        (lhsType.isEqual(testI8) && !rhsType.isEqual(testI8)) ||
-        (!lhsType.isEqual(testI8) && rhsType.isEqual(testI8)) ||
+        (lhsType.isEqual(testInt) && !rhsType.isEqual(testInt)) ||
+        (!lhsType.isEqual(testInt) && rhsType.isEqual(testInt)) ||
         (lhsType.isEqual(testBool) && !rhsType.isEqual(testBool)) ||
         (!lhsType.isEqual(testBool) && rhsType.isEqual(testBool))
       ) {
@@ -257,11 +276,19 @@ class TypeResolver extends SimpleVisitor<void> {
 
       node.resultantType = fn.node.gomType.returnType;
       this.currentType = fn.node.gomType.returnType;
-    } else
+    } else {
+      if (fnName === "log") {
+        // skip for now until modules are implemented
+        node.args.map((arg) => this.resolveType(arg));
+        node.resultantType = new GomPrimitiveTypeOrAlias("void");
+        this.currentType = node.resultantType;
+        return;
+      }
       this.errorManager.throwTypeError({
         message: `Function ${fnName} not found`,
         loc: node.loc,
       });
+    }
   }
 
   visitTerm(node: NodeTerm): void {

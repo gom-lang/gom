@@ -455,7 +455,7 @@ export class NodeBinaryOp extends AbstractNode {
 
 export class NodeAccess extends AbstractNode {
   type: NodeType;
-  lhs: NodeExpr;
+  lhs: NodeTerm;
   rhs: NodeExpr;
   resultantType: GomType;
   children: Node[];
@@ -465,7 +465,7 @@ export class NodeAccess extends AbstractNode {
     rhs,
     loc,
   }: {
-    lhs: NodeExpr;
+    lhs: NodeTerm;
     rhs: NodeExpr;
     loc: number;
   }) {
@@ -509,12 +509,14 @@ export class NodeExprBracketed extends AbstractNode {
   type: NodeType;
   expr: NodeExpr;
   children: Node[];
+  resultantType: GomPrimitiveTypeOrAlias;
 
   constructor({ expr, loc }: { expr: NodeExpr; loc: number }) {
     super();
     this.type = NodeType.EXPR_BRACKETED;
     this.loc = loc;
     this.expr = expr;
+    this.resultantType = new GomPrimitiveTypeOrAlias("void");
     this.children = formChildrenArray(expr);
   }
 }
@@ -539,7 +541,7 @@ export class NodeTerm extends AbstractNode {
     if (this.token.type === GomToken.IDENTIFIER) {
       return new GomPrimitiveTypeOrAlias(`resolve_type@@${this.token.value}`);
     } else if (this.token.type === GomToken.NUMLITERAL) {
-      return new GomPrimitiveTypeOrAlias("i8");
+      return new GomPrimitiveTypeOrAlias("int");
     } else if (this.token.type === GomToken.STRLITERAL) {
       return new GomPrimitiveTypeOrAlias("str");
     } else if (

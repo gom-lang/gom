@@ -199,41 +199,41 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for primitive types", () => {
-    const lexer = new Lexer("i8 bool f32 str", errorManager);
+    const lexer = new Lexer("int bool float str", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.BUILT_IN_TYPE,
-      value: "i8",
+      value: "int",
       start: 0,
-      end: 1,
+      end: 2,
     });
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.BUILT_IN_TYPE,
       value: "bool",
-      start: 3,
-      end: 6,
+      start: 4,
+      end: 7,
     });
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.BUILT_IN_TYPE,
-      value: "f32",
-      start: 8,
-      end: 10,
+      value: "float",
+      start: 9,
+      end: 13,
     });
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.BUILT_IN_TYPE,
       value: "str",
-      start: 12,
-      end: 14,
+      start: 15,
+      end: 17,
     });
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.EOF,
       value: "eof",
-      start: 15,
-      end: 15,
+      start: 18,
+      end: 18,
     });
   });
 

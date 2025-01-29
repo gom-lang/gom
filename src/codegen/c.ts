@@ -56,9 +56,9 @@ export class CodeGenerator extends BaseCodeGenerator {
 
   private mapGomTypeToC(type: GomPrimitiveTypeOrAlias): CType {
     switch (type.typeString) {
-      case "i8":
+      case "int":
         return CType.INT;
-      case "f32":
+      case "float":
         return CType.FLOAT;
       case "void":
         return CType.VOID;
