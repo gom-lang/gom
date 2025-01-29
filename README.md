@@ -19,7 +19,7 @@ Simple arithmetic and function declaration looks like this:
 ```gom
 import io;
 
-fn add(a: i8, b: i8): i8 {
+fn add(a: int, b: int): int {
 	return a + b;
 }
 
@@ -33,16 +33,16 @@ Defining complex data structures is possible via the `struct` notation (like `st
 ```gom
 import io;
 
-type ArrInt = i8[10]; // i8 | i8[10] | struct {} | Temp[10]
+type ArrInt = int[10]; // int | int[10] | struct {} | Temp[10]
 
 type Temperature = struct {
-	high: i8,
-	low: i8,
-	avg: i8
+	high: int,
+	low: int,
+	avg: int
 };
 
 fn main() {
-	let a = 1; // type inferred as i8
+	let a = 1; // type inferred as int
 	io.log("a:", a);
 
 	let temperature = Temperature {
@@ -58,7 +58,7 @@ fn main() {
 Apart from the built-in types, custom types can be created using the `type` keyword.
 
 ```gom
-type Count = i8;
+type Count = int;
 type Name = str;
 ```
 
@@ -84,9 +84,11 @@ npm install
 To compile a Gom program, run:
 
 ```bash
-npm run compile <path-to-gom-file>
+npm run compile <path-to-gom-file> <target>
 # e.g.
-npm run compile test_2.gom
+npm run compile test_2.gom llvm
+# OR target C
+npm run compile test_2.gom c
 ```
 
 ## Updates

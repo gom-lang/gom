@@ -18,14 +18,18 @@ import {
   NodeTerm,
 } from "../parser/rd/nodes";
 import { ScopeManager } from "../semantics/scope";
-import { GomPrimitiveTypeOrAlias, GomType } from "../semantics/type";
+import {
+  GomPrimitiveTypeOrAlias,
+  GomPrimitiveTypeOrAliasValue,
+  GomType,
+} from "../semantics/type";
 import { GomToken } from "../lexer/tokens";
 import { GomErrorManager } from "../util/error";
 import { Node } from "../parser/rd/tree";
 import { BaseCodeGenerator } from "./common";
 
 export enum LLVMType {
-  I8 = "i8",
+  I8 = "int",
   FLOAT = "float",
   VOID = "void",
 }
@@ -39,6 +43,8 @@ export class CodeGenerator extends BaseCodeGenerator {
   private builder: llvm.IRBuilder = new llvm.IRBuilder(this.context);
   private currentFunction: llvm.Function | null = null;
   private currentFunctionEntry: llvm.BasicBlock | null = null;
+
+  private formatStrings: Record<GomPrimitiveTypeOrAliasValue, llvm.Value> = {};
 
   constructor({
     ast,
@@ -83,9 +89,9 @@ export class CodeGenerator extends BaseCodeGenerator {
 
   private mapGomTypeToLLVMType(type: GomPrimitiveTypeOrAlias) {
     switch (type.typeString) {
-      case "i8":
-        return llvm.Type.getInt8Ty(this.context);
-      case "f32":
+      case "int":
+        return llvm.Type.getInt32Ty(this.context);
+      case "float":
         return llvm.Type.getFloatTy(this.context);
       case "void":
         return llvm.Type.getVoidTy(this.context);
@@ -117,32 +123,40 @@ export class CodeGenerator extends BaseCodeGenerator {
   private writeGlobalFunctions(): void {
     const printFnType = llvm.FunctionType.get(
       this.builder.getInt32Ty(),
-      [this.builder.getInt8PtrTy()],
-      false
+      [llvm.Type.getInt8PtrTy(this.context)],
+      true
     );
+    this.module.getOrInsertFunction("printf", printFnType);
 
-    llvm.Function.Create(
-      printFnType,
-      llvm.Function.LinkageTypes.ExternalLinkage,
-      "printf",
-      this.module
+    // Create utility global variables for format strings
+    this.formatStrings["int"] = this.builder.CreateGlobalStringPtr(
+      "%d\n",
+      "fmt.int"
+    );
+    this.formatStrings["float"] = this.builder.CreateGlobalStringPtr(
+      "%f\n",
+      "fmt.float"
+    );
+    this.formatStrings["str"] = this.builder.CreateGlobalStringPtr(
+      "%s\n",
+      "fmt.str"
+    );
+    this.formatStrings["bool"] = this.builder.CreateGlobalStringPtr(
+      "%d\n",
+      "fmt.bool"
     );
   }
 
   override generate(): void {
     console.log("Generating code...");
     this.symbolTableReader.enterScope("global");
-    this.writeGlobalFunctions();
     this.writeGlobalVariables();
     this.visit(this.ast);
     this.symbolTableReader.exitScope();
-    console.log(this.module.print());
     writeFileSync(this.outputPath, this.module.print());
   }
 
   visitFunctionDefinition(node: NodeFunctionDefinition): void {
-    console.log("Function", node.name.value);
-
     this.symbolTableReader.enterScope(node.name.value);
     this.irScopeManager.enterScope(node.name.value);
     const returnType = this.mapGomTypeToLLVMType(
@@ -176,7 +190,6 @@ export class CodeGenerator extends BaseCodeGenerator {
 
     this.currentFunction = fn;
     this.currentFunctionEntry = entry;
-    console.log("body", node.body);
     node.body.forEach((stmt) => this.visit(stmt));
 
     this.irScopeManager.exitScope();
@@ -195,6 +208,10 @@ export class CodeGenerator extends BaseCodeGenerator {
       this.module
     );
 
+    // Global functions have to be written here as writing format
+    // strings in the global scope causes an error
+    this.writeGlobalFunctions();
+
     const entry = llvm.BasicBlock.Create(this.context, "entry", mainFunction);
     this.builder.SetInsertPoint(entry);
 
@@ -210,28 +227,35 @@ export class CodeGenerator extends BaseCodeGenerator {
   }
 
   visitLetStatement(node: NodeLetStatement): void {
-    if (!this.currentFunctionEntry) {
-      this.errorManager.throwCodegenError({
-        loc: node.loc,
-        message: "Let statement outside function",
-      });
-    }
-
-    this.builder.SetInsertPoint(this.currentFunctionEntry);
-
-    console.log("Let statement");
     for (const decl of node.decls) {
-      console.log("Decl", decl);
+      if (!this.currentFunctionEntry) {
+        // global variable
+        if (
+          decl.rhs instanceof NodeTerm &&
+          decl.rhs.token.type === GomToken.NUMLITERAL
+        ) {
+          const type = llvm.Type.getInt32Ty(this.context);
+          new llvm.GlobalVariable(
+            type,
+            true,
+            llvm.GlobalValue.LinkageTypes.PrivateLinkage,
+            llvm.ConstantInt.get(type, Number(decl.rhs.token.value)),
+            decl.lhs.token.value
+          );
+        }
+        continue;
+      }
+
+      this.builder.SetInsertPoint(this.currentFunctionEntry);
+
       const type = this.mapGomTypeToLLVMType(
         decl.lhs.resultantType as GomPrimitiveTypeOrAlias
       );
-      console.log("Type", type);
       const alloca = this.builder.CreateAlloca(
         type,
         null,
         decl.lhs.token.value
       );
-      console.log("Alloca", alloca);
 
       const id = this.symbolTableReader.getIdentifier(decl.lhs.token.value);
       if (id) {
@@ -242,13 +266,13 @@ export class CodeGenerator extends BaseCodeGenerator {
 
       const allocaType = alloca.getAllocatedType();
       const rhsType = rhsValue.getType();
-      console.log(
-        "Type compatibility check:",
-        "alloca:",
-        allocaType.toString(),
-        "rhs:",
-        rhsType.toString()
-      );
+
+      if (allocaType.getTypeID() !== rhsType.getTypeID()) {
+        this.errorManager.throwCodegenError({
+          loc: decl.loc,
+          message: `Type mismatch: ${allocaType} and ${rhsType}`,
+        });
+      }
 
       this.builder.CreateStore(rhsValue, alloca);
     }
@@ -410,7 +434,40 @@ export class CodeGenerator extends BaseCodeGenerator {
   }
 
   visitAccess(node: NodeAccess): llvm.Value {
-    throw new Error("Method not implemented.");
+    const idName = node.lhs.token.value;
+    if (idName === "io" && node.rhs instanceof NodeCall) {
+      const fn = this.module.getFunction("printf");
+      if (!fn) {
+        throw new Error("printf function not added globally");
+      }
+
+      const args = node.rhs.args.map((arg) => this.visitExpression(arg));
+      // print each argument
+      let i = 0;
+      const key = "calltmp";
+      for (const arg of args) {
+        const currentArg = node.rhs.args[i];
+        if (
+          currentArg instanceof NodeTerm &&
+          currentArg.token.type === GomToken.STRLITERAL
+        ) {
+          const ptr = this.builder.CreateGlobalStringPtr(
+            currentArg.token.value.replace(/"/g, ""),
+            key + i
+          );
+          this.builder.CreateCall(fn, [ptr], key + i);
+        } else {
+          const formatString =
+            this.formatStrings[
+              (currentArg.resultantType as GomPrimitiveTypeOrAlias).typeString
+            ];
+          this.builder.CreateCall(fn, [formatString, arg], key + i);
+        }
+        i++;
+      }
+      return this.builder.getInt32(0);
+    }
+    return this.builder.getInt32(0);
   }
 
   visitBinaryOp(node: NodeBinaryOp): llvm.Value {
@@ -455,13 +512,15 @@ export class CodeGenerator extends BaseCodeGenerator {
   visitTerm(node: NodeTerm): llvm.Value {
     const type = node.token.type;
     if (type === GomToken.NUMLITERAL) {
-      return this.builder.getInt8(parseInt(node.token.value));
+      return this.builder.getInt32(parseInt(node.token.value));
     } else if (type === GomToken.STRLITERAL) {
-      // todo
-      throw new Error("Not implemented");
+      return llvm.ConstantDataArray.getString(
+        this.context,
+        node.token.value,
+        true
+      );
     } else if (type === GomToken.IDENTIFIER) {
       const id = this.symbolTableReader.getIdentifier(node.token.value);
-      console.log("ID", id);
       if (!id) {
         // throw new Error("Unknown identifier: " + node.token.value);
         this.errorManager.throwCodegenError({
@@ -469,7 +528,6 @@ export class CodeGenerator extends BaseCodeGenerator {
           message: "Unknown identifier: " + node.token.value,
         });
       }
-      console.log("ID", id);
       if (!id.allocaInst) {
         // throw new Error("Identifier not allocated: " + node.token.value);
         this.errorManager.throwCodegenError({
@@ -484,9 +542,9 @@ export class CodeGenerator extends BaseCodeGenerator {
         id.name + ".load"
       );
     } else if (type === GomToken.TRUE) {
-      return this.builder.getInt8(1);
+      return this.builder.getInt32(1);
     } else if (type === GomToken.FALSE) {
-      return this.builder.getInt8(0);
+      return this.builder.getInt32(0);
     } else {
       throw new Error("Unknown term type: " + type);
     }

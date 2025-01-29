@@ -199,11 +199,11 @@ describe("Lexer", () => {
   });
 
   test("returns correct tokens for primitive types", () => {
-    const lexer = new Lexer("i8 bool f32 str", errorManager);
+    const lexer = new Lexer("int bool float str", errorManager);
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.BUILT_IN_TYPE,
-      value: "i8",
+      value: "int",
       start: 0,
       end: 1,
     });
@@ -217,7 +217,7 @@ describe("Lexer", () => {
 
     expect(lexer.nextToken()).toMatchObject({
       type: GomToken.BUILT_IN_TYPE,
-      value: "f32",
+      value: "float",
       start: 8,
       end: 10,
     });

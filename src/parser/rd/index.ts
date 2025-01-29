@@ -437,6 +437,15 @@ export class RecursiveDescentParser {
     return new NodeAssignment({ lhs, rhs, loc });
   }
 
+  parseAccess(): NodeAccess {
+    const loc = this.token.start;
+    const lhs = this.parseTerm() as NodeTerm;
+    this.match(GomToken.DOT);
+    const rhs = this.parseComparison();
+
+    return new NodeAccess({ lhs, rhs, loc });
+  }
+
   parseComparison(): NodeExpr {
     const loc = this.token.start;
     let lhs = this.parseSum();
@@ -521,7 +530,7 @@ export class RecursiveDescentParser {
     while (this.peek(GomToken.LPAREN) || this.peek(GomToken.DOT)) {
       if (this.accept(GomToken.DOT)) {
         const rhs = this.parseCall();
-        lhs = new NodeAccess({ lhs, rhs, loc });
+        lhs = new NodeAccess({ lhs: lhs as NodeTerm, rhs, loc });
       } else if (this.accept(GomToken.LPAREN)) {
         const args = this.parseZeroOrMore(() => {
           const arg = this.parseExpression();
