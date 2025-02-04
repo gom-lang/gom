@@ -28,6 +28,7 @@ export class NodeProgram extends AbstractNode {
   typeDefinitions: NodeTypeDefinition[] = [];
   globalVariables: NodeLetStatement[] = [];
   functionDeclarations: NodeFunctionDefinition[] = [];
+  exportStatements: NodeExportStatement[] = [];
   mainFunction: NodeMainFunction;
 
   constructor({
@@ -35,12 +36,14 @@ export class NodeProgram extends AbstractNode {
     typeDefinitions,
     globalVariables,
     functionDeclarations,
+    exportStatements,
     mainFunction,
   }: {
     importDeclarations: NodeImportDeclaration[];
     typeDefinitions: NodeTypeDefinition[];
     globalVariables: NodeLetStatement[];
     functionDeclarations: NodeFunctionDefinition[];
+    exportStatements: NodeExportStatement[];
     mainFunction: NodeMainFunction;
   }) {
     super();
@@ -49,6 +52,7 @@ export class NodeProgram extends AbstractNode {
     this.typeDefinitions = typeDefinitions;
     this.globalVariables = globalVariables;
     this.functionDeclarations = functionDeclarations;
+    this.exportStatements = exportStatements;
     this.mainFunction = mainFunction;
     this.children = formChildrenArray(
       importDeclarations,
@@ -153,11 +157,36 @@ export class NodeMainFunction extends AbstractNode {
 }
 
 export type NodeStatement =
+  | NodeExportStatement
   | NodeIfStatement
   | NodeForStatement
   | NodeReturnStatement
   | NodeLetStatement
   | NodeExpressionStatement;
+
+export type ExportableNode =
+  | NodeFunctionDefinition
+  | NodeTypeDefinition
+  | NodeLetStatement;
+export class NodeExportStatement extends AbstractNode {
+  type: NodeType;
+  children: Node[];
+  exportedItem: ExportableNode;
+
+  constructor({
+    exportedItem,
+    loc,
+  }: {
+    exportedItem: ExportableNode;
+    loc: number;
+  }) {
+    super();
+    this.type = NodeType.EXPORT_STATEMENT;
+    this.loc = loc;
+    this.exportedItem = exportedItem;
+    this.children = formChildrenArray(exportedItem);
+  }
+}
 
 export class NodeIfStatement extends AbstractNode {
   type: NodeType;

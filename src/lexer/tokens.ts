@@ -1,6 +1,7 @@
 export enum GomToken {
   // Keywords
   IMPORT = "import",
+  EXPORT = "export",
   TYPE = "type",
   FN = "fn",
   LET = "let",
@@ -57,6 +58,7 @@ export enum GomToken {
 
 export const GOM_KEYWORDS = new Set([
   "import",
+  "export",
   "type",
   "fn",
   "let",
@@ -75,6 +77,8 @@ export const getKeywordType = (value: string): GomToken => {
   switch (value) {
     case "import":
       return GomToken.IMPORT;
+    case "export":
+      return GomToken.EXPORT;
     case "type":
       return GomToken.TYPE;
     case "fn":

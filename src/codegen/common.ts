@@ -35,5 +35,9 @@ export abstract class BaseCodeGenerator extends SimpleVisitor<void> {
     );
   }
 
-  generate(): void {}
+  generate(): string {
+    return "";
+  }
+
+  generateAndWriteFile(): void {}
 }

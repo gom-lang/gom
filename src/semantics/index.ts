@@ -18,6 +18,7 @@ import { SimpleVisitor } from "../parser/rd/visitor";
 import { GomFunctionType, GomPrimitiveTypeOrAlias, GomType } from "./type";
 import { GomErrorManager } from "../util/error";
 import { GomToken } from "../lexer/tokens";
+import { GomModule } from "../parser/rd/modules";
 
 export class SemanticAnalyzer extends SimpleVisitor<void> {
   scopeManager: ScopeManager;
@@ -44,7 +45,29 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
   }
 
   visitImportDeclaration(node: NodeImportDeclaration): void {
-    // Implement module resolution
+    const module = new GomModule({ name: node.path.value }, this.errorManager);
+    const semanticAnalyzer = new SemanticAnalyzer(
+      module.parsed,
+      this.errorManager
+    );
+    semanticAnalyzer.analyze();
+
+    module.getAllExports().forEach((exp) => {
+      if (exp instanceof NodeFunctionDefinition) {
+        this.scopeManager.putIdentifier(exp.name.value, exp, exp.gomType);
+      } else if (exp instanceof NodeTypeDefinition) {
+        this.scopeManager.putType(exp.name.value, exp);
+      } else if (exp instanceof NodeLetStatement) {
+        exp.decls.forEach((decl) => {
+          this.scopeManager.putIdentifier(
+            decl.lhs.token.value,
+            decl.lhs,
+            decl.lhs.resultantType,
+            decl.rhs
+          );
+        });
+      }
+    });
   }
 
   visitFunctionDefinition(node: NodeFunctionDefinition): void {

@@ -7,11 +7,14 @@ import { CodeGenerator as CCodeGenerator } from "./codegen/c";
 import { GomErrorManager } from "./util/error";
 import { execSync } from "child_process";
 
-export default async (src: string, target: "llvm" | "c") => {
-  const entry = await readFile(src, "utf-8");
-  const errorManager = new GomErrorManager(entry);
+export const compile = async (
+  srcPath: string,
+  src: string,
+  target: "llvm" | "c"
+) => {
+  const errorManager = new GomErrorManager(src);
   console.time("⏰ Compiled in");
-  const lexer = new Lexer(entry, errorManager);
+  const lexer = new Lexer(src, errorManager);
 
   const parser = new RecursiveDescentParser(lexer);
 
@@ -28,32 +31,37 @@ export default async (src: string, target: "llvm" | "c") => {
           ast: program,
           scopeManager: semanticAnalyzer.scopeManager,
           errorManager,
-          outputPath: src.replace(".gom", ".ll"),
+          outputPath: srcPath.replace(".gom", ".ll"),
         })
       : new CCodeGenerator({
           ast: program,
           scopeManager: semanticAnalyzer.scopeManager,
           errorManager,
-          outputPath: src.replace(".gom", ".c"),
+          outputPath: srcPath.replace(".gom", ".c"),
         });
-  codeGenerator.generate();
+  codeGenerator.generateAndWriteFile();
 
   if (target === "c") {
     // Compile the generated C code
     execSync(
-      `clang -S -emit-llvm ${src.replace(".gom", ".c")} -o ${src.replace(
+      `clang -S -emit-llvm ${srcPath.replace(
         ".gom",
-        ".ll"
-      )}`,
+        ".c"
+      )} -o ${srcPath.replace(".gom", ".ll")}`,
       { stdio: "inherit" }
     );
     execSync(
-      `clang ${src.replace(".gom", ".c")} -o ${src.replace(".gom", "")}`,
+      `clang ${srcPath.replace(".gom", ".c")} -o ${srcPath.replace(
+        ".gom",
+        ""
+      )}`,
       { stdio: "inherit" }
     );
-    console.log(`✅ Compiled to out, run with ./${src.replace(".gom", "")}`);
+    console.log(
+      `✅ Compiled to out, run with ./${srcPath.replace(".gom", "")}`
+    );
   } else {
-    console.log(`✅ Compiled to ${src.replace(".gom", ".ll")}`);
+    console.log(`✅ Compiled to ${srcPath.replace(".gom", ".ll")}`);
   }
 
   console.timeEnd("⏰ Compiled in");
@@ -72,4 +80,35 @@ export default async (src: string, target: "llvm" | "c") => {
     ),
     "utf-8"
   );
+};
+
+export const compileAndReturn = async (src: string) => {
+  const errorManager = new GomErrorManager(src);
+  const lexer = new Lexer(src, errorManager);
+
+  const parser = new RecursiveDescentParser(lexer);
+
+  const program = parser.parse();
+
+  const semanticAnalyzer = new SemanticAnalyzer(program, errorManager);
+  semanticAnalyzer.analyze();
+
+  const codeGenerator = new LLVMCodeGenerator({
+    ast: program,
+    scopeManager: semanticAnalyzer.scopeManager,
+    errorManager,
+    outputPath: "out.ll",
+  });
+  const out = codeGenerator.generate();
+
+  return out;
+};
+
+export const runCompile = async (srcPath: string, target: "llvm" | "c") => {
+  try {
+    const src = await readFile(srcPath, "utf-8");
+    await compile(srcPath, src, target);
+  } catch (e) {
+    console.error(e);
+  }
 };
