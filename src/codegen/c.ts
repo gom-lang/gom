@@ -39,15 +39,19 @@ export class CodeGenerator extends BaseCodeGenerator {
   private outLines: string[] = [];
   private indent = 0;
 
-  override generate(): void {
+  override generate(): string {
     console.log("Generating code...");
     this.symbolTableReader.enterScope("global");
     this.writeIncludes();
     this.writeGlobalVariables();
     this.visit(this.ast);
     this.symbolTableReader.exitScope();
-    console.log(this.outLines.join("\n"));
-    writeFileSync(this.outputPath, this.outLines.join("\n"));
+    return this.outLines.join("\n");
+  }
+
+  override generateAndWriteFile(): void {
+    const out = this.generate();
+    writeFileSync(this.outputPath, out);
   }
 
   private writeLine(line: string): void {

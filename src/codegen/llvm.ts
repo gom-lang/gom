@@ -147,13 +147,18 @@ export class CodeGenerator extends BaseCodeGenerator {
     );
   }
 
-  override generate(): void {
+  override generateAndWriteFile(): void {
+    const out = this.generate();
+    writeFileSync(this.outputPath, out);
+  }
+
+  override generate(): string {
     console.log("Generating code...");
     this.symbolTableReader.enterScope("global");
     this.writeGlobalVariables();
     this.visit(this.ast);
     this.symbolTableReader.exitScope();
-    writeFileSync(this.outputPath, this.module.print());
+    return this.module.print();
   }
 
   visitFunctionDefinition(node: NodeFunctionDefinition): void {
@@ -348,8 +353,6 @@ export class CodeGenerator extends BaseCodeGenerator {
   }
 
   visitForStatement(node: NodeForStatement): void {
-    this.symbolTableReader.enterScope("for");
-    this.irScopeManager.enterScope("for");
     const currentFunction = this.currentFunction;
     if (!currentFunction) {
       this.errorManager.throwCodegenError({
@@ -358,11 +361,21 @@ export class CodeGenerator extends BaseCodeGenerator {
       });
     }
 
-    if (node.conditionExpr) {
+    if (node.initExpr && node.conditionExpr && node.updateExpr) {
       // for loop
       const loopBB = llvm.BasicBlock.Create(
         this.context,
         "loop",
+        currentFunction
+      );
+      const bodyBB = llvm.BasicBlock.Create(
+        this.context,
+        "loopbody",
+        currentFunction
+      );
+      const updateBB = llvm.BasicBlock.Create(
+        this.context,
+        "loopupdate",
         currentFunction
       );
       const afterBB = llvm.BasicBlock.Create(
@@ -371,34 +384,44 @@ export class CodeGenerator extends BaseCodeGenerator {
         currentFunction
       );
 
-      this.builder.CreateBr(loopBB);
+      this.visitExpression(node.initExpr);
 
+      this.builder.CreateBr(loopBB);
       this.builder.SetInsertPoint(loopBB);
-      if (node.initExpr) {
-        this.visitExpression(node.initExpr);
-        // todo
-      }
 
       const condValue = this.visitExpression(node.conditionExpr);
-      this.builder.CreateCondBr(condValue, loopBB, afterBB);
+      this.builder.CreateCondBr(condValue, bodyBB, afterBB);
+
+      this.builder.SetInsertPoint(bodyBB);
+      node.body.forEach((stmt) => this.visit(stmt));
+
+      this.builder.CreateBr(updateBB);
+      this.builder.SetInsertPoint(updateBB);
+      this.visitExpression(node.updateExpr);
+      this.builder.CreateBr(loopBB);
 
       this.builder.SetInsertPoint(afterBB);
     } else {
       // infinite loop
       const loopBB = llvm.BasicBlock.Create(
         this.context,
-        "loop",
+        "infloop",
+        currentFunction
+      );
+      const afterBB = llvm.BasicBlock.Create(
+        this.context,
+        "afterinfloop",
         currentFunction
       );
 
       this.builder.CreateBr(loopBB);
       this.builder.SetInsertPoint(loopBB);
+      node.body.forEach((stmt) => this.visit(stmt));
+      this.builder.CreateBr(loopBB);
+
+      // later for break;
+      this.builder.SetInsertPoint(afterBB);
     }
-
-    node.body.forEach((stmt) => this.visit(stmt));
-
-    this.irScopeManager.exitScope();
-    this.symbolTableReader.exitScope();
   }
 
   visitExpression(expr: NodeExpr): llvm.Value {

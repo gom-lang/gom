@@ -23,14 +23,7 @@ fn main() {
     a = 2;
     let sq = square(a);
     let i = 3;
-    io.log(add(i, 1));
+    io.log("Sum: ", add(i, 1));
 
     i = i + 1;
-
-    if(i == 3) {
-        io.log("i is 3\n");
-    } else {
-        io.log("i is not 3\n");
-        io.log("i is ", i);
-    }
 }

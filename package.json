@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "test": "vitest run",
     "compile": "tsx run.ts"
   },
@@ -11,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "commander": "^13.1.0",
     "llvm-bindings": "github:TypeFox/llvm-bindings",
     "typescript": "^5.4.5"
   },

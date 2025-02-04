@@ -1,6 +1,7 @@
 import { Lexer, Token } from "../../lexer";
 import { GomToken } from "../../lexer/tokens";
 import { GomErrorManager } from "../../util/error";
+import { GomModule } from "./modules";
 import {
   NodeAccess,
   NodeArgumentItem,
@@ -48,7 +49,7 @@ export class RecursiveDescentParser {
     return this.parseProgram();
   }
 
-  private match(type: GomToken) {
+  match(type: GomToken) {
     if (this.token.type === type) {
       const matched = this.token;
       this.nextToken();
@@ -82,7 +83,7 @@ export class RecursiveDescentParser {
     this.matchZeroOrMore(type);
   }
 
-  private peek(type: GomToken) {
+  peek(type: GomToken) {
     return this.token.type === type;
   }
 
@@ -101,7 +102,7 @@ export class RecursiveDescentParser {
     }
   }
 
-  private parseOneOrNone<T>(parseFn: () => T): T | undefined {
+  parseOneOrNone<T>(parseFn: () => T): T | undefined {
     try {
       return parseFn.call(this);
     } catch (e) {
@@ -109,7 +110,7 @@ export class RecursiveDescentParser {
     }
   }
 
-  private parseZeroOrMore<T>(parseFn: () => T): T[] {
+  parseZeroOrMore<T>(parseFn: () => T): T[] {
     let nodes: T[] = [];
     while (1) {
       try {
@@ -122,7 +123,7 @@ export class RecursiveDescentParser {
     return nodes;
   }
 
-  private parseOneOrMore<T>(parseFn: () => T): T[] {
+  parseOneOrMore<T>(parseFn: () => T): T[] {
     const nodes: T[] = [];
     nodes.push(parseFn.call(this));
     nodes.push(...this.parseZeroOrMore(parseFn));
@@ -151,6 +152,7 @@ export class RecursiveDescentParser {
         (def): def is NodeFunctionDefinition =>
           def.type === NodeType.FUNCTION_DEFINITION
       ),
+      exportStatements: [],
       mainFunction,
     });
   }
@@ -358,10 +360,16 @@ export class RecursiveDescentParser {
       });
     } else if (this.accept(GomToken.FOR)) {
       this.match(GomToken.LPAREN);
-      const initExpr = this.parseOneOrNone(this.parseExpression);
-      this.match(GomToken.SEMICOLON);
-      const conditionExpr = this.parseOneOrNone(this.parseExpression);
-      this.match(GomToken.SEMICOLON);
+      const initExpr = this.parseOneOrNone(() => {
+        const expr = this.parseExpression();
+        this.match(GomToken.SEMICOLON);
+        return expr;
+      });
+      const conditionExpr = this.parseOneOrNone(() => {
+        const expr = this.parseExpression();
+        this.match(GomToken.SEMICOLON);
+        return expr;
+      });
       const updateExpr = this.parseOneOrNone(this.parseExpression);
       this.match(GomToken.RPAREN);
       this.match(GomToken.LBRACE);
