@@ -1,3 +1,5 @@
+const SegfaultHandler = require("segfault-handler");
+SegfaultHandler.registerHandler("crash.log");
 import { readFile, writeFile } from "fs/promises";
 import { Lexer } from "./lexer";
 import { RecursiveDescentParser } from "./parser/rd";
@@ -82,7 +84,10 @@ export const compile = async (
   );
 };
 
-export const compileAndReturn = async (src: string) => {
+export const compileAndReturn = async (
+  src: string,
+  target: "llvm" | "c" = "llvm"
+) => {
   const errorManager = new GomErrorManager(src);
   const lexer = new Lexer(src, errorManager);
 
@@ -93,15 +98,21 @@ export const compileAndReturn = async (src: string) => {
   const semanticAnalyzer = new SemanticAnalyzer(program, errorManager);
   semanticAnalyzer.analyze();
 
-  const codeGenerator = new LLVMCodeGenerator({
-    ast: program,
-    scopeManager: semanticAnalyzer.scopeManager,
-    errorManager,
-    outputPath: "out.ll",
-  });
-  const out = codeGenerator.generate();
-
-  return out;
+  const codeGenerator =
+    target === "llvm"
+      ? new LLVMCodeGenerator({
+          ast: program,
+          scopeManager: semanticAnalyzer.scopeManager,
+          errorManager,
+          outputPath: "out.ll",
+        })
+      : new CCodeGenerator({
+          ast: program,
+          scopeManager: semanticAnalyzer.scopeManager,
+          errorManager,
+          outputPath: "out.c",
+        });
+  return codeGenerator.generate();
 };
 
 export const runCompile = async (srcPath: string, target: "llvm" | "c") => {
