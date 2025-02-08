@@ -45,6 +45,7 @@ export class CodeGenerator extends BaseCodeGenerator {
   private currentFunctionEntry: llvm.BasicBlock | null = null;
 
   private formatStrings: Record<GomPrimitiveTypeOrAliasValue, llvm.Value> = {};
+  private globalStringPtrs: Record<string, llvm.Value> = {};
 
   constructor({
     ast,
@@ -120,31 +121,57 @@ export class CodeGenerator extends BaseCodeGenerator {
     return this.mapGomTypeToLLVMType(type as GomPrimitiveTypeOrAlias);
   }
 
+  private transformStringLiteral(value: string): string {
+    let transformedValue = value;
+    transformedValue = transformedValue.slice(1, -1);
+
+    // escape sequences
+    transformedValue = transformedValue.replace(/\\n/g, "\x0A");
+    transformedValue = transformedValue.replace(/\\t/g, "\x09");
+    transformedValue = transformedValue.replace(/\\r/g, "\x0D");
+
+    return transformedValue;
+  }
+
+  private getStringLiteralPointer(node: NodeTerm): llvm.Value {
+    const transformedValue = this.transformStringLiteral(node.token.value);
+    return this.builder.CreateGlobalStringPtr(transformedValue, `.strliteral`);
+  }
+
+  private getFormatStringLiteralPointer(type: GomPrimitiveTypeOrAliasValue) {
+    if (!this.formatStrings[type]) {
+      if (!this.currentFunctionEntry) {
+        this.errorManager.throwCodegenError({
+          loc: 0,
+          message: "Printing string literal outside function",
+        });
+      }
+
+      const typeToFormatString = (t: GomPrimitiveTypeOrAliasValue) =>
+        ({
+          int: "%d",
+          float: "%f",
+          str: "%s",
+          bool: "%d",
+        }[t]);
+      this.formatStrings[type] = this.builder.CreateGlobalStringPtr(
+        `${typeToFormatString(type) || "%d"}`,
+        `fmt.${type}`
+      );
+    }
+
+    return this.formatStrings[type];
+  }
+
   private writeGlobalFunctions(): void {
+    console.log("Writing global functions...");
     const printFnType = llvm.FunctionType.get(
       this.builder.getInt32Ty(),
       [llvm.Type.getInt8PtrTy(this.context)],
       true
     );
-    this.module.getOrInsertFunction("printf", printFnType);
 
-    // Create utility global variables for format strings
-    this.formatStrings["int"] = this.builder.CreateGlobalStringPtr(
-      "%d\n",
-      "fmt.int"
-    );
-    this.formatStrings["float"] = this.builder.CreateGlobalStringPtr(
-      "%f\n",
-      "fmt.float"
-    );
-    this.formatStrings["str"] = this.builder.CreateGlobalStringPtr(
-      "%s\n",
-      "fmt.str"
-    );
-    this.formatStrings["bool"] = this.builder.CreateGlobalStringPtr(
-      "%d\n",
-      "fmt.bool"
-    );
+    this.module.getOrInsertFunction("printf", printFnType);
   }
 
   override generateAndWriteFile(): void {
@@ -347,6 +374,9 @@ export class CodeGenerator extends BaseCodeGenerator {
       this.symbolTableReader.exitScope();
       this.irScopeManager.exitScope();
       this.builder.CreateBr(mergeBB);
+    } else {
+      this.builder.SetInsertPoint(elseBB);
+      this.builder.CreateBr(mergeBB);
     }
 
     this.builder.SetInsertPoint(mergeBB);
@@ -474,22 +504,27 @@ export class CodeGenerator extends BaseCodeGenerator {
           currentArg instanceof NodeTerm &&
           currentArg.token.type === GomToken.STRLITERAL
         ) {
-          const ptr = this.builder.CreateGlobalStringPtr(
-            currentArg.token.value.replace(/"/g, ""),
-            key + i
-          );
-          this.builder.CreateCall(fn, [ptr], key + i);
+          this.builder.CreateCall(fn, [arg], key + i);
         } else {
-          const formatString =
-            this.formatStrings[
-              (currentArg.resultantType as GomPrimitiveTypeOrAlias).typeString
-            ];
+          const formatString = this.getFormatStringLiteralPointer(
+            (currentArg.resultantType as GomPrimitiveTypeOrAlias).typeString
+          );
           this.builder.CreateCall(fn, [formatString, arg], key + i);
         }
         i++;
       }
+
+      if (!this.globalStringPtrs["newline"]) {
+        this.globalStringPtrs["newline"] = this.builder.CreateGlobalStringPtr(
+          "\n",
+          "newline"
+        );
+      }
+      const newline = this.globalStringPtrs["newline"];
+      this.builder.CreateCall(fn, [newline], "newline");
       return this.builder.getInt32(0);
     }
+
     return this.builder.getInt32(0);
   }
 
@@ -537,11 +572,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     if (type === GomToken.NUMLITERAL) {
       return this.builder.getInt32(parseInt(node.token.value));
     } else if (type === GomToken.STRLITERAL) {
-      return llvm.ConstantDataArray.getString(
-        this.context,
-        node.token.value,
-        true
-      );
+      return this.getStringLiteralPointer(node);
     } else if (type === GomToken.IDENTIFIER) {
       const id = this.symbolTableReader.getIdentifier(node.token.value);
       if (!id) {

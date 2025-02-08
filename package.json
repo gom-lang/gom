@@ -13,11 +13,13 @@
   "license": "ISC",
   "dependencies": {
     "commander": "^13.1.0",
+    "cors": "^2.8.5",
     "llvm-bindings": "github:TypeFox/llvm-bindings",
     "typescript": "^5.4.5"
   },
   "devDependencies": {
     "@hono/node-server": "^1.13.8",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "express": "^4.21.2",
     "hono": "^4.6.20",
