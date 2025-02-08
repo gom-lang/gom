@@ -15,7 +15,7 @@ import { Node, NodeType } from "./tree";
 import path from "path";
 import { GomToken } from "../../lexer/tokens";
 
-const GOM_MODULES_PATH = "/Users/mkarekar/Documents/projects/gom/gom_modules";
+const GOM_MODULES_PATH = path.resolve(__dirname, "../../../gom_modules");
 
 interface ModuleKey {
   name: string;
