@@ -10,18 +10,24 @@ import {
   NodeExpressionStatement,
   NodeForStatement,
   NodeFunctionDefinition,
+  NodeGomTypeStruct,
   NodeIfStatement,
   NodeLetStatement,
   NodeMainFunction,
   NodeProgram,
   NodeReturnStatement,
+  NodeStructInit,
   NodeTerm,
+  NodeTypeDefinition,
 } from "../parser/rd/nodes";
 import { ScopeManager } from "../semantics/scope";
 import {
+  GomFunctionType,
   GomPrimitiveTypeOrAlias,
   GomPrimitiveTypeOrAliasValue,
+  GomStructType,
   GomType,
+  GomTypeKind,
 } from "../semantics/type";
 import { GomToken } from "../lexer/tokens";
 import { GomErrorManager } from "../util/error";
@@ -46,6 +52,8 @@ export class CodeGenerator extends BaseCodeGenerator {
 
   private formatStrings: Record<GomPrimitiveTypeOrAliasValue, llvm.Value> = {};
   private globalStringPtrs: Record<string, llvm.Value> = {};
+
+  private structTypes: Record<string, llvm.StructType> = {};
 
   constructor({
     ast,
@@ -88,7 +96,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     });
   }
 
-  private mapGomTypeToLLVMType(type: GomPrimitiveTypeOrAlias) {
+  private mapGomPrimitiveTypeToLLVMType(type: GomPrimitiveTypeOrAlias) {
     switch (type.typeString) {
       case "int":
         return llvm.Type.getInt32Ty(this.context);
@@ -101,24 +109,23 @@ export class CodeGenerator extends BaseCodeGenerator {
     }
   }
 
-  private getExpressionLLVMType(node: NodeExpr): llvm.Type {
-    let type: GomType | null = null;
-    if (
-      node instanceof NodeTerm ||
-      node instanceof NodeCall ||
-      node instanceof NodeBinaryOp ||
-      node instanceof NodeAccess
-    ) {
-      type = node.resultantType;
-    } else if (node instanceof NodeExprBracketed) {
-      return this.getExpressionLLVMType(node.expr);
+  private mapGomStructTypeToLLVMType(type: GomStructType) {
+    const structType = this.structTypes[type.name];
+    if (!structType) {
+      throw new Error("Unknown type: " + type.name);
     }
 
-    if (type === null) {
-      throw new Error("Unknown expression type");
+    return structType;
+  }
+
+  private mapGomTypeToLLVMType(type: GomType) {
+    if (type instanceof GomPrimitiveTypeOrAlias) {
+      return this.mapGomPrimitiveTypeToLLVMType(type);
+    } else if (type instanceof GomStructType) {
+      return this.mapGomStructTypeToLLVMType(type);
     }
 
-    return this.mapGomTypeToLLVMType(type as GomPrimitiveTypeOrAlias);
+    throw new Error("Unknown type: " + type.toStr());
   }
 
   private transformStringLiteral(value: string): string {
@@ -164,7 +171,6 @@ export class CodeGenerator extends BaseCodeGenerator {
   }
 
   private writeGlobalFunctions(): void {
-    console.log("Writing global functions...");
     const printFnType = llvm.FunctionType.get(
       this.builder.getInt32Ty(),
       [llvm.Type.getInt8PtrTy(this.context)],
@@ -188,13 +194,36 @@ export class CodeGenerator extends BaseCodeGenerator {
     return this.module.print();
   }
 
+  visitTypeDefinition(node: NodeTypeDefinition): void {
+    if (node.rhs instanceof NodeGomTypeStruct) {
+      const type = this.symbolTableReader.getType(node.name.token.value);
+      if (!type) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "Unknown type: " + node.name.token.value,
+        });
+      }
+      const structType = llvm.StructType.create(
+        this.context,
+        node.name.token.value
+      );
+      const gomType = type.gomType as GomStructType;
+      const fields = Array.from(gomType.fields).map(([_key, fieldType]) => {
+        return this.mapGomTypeToLLVMType(fieldType);
+      });
+      structType.setBody(fields);
+
+      this.structTypes[type.name] = structType;
+    }
+  }
+
   visitFunctionDefinition(node: NodeFunctionDefinition): void {
     this.symbolTableReader.enterScope(node.name.value);
     this.irScopeManager.enterScope(node.name.value);
     const returnType = this.mapGomTypeToLLVMType(
-      node.gomType.returnType as GomPrimitiveTypeOrAlias
+      (node.resultantType as GomFunctionType).returnType
     );
-    const argsType = node.gomType.args.map((arg) =>
+    const argsType = (node.resultantType as GomFunctionType).args.map((arg) =>
       this.mapGomTypeToLLVMType(arg as GomPrimitiveTypeOrAlias)
     );
 
@@ -280,9 +309,7 @@ export class CodeGenerator extends BaseCodeGenerator {
 
       this.builder.SetInsertPoint(this.currentFunctionEntry);
 
-      const type = this.mapGomTypeToLLVMType(
-        decl.lhs.resultantType as GomPrimitiveTypeOrAlias
-      );
+      const type = this.mapGomTypeToLLVMType(decl.lhs.resultantType);
       const alloca = this.builder.CreateAlloca(
         type,
         null,
@@ -294,19 +321,11 @@ export class CodeGenerator extends BaseCodeGenerator {
         id.allocaInst = alloca;
       }
 
-      const rhsValue = this.visitExpression(decl.rhs);
+      const rhsValue = this.visitExpression(decl.rhs, decl.lhs);
 
-      const allocaType = alloca.getAllocatedType();
-      const rhsType = rhsValue.getType();
-
-      if (allocaType.getTypeID() !== rhsType.getTypeID()) {
-        this.errorManager.throwCodegenError({
-          loc: decl.loc,
-          message: `Type mismatch: ${allocaType} and ${rhsType}`,
-        });
+      if (!type.isStructTy()) {
+        this.builder.CreateStore(rhsValue, alloca);
       }
-
-      this.builder.CreateStore(rhsValue, alloca);
     }
   }
 
@@ -454,7 +473,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     }
   }
 
-  visitExpression(expr: NodeExpr): llvm.Value {
+  visitExpression(expr: NodeExpr, declLhs?: NodeTerm): llvm.Value {
     if (expr instanceof NodeAccess) {
       return this.visitAccess(expr);
     } else if (expr instanceof NodeBinaryOp) {
@@ -465,6 +484,8 @@ export class CodeGenerator extends BaseCodeGenerator {
       return this.visitTerm(expr);
     } else if (expr instanceof NodeAssignment) {
       return this.visitAssignment(expr);
+    } else if (expr instanceof NodeStructInit) {
+      return this.visitStructInit(expr, declLhs);
     } else if (expr instanceof NodeExprBracketed) {
       return this.visitExpression(expr.expr);
     }
@@ -484,6 +505,43 @@ export class CodeGenerator extends BaseCodeGenerator {
     const rhsValue = this.visitExpression(node.rhs);
     this.builder.CreateStore(rhsValue, id.allocaInst!);
     return rhsValue;
+  }
+
+  visitStructInit(node: NodeStructInit, declLhs?: NodeTerm): llvm.Value {
+    if (!declLhs) {
+      this.errorManager.throwCodegenError({
+        loc: node.loc,
+        message: "Struct init without declaration",
+      });
+    }
+    const structId = this.symbolTableReader.getIdentifier(declLhs.token.value);
+    if (!structId) {
+      this.errorManager.throwCodegenError({
+        loc: node.loc,
+        message: "Unknown struct: " + node.structTypeName.token.value,
+      });
+    }
+
+    if (!structId.allocaInst) {
+      this.errorManager.throwCodegenError({
+        loc: node.loc,
+        message: "Struct not allocated: " + node.structTypeName.token.value,
+      });
+    }
+    const structAlloca = structId.allocaInst;
+    const structType = this.mapGomTypeToLLVMType(node.resultantType);
+    const index0 = this.builder.getInt32(0);
+    node.fields.forEach((field, i) => {
+      const fieldVal = this.visitExpression(field[1]);
+      const fieldPtr = this.builder.CreateGEP(
+        structType,
+        structAlloca,
+        [index0, this.builder.getInt32(i)],
+        "fieldptr"
+      );
+      this.builder.CreateStore(fieldVal, fieldPtr);
+    });
+    return structAlloca;
   }
 
   visitAccess(node: NodeAccess): llvm.Value {
@@ -523,6 +581,42 @@ export class CodeGenerator extends BaseCodeGenerator {
       const newline = this.globalStringPtrs["newline"];
       this.builder.CreateCall(fn, [newline], "newline");
       return this.builder.getInt32(0);
+    } else if (
+      node.lhs.resultantType instanceof GomStructType &&
+      node.rhs instanceof NodeTerm
+    ) {
+      const type = node.lhs.resultantType as GomStructType;
+      const structType = this.mapGomTypeToLLVMType(node.lhs.resultantType);
+      const struct = this.symbolTableReader.getIdentifier(idName);
+      if (!struct) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "Unknown struct: " + idName,
+        });
+      }
+
+      if (!struct.allocaInst) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "Struct not allocated: " + idName,
+        });
+      }
+
+      const index = this.builder.getInt32(
+        Array.from(type.fields.keys()).indexOf(node.rhs.token.value)
+      );
+
+      const ptr = this.builder.CreateGEP(
+        structType,
+        struct.allocaInst,
+        [this.builder.getInt32(0), index],
+        "fieldptr"
+      );
+      return this.builder.CreateLoad(
+        this.mapGomTypeToLLVMType(node.rhs.resultantType),
+        ptr,
+        "fieldload"
+      );
     }
 
     return this.builder.getInt32(0);

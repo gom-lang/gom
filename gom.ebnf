@@ -32,7 +32,7 @@ gomType = typeIdOrArray | structType;
 
 typeIdOrArray = typeId ("[" , numLiteral , "]")?;
 
-structType = "struct" , "{" , structTypeItem+ , "}";
+structType = "{" , structTypeItem+ , "}";
 
 structTypeItem = identifier , ":" , gomType , ","?;
 

@@ -70,7 +70,7 @@ type Name = str;
 | Lexical Analysis | ✅ Done |
 | Syntactic Analysis (parsing) | ✅ Done |
 | Semantic Analysis & preliminary type system | ✅ Done |
-| C Code Generation | ⚙️ In progress |
+| LLVM IR Generation | ⚙️ In progress |
 | Complex data structures | ⏳ Not started |
 
 ## Trying out Gom

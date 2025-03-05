@@ -1,7 +1,7 @@
 /**
  * Gom type can be:
  * - Primitive, e.g. int, bool, float, str, void
- * - Struct e.g. struct { x: int, y: int }
+ * - Struct e.g. { x: int, y: int }
  * - Custom, e.g. type Number = int
  * - Function, e.g. fn add(a: int, b: int): int
  *
@@ -15,10 +15,14 @@ export enum GomTypeKind {
   Function = "Function",
 }
 
-export interface GomType {
-  kind: GomTypeKind;
-  toStr(): string;
-  isEqual(other: GomType): boolean;
+export class GomType {
+  kind: GomTypeKind = GomTypeKind.PrimitiveOrAlias;
+  toStr(): string {
+    return "gomType";
+  }
+  isEqual(other: GomType): boolean {
+    return false;
+  }
 }
 
 export type GomPrimitiveTypeOrAliasValue =
@@ -29,11 +33,12 @@ export type GomPrimitiveTypeOrAliasValue =
   | "void"
   | string;
 
-export class GomPrimitiveTypeOrAlias implements GomType {
+export class GomPrimitiveTypeOrAlias extends GomType {
   kind: GomTypeKind;
   typeString: GomPrimitiveTypeOrAliasValue;
 
   constructor(typeString: GomPrimitiveTypeOrAliasValue) {
+    super();
     this.kind = GomTypeKind.PrimitiveOrAlias;
     this.typeString = typeString;
   }
@@ -50,12 +55,13 @@ export class GomPrimitiveTypeOrAlias implements GomType {
   }
 }
 
-export class GomArrayType implements GomType {
+export class GomArrayType extends GomType {
   kind: GomTypeKind;
   elementType: GomType;
   size: number;
 
   constructor(elementType: GomType, size: number) {
+    super();
     this.kind = GomTypeKind.Array;
     this.elementType = elementType;
     this.size = size;
@@ -75,11 +81,14 @@ export class GomArrayType implements GomType {
   }
 }
 
-export class GomStructType implements GomType {
+export class GomStructType extends GomType {
   kind: GomTypeKind;
-  fields: Record<string, GomType>;
+  name: string;
+  fields: Map<string, GomType>;
 
-  constructor(fields: Record<string, GomType>) {
+  constructor(name: string, fields: Map<string, GomType>) {
+    super();
+    this.name = name;
     this.kind = GomTypeKind.Struct;
     this.fields = fields;
   }
@@ -91,12 +100,12 @@ export class GomStructType implements GomType {
   }
 
   isEqual(other: GomStructType): boolean {
-    if (Object.keys(this.fields).length !== Object.keys(other.fields).length) {
+    if (this.fields.size !== other.fields.size) {
       return false;
     }
 
     for (const [name, type] of Object.entries(this.fields)) {
-      if (!other.fields[name] || !type.isEqual(other.fields[name])) {
+      if (!other.fields.has(name) || !type.isEqual(other.fields.get(name))) {
         return false;
       }
     }
@@ -105,12 +114,13 @@ export class GomStructType implements GomType {
   }
 }
 
-export class GomFunctionType implements GomType {
+export class GomFunctionType extends GomType {
   kind: GomTypeKind;
   args: GomType[];
   returnType: GomType;
 
   constructor(args: GomType[], returnType: GomType) {
+    super();
     this.kind = GomTypeKind.Function;
     this.args = args;
     this.returnType = returnType;

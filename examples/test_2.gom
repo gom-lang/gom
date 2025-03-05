@@ -1,8 +1,13 @@
 import io;
 
-type Point = struct {
+type Point = {
     x: int,
     y: int
+};
+
+type Line = {
+    p1: Point,
+    p2: Point
 };
 
 let GLOBAL = 1;
@@ -15,15 +20,15 @@ fn add(a: int, b: int): int {
     return a + b;
 }
 
+fn distance(p1: Point, p2: Point): int {
+    return square(p1.x - p2.x) + square(p1.y - p2.y);
+}
+
 fn main() {
-    let a = 1 + 2, b = 2;
+    let p1 = Point { x: 1, y: 2 }, p2 = Point { x: 3, y: 4 };
+    let d = distance(p1, p2);
+    io.log("Distance between p1 and p2: ", d);
 
-    add(1, (1 + b / 2));
-
-    a = 2;
-    let sq = square(a);
-    let i = 3;
-    io.log("Sum: ", add(i, 1));
-
-    i = i + 1;
+    let l = Line { p1: p1, p2: p2 };
+    io.log("Distance between l.p1 and l.p2: ", distance(l.p1, l.p2));
 }

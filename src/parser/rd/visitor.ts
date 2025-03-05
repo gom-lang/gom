@@ -9,12 +9,14 @@ import {
   NodeForStatement,
   NodeFunctionDefinition,
   NodeFunctionReturnType,
+  NodeGomTypeStructField,
   NodeIfStatement,
   NodeImportDeclaration,
   NodeLetStatement,
   NodeMainFunction,
   NodeProgram,
   NodeReturnStatement,
+  NodeStructInit,
   NodeTerm,
   NodeTypeDefinition,
 } from "./nodes";
@@ -89,6 +91,12 @@ export class SimpleVisitor<T> implements Visitor<T> {
       case NodeType.ASSIGNMENT:
         this.visitAssignment(node as NodeAssignment);
         return;
+      case NodeType.STRUCT_INIT:
+        this.visitStructInit(node as NodeStructInit);
+        return;
+      case NodeType.GOM_TYPE_STRUCT_FIELD:
+        this.visitStructField(node as NodeGomTypeStructField);
+        return;
       case NodeType.COMPARISON:
       case NodeType.SUM:
       case NodeType.QUOT:
@@ -153,6 +161,12 @@ export class SimpleVisitor<T> implements Visitor<T> {
     this.visitChildren(node);
   }
   visitAssignment(node: NodeAssignment) {
+    this.visitChildren(node);
+  }
+  visitStructInit(node: NodeStructInit) {
+    this.visitChildren(node);
+  }
+  visitStructField(node: NodeGomTypeStructField) {
     this.visitChildren(node);
   }
   visitBinaryOp(node: NodeBinaryOp) {

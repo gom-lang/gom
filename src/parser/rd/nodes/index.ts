@@ -1,8 +1,10 @@
 import { Token } from "../../../lexer";
 import { GomToken } from "../../../lexer/tokens";
 import {
+  GomArrayType,
   GomFunctionType,
   GomPrimitiveTypeOrAlias,
+  GomStructType,
   GomType,
 } from "../../../semantics/type";
 import { AbstractNode, Node, NodeType } from "../tree";
@@ -81,7 +83,7 @@ export class NodeImportDeclaration extends AbstractNode {
 
 export class NodeTypeDefinition extends AbstractNode {
   type: NodeType;
-  name: Token;
+  name: NodeTerm;
   rhs: NodeGomType;
   children: Node[];
 
@@ -90,7 +92,7 @@ export class NodeTypeDefinition extends AbstractNode {
     rhs,
     loc,
   }: {
-    name: Token;
+    name: NodeTerm;
     rhs: NodeGomType;
     loc: number;
   }) {
@@ -110,7 +112,7 @@ export class NodeFunctionDefinition extends AbstractNode {
   args: NodeArgumentItem[];
   returnType?: NodeFunctionReturnType;
   body: NodeStatement[];
-  gomType: GomFunctionType;
+  resultantType: GomType;
 
   constructor({
     loc,
@@ -133,12 +135,7 @@ export class NodeFunctionDefinition extends AbstractNode {
     this.returnType = returnType;
     this.body = body;
     this.children = formChildrenArray(args, returnType, body);
-    this.gomType = new GomFunctionType(
-      args.map((arg) => arg.gomType),
-      returnType
-        ? new GomPrimitiveTypeOrAlias(returnType.returnType.value)
-        : new GomPrimitiveTypeOrAlias("void")
-    );
+    this.resultantType = new GomPrimitiveTypeOrAlias("void");
   }
 }
 
@@ -312,9 +309,9 @@ export class NodeExpressionStatement extends AbstractNode {
 export class NodeArgumentItem extends AbstractNode {
   type: NodeType;
   name: NodeTerm;
-  expectedType: Token;
+  expectedType: NodeTerm;
   children: Node[];
-  gomType: GomType;
+  resultantType: GomType;
 
   constructor({
     name,
@@ -322,7 +319,7 @@ export class NodeArgumentItem extends AbstractNode {
     loc,
   }: {
     name: NodeTerm;
-    expectedType: Token;
+    expectedType: NodeTerm;
     loc: number;
   }) {
     super();
@@ -331,7 +328,7 @@ export class NodeArgumentItem extends AbstractNode {
     this.name = name;
     this.expectedType = expectedType;
     this.children = [];
-    this.gomType = new GomPrimitiveTypeOrAlias(expectedType.value);
+    this.resultantType = new GomPrimitiveTypeOrAlias("void");
   }
 }
 
@@ -352,8 +349,9 @@ export class NodeFunctionReturnType extends AbstractNode {
 export type NodeGomType = NodeGomTypeIdOrArray | NodeGomTypeStruct;
 export class NodeGomTypeIdOrArray extends AbstractNode {
   type: NodeType;
-  id: Token;
-  arrSize?: Token;
+  id: NodeTerm;
+  arrSize?: NodeTerm;
+  gomType: GomType;
   children: Node[];
 
   constructor({
@@ -361,8 +359,8 @@ export class NodeGomTypeIdOrArray extends AbstractNode {
     arrSize,
     loc,
   }: {
-    id: Token;
-    arrSize?: Token;
+    id: NodeTerm;
+    arrSize?: NodeTerm;
     loc: number;
   }) {
     super();
@@ -370,6 +368,9 @@ export class NodeGomTypeIdOrArray extends AbstractNode {
     this.loc = loc;
     this.id = id;
     this.arrSize = arrSize;
+    this.gomType = arrSize
+      ? new GomArrayType(id.resultantType, Number(arrSize.token.value))
+      : id.resultantType;
     this.children = [];
   }
 }
@@ -377,11 +378,14 @@ export class NodeGomTypeIdOrArray extends AbstractNode {
 export class NodeGomTypeStruct extends AbstractNode {
   type: NodeType;
   fields: NodeGomTypeStructField[];
+  gomType: GomStructType;
 
   constructor({
+    name,
     fields,
     loc,
   }: {
+    name: NodeTerm;
     fields: NodeGomTypeStructField[];
     loc: number;
   }) {
@@ -389,6 +393,13 @@ export class NodeGomTypeStruct extends AbstractNode {
     this.type = NodeType.GOM_TYPE_STRUCT;
     this.loc = loc;
     this.fields = fields;
+    this.gomType = new GomStructType(
+      name.token.value,
+      fields.reduce((acc, field) => {
+        acc.set(field.name.value, field.fieldType.gomType);
+        return acc;
+      }, new Map<string, GomType>())
+    );
     this.children = formChildrenArray(fields);
   }
 }
@@ -396,7 +407,7 @@ export class NodeGomTypeStruct extends AbstractNode {
 export class NodeGomTypeStructField extends AbstractNode {
   type: NodeType;
   name: Token;
-  fieldType: NodeGomTypeIdOrArray;
+  fieldType: NodeGomType;
   children: Node[];
 
   constructor({
@@ -405,7 +416,7 @@ export class NodeGomTypeStructField extends AbstractNode {
     loc,
   }: {
     name: Token;
-    fieldType: NodeGomTypeIdOrArray;
+    fieldType: NodeGomType;
     loc: number;
   }) {
     super();
@@ -421,6 +432,7 @@ export type NodeExpr = NodeExprBasic | NodeExprBracketed;
 
 export type NodeExprBasic =
   | NodeAssignment
+  | NodeStructInit
   | NodeAccess
   | NodeCall
   | NodeBinaryOp
@@ -448,6 +460,37 @@ export class NodeAssignment extends AbstractNode {
     this.rhs = rhs;
     this.resultantType = new GomPrimitiveTypeOrAlias("void");
     this.children = formChildrenArray(lhs, rhs);
+  }
+}
+
+export class NodeStructInit extends AbstractNode {
+  type: NodeType;
+  structTypeName: NodeTerm;
+  fields: [NodeTerm, NodeExpr][];
+  resultantType: GomStructType;
+
+  constructor({
+    structTypeName,
+    fields,
+    loc,
+  }: {
+    structTypeName: NodeTerm;
+    fields: [NodeTerm, NodeExpr][];
+    loc: number;
+  }) {
+    super();
+    this.type = NodeType.STRUCT_INIT;
+    this.loc = loc;
+    this.structTypeName = structTypeName;
+    this.fields = fields;
+    this.resultantType = new GomStructType(
+      structTypeName.token.value,
+      fields.reduce((acc, [field, expr]) => {
+        acc.set(field.token.value, expr.resultantType);
+        return acc;
+      }, new Map<string, GomType>())
+    );
+    this.children = formChildrenArray(fields.map(([, expr]) => expr));
   }
 }
 
@@ -538,7 +581,7 @@ export class NodeExprBracketed extends AbstractNode {
   type: NodeType;
   expr: NodeExpr;
   children: Node[];
-  resultantType: GomPrimitiveTypeOrAlias;
+  resultantType: GomType;
 
   constructor({ expr, loc }: { expr: NodeExpr; loc: number }) {
     super();
@@ -554,8 +597,8 @@ export class NodeTerm extends AbstractNode {
   type: NodeType;
   token: Token;
   children: Node[];
-  gomType: GomPrimitiveTypeOrAlias;
-  resultantType: GomPrimitiveTypeOrAlias;
+  gomType: GomType;
+  resultantType: GomType;
 
   constructor(token: Token) {
     super();
@@ -579,7 +622,7 @@ export class NodeTerm extends AbstractNode {
     ) {
       return new GomPrimitiveTypeOrAlias("bool");
     } else if (this.token.type === GomToken.BUILT_IN_TYPE) {
-      return new GomPrimitiveTypeOrAlias(`primitive_type@@${this.token.value}`);
+      return new GomPrimitiveTypeOrAlias(this.token.value);
     }
 
     throw new Error(`Cannot determine type for token: ${this.token.type}`);

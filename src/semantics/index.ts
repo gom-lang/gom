@@ -5,17 +5,25 @@ import {
   NodeExpr,
   NodeForStatement,
   NodeFunctionDefinition,
+  NodeGomTypeStruct,
+  NodeGomTypeStructField,
   NodeIfStatement,
   NodeImportDeclaration,
   NodeLetStatement,
   NodeMainFunction,
   NodeProgram,
+  NodeStructInit,
   NodeTerm,
   NodeTypeDefinition,
 } from "../parser/rd/nodes";
 import { ScopeManager, SymbolTableReader } from "./scope";
 import { SimpleVisitor } from "../parser/rd/visitor";
-import { GomFunctionType, GomPrimitiveTypeOrAlias, GomType } from "./type";
+import {
+  GomFunctionType,
+  GomPrimitiveTypeOrAlias,
+  GomStructType,
+  GomType,
+} from "./type";
 import { GomErrorManager } from "../util/error";
 import { GomToken } from "../lexer/tokens";
 import { GomModule } from "../parser/rd/modules";
@@ -54,9 +62,9 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
 
     module.getAllExports().forEach((exp) => {
       if (exp instanceof NodeFunctionDefinition) {
-        this.scopeManager.putIdentifier(exp.name.value, exp, exp.gomType);
+        this.scopeManager.putIdentifier(exp.name.value, exp, exp.resultantType);
       } else if (exp instanceof NodeTypeDefinition) {
-        this.scopeManager.putType(exp.name.value, exp);
+        this.scopeManager.putType(exp.name.token.value, exp);
       } else if (exp instanceof NodeLetStatement) {
         exp.decls.forEach((decl) => {
           this.scopeManager.putIdentifier(
@@ -71,13 +79,44 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
   }
 
   visitFunctionDefinition(node: NodeFunctionDefinition): void {
-    this.scopeManager.putIdentifier(node.name.value, node, node.gomType);
+    let returnType: GomType;
+
+    if (node.returnType) {
+      const type = this.scopeManager.getType(node.returnType.returnType.value);
+      if (!type) {
+        this.errorManager.throwTypeError({
+          message: `Return type ${node.returnType.returnType.value} not found`,
+          loc: node.returnType?.loc || node.loc,
+        });
+      }
+
+      returnType = type.gomType;
+    } else {
+      returnType = new GomPrimitiveTypeOrAlias("void");
+    }
+
+    let argTypes: GomType[] = [];
+    node.args.forEach((arg) => {
+      const argType = this.scopeManager.getType(arg.expectedType.token.value);
+      if (!argType) {
+        this.errorManager.throwTypeError({
+          message: `Type ${arg.expectedType.token.value} not found`,
+          loc: arg.expectedType.loc,
+        });
+      }
+      arg.resultantType = argType.gomType;
+      argTypes.push(argType.gomType);
+    });
+
+    const fnType = new GomFunctionType(argTypes, returnType);
+    node.resultantType = fnType;
+    this.scopeManager.putIdentifier(node.name.value, node, fnType);
     this.scopeManager.beginScope(node.name.value);
     node.args.forEach((arg) => {
       this.scopeManager.putIdentifier(
         arg.name.token.value,
         arg.name,
-        arg.gomType
+        arg.resultantType
       );
     });
     node.body.forEach((stmt) => this.visit(stmt));
@@ -171,7 +210,9 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
   }
 
   visitTypeDefinition(node: NodeTypeDefinition): void {
-    this.scopeManager.putType(node.name.value, node);
+    this.scopeManager.putType(node.name.token.value, node);
+    const typeResolver = new TypeResolver(this.scopeManager, this.errorManager);
+    node.accept(typeResolver);
   }
 }
 
@@ -194,11 +235,128 @@ class TypeResolver extends SimpleVisitor<void> {
     return this.currentType;
   }
 
+  visitStructInit(node: NodeStructInit): void {
+    const structType = this.symbolTableReader.getType(
+      node.structTypeName.token.value
+    );
+    if (!structType) {
+      this.errorManager.throwTypeError({
+        message: `Type ${node.structTypeName.token.value} not found`,
+        loc: node.loc,
+      });
+    }
+    const gomType = structType.gomType;
+    if (!(gomType instanceof GomStructType)) {
+      this.errorManager.throwTypeError({
+        message: `Type ${node.structTypeName.token.value} cannot be initialized as a struct`,
+        loc: node.loc,
+      });
+    }
+
+    if (node.fields.length !== gomType.fields.size) {
+      this.errorManager.throwTypeError({
+        message: `Field count mismatch: expected ${gomType.fields.size}, got ${node.fields.length}`,
+        loc: node.loc,
+      });
+    }
+
+    for (let i = 0; i < node.fields.length; i++) {
+      const field = node.fields[i];
+      const fieldName = field[0],
+        fieldExpr = field[1];
+      if (!gomType.fields.has(fieldName.token.value)) {
+        this.errorManager.throwTypeError({
+          message: `Field ${fieldName.token.value} not found in struct ${node.structTypeName.token.value}`,
+          loc: fieldName.loc,
+        });
+      }
+
+      this.visit(fieldExpr);
+      const fieldType = this.currentType;
+      if (!fieldType?.isEqual(gomType.fields.get(fieldName.token.value)!)) {
+        this.errorManager.throwTypeError({
+          message: `Type mismatch: expected ${gomType.fields
+            .get(fieldName.token.value)!
+            .toStr()}, got ${fieldType?.toStr()}`,
+          loc: fieldExpr.loc,
+        });
+      }
+
+      gomType.fields.set(fieldName.token.value, fieldType);
+    }
+
+    node.resultantType = gomType;
+
+    this.currentType = gomType;
+  }
+
+  visitTypeDefinition(node: NodeTypeDefinition): void {
+    const type = this.symbolTableReader.getType(node.name.token.value);
+    if (!type) {
+      this.errorManager.throwTypeError({
+        message: `Type ${node.name.token.value} not found`,
+        loc: node.loc,
+      });
+    }
+
+    const gomType = type.gomType;
+    if (gomType instanceof GomStructType) {
+      Array.from(gomType.fields.entries()).forEach(([key, field]) => {
+        const _field = field as GomPrimitiveTypeOrAlias;
+        if (_field.typeString.startsWith("resolve_type@@")) {
+          const idName = _field.toStr().replace("resolve_type@@", "");
+          const id = this.symbolTableReader.getType(idName);
+          if (id) {
+            gomType.fields.set(key, id.gomType);
+          } else {
+            this.errorManager.throwTypeError({
+              message: `Type ${idName} not found`,
+              loc: node.loc,
+            });
+          }
+        }
+      });
+    } else if (gomType instanceof GomPrimitiveTypeOrAlias) {
+      if (gomType.typeString.startsWith("resolve_type@@")) {
+        const idName = gomType.typeString.replace("resolve_type@@", "");
+        const id = this.symbolTableReader.getType(idName);
+        if (id) {
+          node.rhs.gomType = id.gomType;
+        } else {
+          this.errorManager.throwTypeError({
+            message: `Type ${idName} not found`,
+            loc: node.loc,
+          });
+        }
+      }
+    }
+  }
+
   visitAccess(node: NodeAccess): void {
     const idName = node.lhs.token.value;
     const id = this.symbolTableReader.getIdentifier(idName);
     if (id && !id.isFunction()) {
-      this.visit(node.rhs);
+      // ensure that node.lhs is a struct
+      // only support member access for structs for now
+      if (id.type instanceof GomStructType) {
+        node.lhs.resultantType = id.type;
+        if (node.rhs instanceof NodeTerm) {
+          const structType = id.type;
+          const field = structType.fields.get(node.rhs.token.value);
+          if (field) {
+            node.rhs.resultantType = field;
+            node.resultantType = field;
+            this.currentType = field;
+          } else {
+            this.errorManager.throwTypeError({
+              message: `Field ${node.rhs.token.value} not found in struct ${idName}`,
+              loc: node.rhs.loc,
+            });
+          }
+        }
+      } else {
+        this.visit(node.rhs);
+      }
     } else {
       if (idName === "io") {
         // skip for now until modules are implemented
@@ -273,32 +431,34 @@ class TypeResolver extends SimpleVisitor<void> {
   visitCall(node: NodeCall): void {
     const fnName = (node.id as NodeTerm).token.value;
     const fn = this.symbolTableReader.getFunction(fnName);
-    if (fn && fn.node.gomType instanceof GomFunctionType) {
+    if (fn && fn.node.resultantType instanceof GomFunctionType) {
       const args = node.args.map((arg) => this.resolveType(arg));
-      if (args.length !== fn.node.gomType.args.length) {
+      if (args.length !== fn.node.resultantType.args.length) {
         this.errorManager.throwTypeError({
           message: `Argument count mismatch: expected ${
-            fn.node.gomType.args.length
+            fn.node.resultantType.args.length
           }, got ${
             args.length
-          } for function ${fnName} of type ${fn.node.gomType.toStr()}`,
+          } for function ${fnName} of type ${fn.node.resultantType.toStr()}`,
           loc: node.loc,
         });
       }
 
       for (let i = 0; i < args.length; i++) {
-        if (!args[i]?.isEqual(fn.node.gomType.args[i])) {
+        if (!args[i]?.isEqual(fn.node.resultantType.args[i])) {
           this.errorManager.throwTypeError({
-            message: `Type mismatch: expected ${fn.node.gomType.args[i]}, got ${
+            message: `Type mismatch: expected ${
+              fn.node.resultantType.args[i]
+            }, got ${
               args[i]
-            } for argument ${i} of function ${fnName} of type ${fn.node.gomType.toStr()}`,
+            } for argument ${i} of function ${fnName} of type ${fn.node.resultantType.toStr()}`,
             loc: node.loc,
           });
         }
       }
 
-      node.resultantType = fn.node.gomType.returnType;
-      this.currentType = fn.node.gomType.returnType;
+      node.resultantType = fn.node.resultantType.returnType;
+      this.currentType = fn.node.resultantType.returnType;
     } else {
       if (fnName === "log") {
         // skip for now until modules are implemented
@@ -317,21 +477,23 @@ class TypeResolver extends SimpleVisitor<void> {
   visitTerm(node: NodeTerm): void {
     const type = node.gomType;
 
-    if (type.typeString.startsWith("resolve_type@@")) {
-      const idName = type.typeString.replace("resolve_type@@", "");
-      const id = this.symbolTableReader.getIdentifier(idName);
-      if (id && !id.isFunction()) {
-        node.resultantType = id.type as GomPrimitiveTypeOrAlias;
-        this.currentType = id.type;
+    if (type instanceof GomPrimitiveTypeOrAlias) {
+      if (type.typeString.startsWith("resolve_type@@")) {
+        const idName = type.typeString.replace("resolve_type@@", "");
+        const id = this.symbolTableReader.getIdentifier(idName);
+        if (id && !id.isFunction()) {
+          node.resultantType = id.type;
+          this.currentType = id.type;
+        } else {
+          this.errorManager.throwTypeError({
+            message: `Identifier ${idName} not found`,
+            loc: node.loc,
+          });
+        }
       } else {
-        this.errorManager.throwTypeError({
-          message: `Identifier ${idName} not found`,
-          loc: node.loc,
-        });
+        node.resultantType = type;
+        this.currentType = type;
       }
-    } else {
-      node.resultantType = type;
-      this.currentType = type;
     }
   }
 }
