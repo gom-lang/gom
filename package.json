@@ -1,8 +1,11 @@
 {
-  "name": "gom",
+  "name": "gom-lang",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "run.ts",
+  "bin": {
+    "gomc": "run.sh"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
