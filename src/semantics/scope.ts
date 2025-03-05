@@ -2,17 +2,19 @@ import llvm from "llvm-bindings";
 import {
   NodeExpr,
   NodeFunctionDefinition,
+  NodeGomTypeIdOrArray,
   NodeGomTypeStruct,
   NodeTerm,
   NodeTypeDefinition,
 } from "../parser/rd/nodes";
 import { GomInternalError, SyntaxError } from "../util/error";
 import {
-  GomArrayType,
   GomPrimitiveTypeOrAlias,
+  GomPrimitiveTypeOrAliasValue,
   GomStructType,
   GomType,
 } from "./type";
+import { GOM_BUILT_IN_TYPES, GomToken } from "../lexer/tokens";
 
 class SymbolTableNode<T> {
   private children: SymbolTableNode<T>[] = [];
@@ -47,7 +49,7 @@ class SymbolTableNode<T> {
 class TypeEntry {
   name: string;
   node: NodeTypeDefinition;
-  gomType: GomPrimitiveTypeOrAlias | GomStructType;
+  gomType: GomType;
 
   constructor(name: string, node: NodeTypeDefinition) {
     this.name = name;
@@ -55,22 +57,19 @@ class TypeEntry {
     this.gomType =
       node.rhs instanceof NodeGomTypeStruct
         ? new GomStructType(
+            name,
             node.rhs.fields.reduce((acc, field) => {
-              const arrSize = field.fieldType.arrSize;
-              if (arrSize) {
-                acc[field.name.value] = new GomArrayType(
-                  new GomPrimitiveTypeOrAlias(field.fieldType.id.value),
-                  Number(arrSize.value)
-                );
-              } else {
-                acc[field.name.value] = new GomPrimitiveTypeOrAlias(
-                  field.fieldType.id.value
-                );
+              if (field instanceof NodeGomTypeStruct) {
+                throw new SyntaxError({
+                  message: `Nested structs are not supported`,
+                  loc: [1, field.loc],
+                });
               }
+              acc.set(field.name.value, field.fieldType.gomType);
               return acc;
-            }, {} as Record<string, GomType>)
+            }, new Map<string, GomType>())
           )
-        : new GomPrimitiveTypeOrAlias(node.name.value);
+        : new GomPrimitiveTypeOrAlias(node.name.token.value);
   }
 
   getValue() {
@@ -199,9 +198,36 @@ export class Scope {
 
 export class ScopeManager {
   private currentSymbolTableNode: SymbolTableNode<Scope>;
+  private primitiveTypes: Record<GomPrimitiveTypeOrAliasValue, TypeEntry> = {};
 
   constructor() {
     this.currentSymbolTableNode = new SymbolTableNode("root", new Scope());
+    this.setPrimitiveTypes();
+  }
+
+  private setPrimitiveTypes() {
+    GOM_BUILT_IN_TYPES.forEach((type) => {
+      const fakeNode = new NodeTypeDefinition({
+        name: new NodeTerm({
+          value: type,
+          start: 0,
+          end: 0,
+          type: GomToken.BUILT_IN_TYPE,
+        }),
+        rhs: new NodeGomTypeIdOrArray({
+          id: new NodeTerm({
+            value: type,
+            start: 0,
+            end: 0,
+            type: GomToken.BUILT_IN_TYPE,
+          }),
+          arrSize: undefined,
+          loc: 0,
+        }),
+        loc: 0,
+      });
+      this.primitiveTypes[type] = new TypeEntry(type, fakeNode);
+    });
   }
 
   beginScope(name: string) {
@@ -251,6 +277,9 @@ export class ScopeManager {
   }
 
   getType(name: string) {
+    if (this.primitiveTypes[name]) {
+      return this.primitiveTypes[name];
+    }
     return this.getCurrentScope().getType(name);
   }
 

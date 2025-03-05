@@ -33,9 +33,9 @@ Defining complex data structures is possible via the `struct` notation (like `st
 ```gom
 import io;
 
-type ArrInt = int[10]; // int | int[10] | struct {} | Temp[10]
+type ArrInt = int[10]; // int | int[10] | {} | Temp[10]
 
-type Temperature = struct {
+type Temperature = {
 	high: int,
 	low: int,
 	avg: int
@@ -70,8 +70,10 @@ type Name = str;
 | Lexical Analysis | ✅ Done |
 | Syntactic Analysis (parsing) | ✅ Done |
 | Semantic Analysis & preliminary type system | ✅ Done |
-| C Code Generation | ⚙️ In progress |
-| Complex data structures | ⏳ Not started |
+| LLVM IR Generation | ✅ Done |
+| Complex data structures - structs | ✅ Done |
+| Modules | ⚙️ In progress |
+| Complex data structures - arrays | ⏳ Not started |
 
 ## Trying out Gom
 

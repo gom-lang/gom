@@ -17,9 +17,6 @@ export enum GomToken {
   // Primitive type
   BUILT_IN_TYPE = "built_in_type",
 
-  // Complex types
-  STRUCT = "struct",
-
   // Symbols
   LPAREN = "(",
   RPAREN = ")",
@@ -70,7 +67,6 @@ export const GOM_KEYWORDS = new Set([
   "main",
   "true",
   "false",
-  "struct",
 ]);
 
 export const getKeywordType = (value: string): GomToken => {
@@ -101,8 +97,6 @@ export const getKeywordType = (value: string): GomToken => {
       return GomToken.TRUE;
     case "false":
       return GomToken.FALSE;
-    case "struct":
-      return GomToken.STRUCT;
     default:
       return GomToken.IDENTIFIER;
   }

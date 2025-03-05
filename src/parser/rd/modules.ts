@@ -54,7 +54,6 @@ export class GomModule {
   }
 
   private parseModule(): NodeProgram {
-    console.log("Parsing module...", this.src);
     const lexer = new Lexer(this.src, this.errorManager);
     const parser = new ModuleParser(lexer);
 

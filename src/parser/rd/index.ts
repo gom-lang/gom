@@ -25,6 +25,7 @@ import {
   NodeProgram,
   NodeReturnStatement,
   NodeStatement,
+  NodeStructInit,
   NodeTerm,
   NodeTypeDefinition,
 } from "./nodes";
@@ -183,9 +184,9 @@ export class RecursiveDescentParser {
   parseTypeDefinition() {
     const loc = this.token.start;
     this.match(GomToken.TYPE);
-    const name = this.match(GomToken.IDENTIFIER);
+    const name = this.parseTerm();
     this.match(GomToken.EQ);
-    const rhs = this.parseGomType();
+    const rhs = this.parseGomType(name);
     this.match(GomToken.SEMICOLON);
 
     return new NodeTypeDefinition({
@@ -195,9 +196,9 @@ export class RecursiveDescentParser {
     });
   }
 
-  parseGomType() {
-    if (this.peek(GomToken.STRUCT)) {
-      return this.parseStructType();
+  parseGomType(typeName: NodeTerm) {
+    if (this.peek(GomToken.LBRACE)) {
+      return this.parseStructType(typeName);
     } else if (
       this.peek(GomToken.IDENTIFIER) ||
       this.peek(GomToken.BUILT_IN_TYPE)
@@ -208,14 +209,13 @@ export class RecursiveDescentParser {
     throw new Error(`Unexpected token: ${this.token.value}`);
   }
 
-  parseStructType() {
+  parseStructType(typeName: NodeTerm) {
     const loc = this.token.start;
-    this.match(GomToken.STRUCT);
     this.match(GomToken.LBRACE);
     const fields = this.parseOneOrMore(this.parseStructTypeField);
     this.match(GomToken.RBRACE);
 
-    return new NodeGomTypeStruct({ fields, loc });
+    return new NodeGomTypeStruct({ name: typeName, fields, loc });
   }
 
   parseStructTypeField() {
@@ -234,17 +234,17 @@ export class RecursiveDescentParser {
     const baseType = this.parseTerm() as NodeTerm;
 
     if (this.accept(GomToken.LBRACKET)) {
-      const size = this.match(GomToken.NUMLITERAL);
+      const size = this.parseTerm();
       this.match(GomToken.RBRACKET);
       return new NodeGomTypeIdOrArray({
-        id: baseType.token,
+        id: baseType,
         arrSize: size,
         loc: baseType.token.start,
       });
     }
 
     return new NodeGomTypeIdOrArray({
-      id: baseType.token,
+      id: baseType,
       loc: baseType.token.start,
     });
   }
@@ -274,7 +274,7 @@ export class RecursiveDescentParser {
     const loc = this.token.start;
     const name = this.parseTerm() as NodeTerm;
     this.match(GomToken.COLON);
-    const expectedType = this.match(GomToken.BUILT_IN_TYPE); // can be custom type
+    const expectedType = this.parseTerm();
     this.matchOneOrNone(GomToken.COMMA);
 
     return new NodeArgumentItem({
@@ -429,7 +429,7 @@ export class RecursiveDescentParser {
       if (this.buffer[1].type === GomToken.EQ) {
         return this.parseAssignment();
       } else {
-        return this.parseComparison();
+        return this.parseStructInit();
       }
     } else {
       return this.parseComparison();
@@ -452,6 +452,26 @@ export class RecursiveDescentParser {
     const rhs = this.parseComparison();
 
     return new NodeAccess({ lhs, rhs, loc });
+  }
+
+  parseStructInit(): NodeExpr {
+    if (this.buffer[1].type === GomToken.LBRACE) {
+      const loc = this.token.start;
+      const structTypeName = this.parseTerm();
+      this.match(GomToken.LBRACE);
+      const fields: [NodeTerm, NodeExpr][] = this.parseOneOrMore(() => {
+        const name = this.parseTerm();
+        this.match(GomToken.COLON);
+        const value = this.parseExpression();
+        if (!this.peek(GomToken.RBRACE)) this.match(GomToken.COMMA);
+        return [name, value];
+      });
+      this.match(GomToken.RBRACE);
+
+      return new NodeStructInit({ structTypeName, fields, loc });
+    }
+
+    return this.parseComparison();
   }
 
   parseComparison(): NodeExpr {
