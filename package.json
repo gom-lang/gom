@@ -10,7 +10,8 @@
     "build": "tsc",
     "test": "vitest run",
     "compile": "tsx run.ts",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "release": "changeset publish"
   },
   "keywords": [],
   "author": "",
