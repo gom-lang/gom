@@ -1,5 +1,5 @@
 ---
-"gom": patch
+"gom-lang": patch
 ---
 
 Add changesets
