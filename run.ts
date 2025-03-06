@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 import { runCompile } from "./src/index";
 
 const filePath = process.argv[2];
