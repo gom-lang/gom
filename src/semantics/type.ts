@@ -1,18 +1,31 @@
 /**
  * Gom type can be:
  * - Primitive, e.g. int, bool, float, str, void
+ * - Tuple, e.g. (int, bool)
  * - Struct e.g. { x: int, y: int }
- * - Custom, e.g. type Number = int
+ * - Composite, e.g. type IntList = List<int>
  * - Function, e.g. fn add(a: int, b: int): int
  *
  * For now, structs are not supported & custom types can only be aliases to primitives.
  */
 
+import assert from "assert";
+
 export enum GomTypeKind {
   PrimitiveOrAlias = "PrimitiveOrAlias",
+  // Deprecated, use Composite instead
   Array = "Array",
+  Tuple = "Tuple",
   Struct = "Struct",
+  Composite = "Composite",
   Function = "Function",
+}
+
+export enum GomCompositeTypeKind {
+  List = "List",
+  _Custom = "_Custom",
+  // Map = "Map",
+  // Set = "Set",
 }
 
 export class GomType {
@@ -55,6 +68,9 @@ export class GomPrimitiveTypeOrAlias extends GomType {
   }
 }
 
+/**
+ * Deprecated, use GomCompositeType instead
+ */
 export class GomArrayType extends GomType {
   kind: GomTypeKind;
   elementType: GomType;
@@ -78,6 +94,43 @@ export class GomArrayType extends GomType {
 
   toStr(): string {
     return `${this.elementType.toStr()}[${this.size}]`;
+  }
+}
+
+export class GomTupleType extends GomType {
+  kind: GomTypeKind;
+  fields: Map<string, GomType>;
+
+  constructor(fields: GomType[]) {
+    super();
+    this.kind = GomTypeKind.Tuple;
+    this.fields = fields.reduce((acc, field, i) => {
+      acc.set(i.toString(), field);
+      return acc;
+    }, new Map<string, GomType>());
+  }
+
+  isEqual(other: GomTupleType): boolean {
+    if (other.kind !== GomTypeKind.Tuple) {
+      return false;
+    }
+    if (this.fields.size !== other.fields.size) {
+      return false;
+    }
+    for (let i = 0; i < this.fields.size; i++) {
+      const otherField = other.fields.get(i.toString());
+      assert(otherField);
+      if (!this.fields.get(i.toString())?.isEqual(otherField)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  toStr(): string {
+    return `{ ${Array.from(this.fields)
+      .map((field) => field[1].toStr())
+      .join(", ")} }`;
   }
 }
 
@@ -114,6 +167,19 @@ export class GomStructType extends GomType {
   }
 }
 
+export class GomCompositeType extends GomType {
+  kind: GomTypeKind;
+  compositeKind: GomCompositeTypeKind;
+  fieldTypes: GomType[];
+
+  constructor(compositeKind: GomCompositeTypeKind, fieldTypes: GomType[]) {
+    super();
+    this.kind = GomTypeKind.Composite;
+    this.compositeKind = compositeKind;
+    this.fieldTypes = fieldTypes;
+  }
+}
+
 export class GomFunctionType extends GomType {
   kind: GomTypeKind;
   args: GomType[];
@@ -146,5 +212,13 @@ export class GomFunctionType extends GomType {
     return `(${this.args
       .map((arg) => arg.toStr())
       .join(", ")}) => ${this.returnType.toStr()}`;
+  }
+
+  usesSret(): boolean {
+    return (
+      this.returnType instanceof GomStructType ||
+      this.returnType instanceof GomCompositeType ||
+      this.returnType instanceof GomTupleType
+    );
   }
 }

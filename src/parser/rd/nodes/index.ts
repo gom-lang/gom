@@ -2,9 +2,12 @@ import { Token } from "../../../lexer";
 import { GomToken } from "../../../lexer/tokens";
 import {
   GomArrayType,
+  GomCompositeType,
+  GomCompositeTypeKind,
   GomFunctionType,
   GomPrimitiveTypeOrAlias,
   GomStructType,
+  GomTupleType,
   GomType,
 } from "../../../semantics/type";
 import { AbstractNode, Node, NodeType } from "../tree";
@@ -334,10 +337,10 @@ export class NodeArgumentItem extends AbstractNode {
 
 export class NodeFunctionReturnType extends AbstractNode {
   type: NodeType;
-  returnType: Token;
+  returnType: NodeGomType;
   children: Node[];
 
-  constructor({ returnType, loc }: { returnType: Token; loc: number }) {
+  constructor({ returnType, loc }: { returnType: NodeGomType; loc: number }) {
     super();
     this.type = NodeType.FUNCTION_RETURN_TYPE;
     this.loc = loc;
@@ -346,32 +349,40 @@ export class NodeFunctionReturnType extends AbstractNode {
   }
 }
 
-export type NodeGomType = NodeGomTypeIdOrArray | NodeGomTypeStruct;
-export class NodeGomTypeIdOrArray extends AbstractNode {
+export type NodeGomType =
+  | NodeGomTypeId
+  | NodeGomTypeStruct
+  | NodeGomTypeComposite
+  | NodeGomTypeTuple;
+export class NodeGomTypeId extends AbstractNode {
   type: NodeType;
   id: NodeTerm;
-  arrSize?: NodeTerm;
   gomType: GomType;
   children: Node[];
 
-  constructor({
-    id,
-    arrSize,
-    loc,
-  }: {
-    id: NodeTerm;
-    arrSize?: NodeTerm;
-    loc: number;
-  }) {
+  constructor({ id, loc }: { id: NodeTerm; arrSize?: NodeTerm; loc: number }) {
     super();
-    this.type = NodeType.GOM_TYPE_ID_OR_ARRAY;
+    this.type = NodeType.GOM_TYPE_ID;
     this.loc = loc;
     this.id = id;
-    this.arrSize = arrSize;
-    this.gomType = arrSize
-      ? new GomArrayType(id.resultantType, Number(arrSize.token.value))
-      : id.resultantType;
+    this.gomType = id.resultantType;
     this.children = [];
+  }
+}
+
+export class NodeGomTypeTuple extends AbstractNode {
+  type: NodeType;
+  fields: NodeGomType[];
+  gomType: GomType;
+  children: Node[];
+
+  constructor({ fields, loc }: { fields: NodeGomType[]; loc: number }) {
+    super();
+    this.type = NodeType.GOM_TYPE_TUPLE;
+    this.loc = loc;
+    this.fields = fields;
+    this.gomType = new GomTupleType(fields.map((field) => field.gomType));
+    this.children = formChildrenArray(fields);
   }
 }
 
@@ -401,6 +412,44 @@ export class NodeGomTypeStruct extends AbstractNode {
       }, new Map<string, GomType>())
     );
     this.children = formChildrenArray(fields);
+  }
+}
+
+export class NodeGomTypeComposite extends AbstractNode {
+  type: NodeType;
+  id: NodeTerm;
+  fields: NodeGomType[];
+  gomType: GomType;
+  children: Node[];
+
+  constructor({
+    id,
+    fields,
+    loc,
+  }: {
+    id: NodeTerm;
+    fields: NodeGomType[];
+    loc: number;
+  }) {
+    super();
+    this.type = NodeType.GOM_TYPE_COMPOSITE;
+    this.loc = loc;
+    this.id = id;
+    this.fields = fields;
+    this.gomType = new GomCompositeType(
+      NodeGomTypeComposite.getGomCompositeTypeKind(id),
+      fields.map((field) => field.gomType)
+    );
+    this.children = [];
+  }
+
+  static getGomCompositeTypeKind(id: NodeTerm): GomCompositeTypeKind {
+    switch (id.token.value) {
+      case "List":
+        return GomCompositeTypeKind.List;
+      default:
+        return GomCompositeTypeKind._Custom;
+    }
   }
 }
 
@@ -434,8 +483,11 @@ export type NodeExprBasic =
   | NodeAssignment
   | NodeStructInit
   | NodeAccess
+  | NodeIndexedAccess
   | NodeCall
   | NodeBinaryOp
+  | NodeTupleLiteral
+  | NodeListLiteral
   | NodeTerm;
 
 export class NodeAssignment extends AbstractNode {
@@ -590,6 +642,72 @@ export class NodeExprBracketed extends AbstractNode {
     this.expr = expr;
     this.resultantType = new GomPrimitiveTypeOrAlias("void");
     this.children = formChildrenArray(expr);
+  }
+}
+
+export class NodeIndexedAccess extends AbstractNode {
+  type: NodeType;
+  lhs: NodeExpr;
+  index: NodeExpr;
+  children: Node[];
+  resultantType: GomType;
+
+  constructor({
+    lhs,
+    index,
+    loc,
+  }: {
+    lhs: NodeExpr;
+    index: NodeExpr;
+    loc: number;
+  }) {
+    super();
+    this.type = NodeType.INDEXED_ACCESS;
+    this.loc = loc;
+    this.lhs = lhs;
+    this.index = index;
+    this.children = formChildrenArray(lhs, index);
+    this.resultantType = new GomPrimitiveTypeOrAlias("void");
+  }
+}
+
+export class NodeTupleLiteral extends AbstractNode {
+  type: NodeType;
+  elements: NodeExpr[];
+  children: Node[];
+  gomType: GomType;
+  resultantType: GomType;
+
+  constructor({ elements, loc }: { elements: NodeExpr[]; loc: number }) {
+    super();
+    this.type = NodeType.TUPLE_LITERAL;
+    this.loc = loc;
+    this.elements = elements;
+    this.children = elements;
+    this.gomType = new GomTupleType(
+      elements.map((elements) => elements.resultantType)
+    );
+    this.resultantType = this.gomType;
+  }
+}
+
+export class NodeListLiteral extends AbstractNode {
+  type: NodeType;
+  elements: NodeExpr[];
+  children: Node[];
+  gomType: GomType;
+  resultantType: GomType;
+
+  constructor({ elements, loc }: { elements: NodeExpr[]; loc: number }) {
+    super();
+    this.type = NodeType.LIST_LITERAL;
+    this.loc = loc;
+    this.elements = elements;
+    this.children = elements;
+    this.gomType = new GomCompositeType(GomCompositeTypeKind.List, [
+      elements[0].resultantType,
+    ]);
+    this.resultantType = this.gomType;
   }
 }
 

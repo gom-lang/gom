@@ -12,12 +12,15 @@ import {
   NodeGomTypeStructField,
   NodeIfStatement,
   NodeImportDeclaration,
+  NodeIndexedAccess,
   NodeLetStatement,
+  NodeListLiteral,
   NodeMainFunction,
   NodeProgram,
   NodeReturnStatement,
   NodeStructInit,
   NodeTerm,
+  NodeTupleLiteral,
   NodeTypeDefinition,
 } from "./nodes";
 import { Node, NodeType } from "./tree";
@@ -118,6 +121,15 @@ export class SimpleVisitor<T> implements Visitor<T> {
       case NodeType.EXPRESSION_STATEMENT:
         this.visitExpressionStatement(node as NodeExpressionStatement);
         return;
+      case NodeType.TUPLE_LITERAL:
+        this.visitTupleLiteral(node as NodeTupleLiteral);
+        return;
+      case NodeType.LIST_LITERAL:
+        this.visitListLiteral(node as NodeListLiteral);
+        return;
+      case NodeType.INDEXED_ACCESS:
+        this.visitIndexedAccess(node as NodeIndexedAccess);
+        return;
       case NodeType.TERM:
         this.visitTerm(node as NodeTerm);
         return;
@@ -185,6 +197,15 @@ export class SimpleVisitor<T> implements Visitor<T> {
     this.visitChildren(node);
   }
   visitExpressionStatement(node: NodeExpressionStatement) {
+    this.visitChildren(node);
+  }
+  visitTupleLiteral(node: NodeTupleLiteral) {
+    this.visitChildren(node);
+  }
+  visitListLiteral(node: NodeListLiteral) {
+    this.visitChildren(node);
+  }
+  visitIndexedAccess(node: NodeIndexedAccess) {
     this.visitChildren(node);
   }
   visitTerm(node: NodeTerm) {

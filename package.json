@@ -17,9 +17,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "cors": "^2.8.5",
     "llvm-bindings": "github:TypeFox/llvm-bindings",
+    "ts-pattern": "^5.6.2",
     "typescript": "^5.4.5"
   },
   "devDependencies": {

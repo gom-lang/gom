@@ -2,8 +2,10 @@ import llvm from "llvm-bindings";
 import {
   NodeExpr,
   NodeFunctionDefinition,
-  NodeGomTypeIdOrArray,
+  NodeGomTypeComposite,
+  NodeGomTypeId,
   NodeGomTypeStruct,
+  NodeGomTypeTuple,
   NodeTerm,
   NodeTypeDefinition,
 } from "../parser/rd/nodes";
@@ -12,6 +14,7 @@ import {
   GomPrimitiveTypeOrAlias,
   GomPrimitiveTypeOrAliasValue,
   GomStructType,
+  GomTupleType,
   GomType,
 } from "./type";
 import { GOM_BUILT_IN_TYPES, GomToken } from "../lexer/tokens";
@@ -54,22 +57,33 @@ class TypeEntry {
   constructor(name: string, node: NodeTypeDefinition) {
     this.name = name;
     this.node = node;
-    this.gomType =
-      node.rhs instanceof NodeGomTypeStruct
-        ? new GomStructType(
-            name,
-            node.rhs.fields.reduce((acc, field) => {
-              if (field instanceof NodeGomTypeStruct) {
-                throw new SyntaxError({
-                  message: `Nested structs are not supported`,
-                  loc: [1, field.loc],
-                });
-              }
-              acc.set(field.name.value, field.fieldType.gomType);
-              return acc;
-            }, new Map<string, GomType>())
-          )
-        : new GomPrimitiveTypeOrAlias(node.name.token.value);
+    this.gomType = this.makeGomType();
+  }
+
+  private makeGomType() {
+    return this.node.rhs.gomType;
+    // if (this.node.rhs instanceof NodeGomTypeStruct) {
+    //   return new GomStructType(
+    //     this.name,
+    //     this.node.rhs.fields.reduce((acc, field) => {
+    //       if (field instanceof NodeGomTypeStruct) {
+    //         throw new SyntaxError({
+    //           message: `Nested structs are not supported`,
+    //           loc: [1, field.loc],
+    //         });
+    //       }
+    //       acc.set(field.name.value, field.fieldType.gomType);
+    //       return acc;
+    //     }, new Map<string, GomType>())
+    //   );
+    // } else if (this.node.rhs instanceof NodeGomTypeTuple) {
+    //   return new GomTupleType(
+    //     this.node.rhs.fields.map((field) => field.gomType)
+    //   );
+    // } else if (this.node.rhs instanceof NodeGomTypeComposite) {
+    // } else {
+    //   return new GomPrimitiveTypeOrAlias(this.node.name.token.value);
+    // }
   }
 
   getValue() {
@@ -214,14 +228,13 @@ export class ScopeManager {
           end: 0,
           type: GomToken.BUILT_IN_TYPE,
         }),
-        rhs: new NodeGomTypeIdOrArray({
+        rhs: new NodeGomTypeId({
           id: new NodeTerm({
             value: type,
             start: 0,
             end: 0,
             type: GomToken.BUILT_IN_TYPE,
           }),
-          arrSize: undefined,
           loc: 0,
         }),
         loc: 0,
