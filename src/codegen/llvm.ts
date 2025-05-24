@@ -382,7 +382,6 @@ export class CodeGenerator extends BaseCodeGenerator {
     }
 
     if (node.expr) {
-      console.log("return statement", node.expr);
       if (node.expr.resultantType instanceof GomPrimitiveTypeOrAlias) {
         const exprValue = this.visitExpression(node.expr);
         this.builder.CreateRet(exprValue);
@@ -535,11 +534,11 @@ export class CodeGenerator extends BaseCodeGenerator {
     if (expr instanceof NodeAccess) {
       return this.visitAccess(expr);
     } else if (expr instanceof NodeBinaryOp) {
-      return this.visitBinaryOp(expr);
+      return this.visitBinaryOp(expr, context);
     } else if (expr instanceof NodeCall) {
       return this.visitCall(expr, context);
     } else if (expr instanceof NodeTerm) {
-      return this.visitTerm(expr);
+      return this.visitTerm(expr, context);
     } else if (expr instanceof NodeAssignment) {
       return this.visitAssignment(expr);
     } else if (expr instanceof NodeStructInit) {
@@ -714,32 +713,49 @@ export class CodeGenerator extends BaseCodeGenerator {
     return this.builder.getInt32(0);
   }
 
-  visitBinaryOp(node: NodeBinaryOp): llvm.Value {
+  visitBinaryOp(node: NodeBinaryOp, context?: ExpressionContext): llvm.Value {
+    const pointer = context?.pointer;
     const op = node.op;
     const lhs = this.visitExpression(node.lhs);
     const rhs = this.visitExpression(node.rhs);
 
+    let irOperation: llvm.Value | null = null;
     switch (op.type) {
       case GomToken.PLUS:
-        return this.builder.CreateAdd(lhs, rhs, "addtmp");
+        irOperation = this.builder.CreateAdd(lhs, rhs, "addtmp");
+        break;
       case GomToken.MINUS:
-        return this.builder.CreateSub(lhs, rhs, "subtmp");
+        irOperation = this.builder.CreateSub(lhs, rhs, "subtmp");
+        break;
       case GomToken.MUL:
-        return this.builder.CreateMul(lhs, rhs, "multmp");
+        irOperation = this.builder.CreateMul(lhs, rhs, "multmp");
+        break;
       case GomToken.DIV:
-        return this.builder.CreateSDiv(lhs, rhs, "divtmp");
+        irOperation = this.builder.CreateSDiv(lhs, rhs, "divtmp");
+        break;
       case GomToken.EQEQ:
-        return this.builder.CreateICmpEQ(lhs, rhs, "eqtmp");
+        irOperation = this.builder.CreateICmpEQ(lhs, rhs, "eqtmp");
+        break;
       case GomToken.LT:
-        return this.builder.CreateICmpSLT(lhs, rhs, "lttmp");
+        irOperation = this.builder.CreateICmpSLT(lhs, rhs, "lttmp");
+        break;
       case GomToken.GT:
-        return this.builder.CreateICmpSGT(lhs, rhs, "gttmp");
+        irOperation = this.builder.CreateICmpSGT(lhs, rhs, "gttmp");
+        break;
       case GomToken.LTE:
-        return this.builder.CreateICmpSLE(lhs, rhs, "ltetmp");
+        irOperation = this.builder.CreateICmpSLE(lhs, rhs, "ltetmp");
+        break;
       case GomToken.GTE:
-        return this.builder.CreateICmpSGE(lhs, rhs, "gtetmp");
+        irOperation = this.builder.CreateICmpSGE(lhs, rhs, "gtetmp");
+        break;
       default:
         throw new Error("Unknown operator: " + op.type);
+    }
+
+    if (pointer) {
+      return this.builder.CreateStore(irOperation, pointer);
+    } else {
+      return irOperation;
     }
   }
 
@@ -772,40 +788,88 @@ export class CodeGenerator extends BaseCodeGenerator {
     }
   }
 
-  visitTerm(node: NodeTerm): llvm.Value {
+  visitTerm(node: NodeTerm, context?: ExpressionContext): llvm.Value {
+    const pointer = context?.pointer;
     const type = node.token.type;
-    if (type === GomToken.NUMLITERAL) {
-      return this.builder.getInt32(parseInt(node.token.value));
-    } else if (type === GomToken.STRLITERAL) {
-      return this.getStringLiteralPointer(node);
-    } else if (type === GomToken.IDENTIFIER) {
-      const id = this.symbolTableReader.getIdentifier(node.token.value);
-      if (!id) {
-        // throw new Error("Unknown identifier: " + node.token.value);
-        this.errorManager.throwCodegenError({
-          loc: node.loc,
-          message: "Unknown identifier: " + node.token.value,
-        });
-      }
-      if (!id.allocaInst) {
-        // throw new Error("Identifier not allocated: " + node.token.value);
-        this.errorManager.throwCodegenError({
-          loc: node.loc,
-          message: "Identifier not allocated: " + node.token.value,
-        });
-      }
+    if (pointer) {
+      if (type === GomToken.NUMLITERAL) {
+        const value = parseInt(node.token.value);
+        const intValue = this.builder.getInt32(value);
+        this.builder.CreateStore(intValue, pointer);
+        return intValue;
+      } else if (type === GomToken.STRLITERAL) {
+        const strPtr = this.getStringLiteralPointer(node);
+        this.builder.CreateStore(strPtr, pointer);
+        return strPtr;
+      } else if (type === GomToken.IDENTIFIER) {
+        const id = this.symbolTableReader.getIdentifier(node.token.value);
+        if (!id) {
+          // throw new Error("Unknown identifier: " + node.token.value);
+          this.errorManager.throwCodegenError({
+            loc: node.loc,
+            message: "Unknown identifier: " + node.token.value,
+          });
+        }
+        if (!id.allocaInst) {
+          // throw new Error("Identifier not allocated: " + node.token.value);
+          this.errorManager.throwCodegenError({
+            loc: node.loc,
+            message: "Identifier not allocated: " + node.token.value,
+          });
+        }
 
-      return this.builder.CreateLoad(
-        this.mapGomTypeToLLVMType(id.type as GomPrimitiveTypeOrAlias),
-        id.allocaInst,
-        id.name + ".load"
-      );
-    } else if (type === GomToken.TRUE) {
-      return this.builder.getInt1(true);
-    } else if (type === GomToken.FALSE) {
-      return this.builder.getInt1(false);
+        const loadInst = this.builder.CreateLoad(
+          this.mapGomTypeToLLVMType(id.type as GomPrimitiveTypeOrAlias),
+          id.allocaInst,
+          id.name + ".load"
+        );
+        this.builder.CreateStore(loadInst, pointer);
+        return loadInst;
+      } else if (type === GomToken.TRUE) {
+        const trueValue = this.builder.getInt1(true);
+        this.builder.CreateStore(trueValue, pointer);
+        return trueValue;
+      } else if (type === GomToken.FALSE) {
+        const falseValue = this.builder.getInt1(false);
+        this.builder.CreateStore(falseValue, pointer);
+        return falseValue;
+      } else {
+        throw new Error("Unknown term type: " + type);
+      }
     } else {
-      throw new Error("Unknown term type: " + type);
+      if (type === GomToken.NUMLITERAL) {
+        return this.builder.getInt32(parseInt(node.token.value));
+      } else if (type === GomToken.STRLITERAL) {
+        return this.getStringLiteralPointer(node);
+      } else if (type === GomToken.IDENTIFIER) {
+        const id = this.symbolTableReader.getIdentifier(node.token.value);
+        if (!id) {
+          // throw new Error("Unknown identifier: " + node.token.value);
+          this.errorManager.throwCodegenError({
+            loc: node.loc,
+            message: "Unknown identifier: " + node.token.value,
+          });
+        }
+        if (!id.allocaInst) {
+          // throw new Error("Identifier not allocated: " + node.token.value);
+          this.errorManager.throwCodegenError({
+            loc: node.loc,
+            message: "Identifier not allocated: " + node.token.value,
+          });
+        }
+
+        return this.builder.CreateLoad(
+          this.mapGomTypeToLLVMType(id.type as GomPrimitiveTypeOrAlias),
+          id.allocaInst,
+          id.name + ".load"
+        );
+      } else if (type === GomToken.TRUE) {
+        return this.builder.getInt1(true);
+      } else if (type === GomToken.FALSE) {
+        return this.builder.getInt1(false);
+      } else {
+        throw new Error("Unknown term type: " + type);
+      }
     }
   }
 }

@@ -116,10 +116,6 @@ export const compileAndReturn = async (
 };
 
 export const runCompile = async (srcPath: string, target: "llvm" | "c") => {
-  try {
-    const src = await readFile(srcPath, "utf-8");
-    await compile(srcPath, src, target);
-  } catch (e) {
-    console.error(e);
-  }
+  const src = await readFile(srcPath, "utf-8");
+  await compile(srcPath, src, target);
 };

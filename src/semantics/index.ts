@@ -14,6 +14,7 @@ import {
   NodeLetStatement,
   NodeMainFunction,
   NodeProgram,
+  NodeReturnStatement,
   NodeStructInit,
   NodeTerm,
   NodeTupleLiteral,
@@ -34,6 +35,7 @@ import { GomModule } from "../parser/rd/modules";
 
 export class SemanticAnalyzer extends SimpleVisitor<void> {
   scopeManager: ScopeManager;
+  private currentFunctionDefinition: NodeFunctionDefinition | null = null;
 
   constructor(private ast: NodeProgram, private errorManager: GomErrorManager) {
     super();
@@ -83,6 +85,7 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
   }
 
   visitFunctionDefinition(node: NodeFunctionDefinition): void {
+    this.currentFunctionDefinition = node;
     let returnType: GomType;
     const nodeReturnType = node.returnType;
     if (nodeReturnType) {
@@ -141,6 +144,7 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
     });
     node.body.forEach((stmt) => this.visit(stmt));
     this.scopeManager.endScope();
+    this.currentFunctionDefinition = null;
   }
 
   visitForStatement(node: NodeForStatement): void {
@@ -217,6 +221,35 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
         );
       }
     });
+  }
+
+  visitReturnStatement(node: NodeReturnStatement): void {
+    let returnType: GomType | null = null;
+    if (node.expr) {
+      this.visit(node.expr);
+      const typeResolver = new TypeResolver(
+        this.scopeManager,
+        this.errorManager
+      );
+      returnType = typeResolver.resolveType(node.expr);
+    }
+    if (this.currentFunctionDefinition) {
+      const fnType = this.currentFunctionDefinition.resultantType;
+      if (
+        fnType instanceof GomFunctionType &&
+        returnType &&
+        !returnType.isEqual(fnType.returnType) &&
+        !(
+          returnType instanceof GomPrimitiveTypeOrAlias &&
+          returnType.typeString === "void"
+        )
+      ) {
+        this.errorManager.throwTypeError({
+          message: `Return type mismatch: expected ${fnType.returnType.toStr()}, got ${returnType.toStr()}`,
+          loc: node.loc,
+        });
+      }
+    }
   }
 
   visitAccess(node: NodeAccess): void {

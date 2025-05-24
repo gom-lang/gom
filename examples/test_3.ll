@@ -47,6 +47,7 @@ entry:
   store i32 %2, i32* %4, align 4
   %i = alloca i32, align 4
   store i32 0, i32* %i, align 4
+  store i32 0, i32* %i, align 4
   %retries.load = load i32, i32* %4, align 4
   store i32 %retries.load, i32* %i, align 4
   br label %loop
@@ -57,9 +58,12 @@ loop:                                             ; preds = %loopupdate, %entry
   br i1 %gttmp, label %loopbody, label %afterloop
 
 loopbody:                                         ; preds = %loop
-  %i.load1 = load i32, i32* %i, align 4
+  %retries.load1 = load i32, i32* %4, align 4
+  %i.load2 = load i32, i32* %i, align 4
+  %subtmp = sub i32 %retries.load1, %i.load2
+  %addtmp = add i32 %subtmp, 1
   %calltmp0 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.strliteral.1, i32 0, i32 0))
-  %calltmp1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @fmt.int, i32 0, i32 0), i32 %i.load1)
+  %calltmp1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @fmt.int, i32 0, i32 0), i32 %addtmp)
   %newline = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([2 x i8], [2 x i8]* @newline, i32 0, i32 0))
   %resp = alloca { i32, i1 }, align 8
   %url.load = load i8*, i8** %3, align 8
@@ -69,21 +73,22 @@ loopbody:                                         ; preds = %loop
   br i1 %fieldload, label %then, label %else
 
 loopupdate:                                       ; preds = %merge
-  %i.load2 = load i32, i32* %i, align 4
-  %subtmp = sub i32 %i.load2, 1
-  store i32 %subtmp, i32* %i, align 4
+  %i.load3 = load i32, i32* %i, align 4
+  %subtmp4 = sub i32 %i.load3, 1
+  store i32 %subtmp4, i32* %i, align 4
   br label %loop
 
 afterloop:                                        ; preds = %loop
-  %fieldptr3 = getelementptr { i32, i1 }, { i32, i1 }* %0, i32 0, i32 0
-  store i32 500, i32* %fieldptr3, align 4
-  %fieldptr4 = getelementptr { i32, i1 }, { i32, i1 }* %0, i32 0, i32 1
-  store i1 false, i1* %fieldptr4, align 1
+  %fieldptr5 = getelementptr { i32, i1 }, { i32, i1 }* %0, i32 0, i32 0
+  store i32 500, i32* %fieldptr5, align 4
+  %fieldptr6 = getelementptr { i32, i1 }, { i32, i1 }* %0, i32 0, i32 1
+  store i1 false, i1* %fieldptr6, align 1
   ret void
 
 then:                                             ; preds = %loopbody
   %resp.load = load { i32, i1 }, { i32, i1 }* %resp, align 4
-  ret { i32, i1 } %resp.load
+  store { i32, i1 } %resp.load, { i32, i1 }* %0, align 4
+  ret void
   br label %merge
 
 else:                                             ; preds = %loopbody
@@ -96,7 +101,7 @@ merge:                                            ; preds = %else, %then
 define void @main() {
 entry:
   %resp = alloca { i32, i1 }, align 8
-  call void @process_http_retry({ i32, i1 }* %resp, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.strliteral.2, i32 0, i32 0), i32 3)
+  call void @process_http_retry({ i32, i1 }* %resp, i8* getelementptr inbounds ([23 x i8], [23 x i8]* @.strliteral.2, i32 0, i32 0), i32 10)
   %fieldptr = getelementptr { i32, i1 }, { i32, i1 }* %resp, i32 0, i32 0
   %fieldload = load i32, i32* %fieldptr, align 4
   %fieldptr1 = getelementptr { i32, i1 }, { i32, i1 }* %resp, i32 0, i32 1
