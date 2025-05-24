@@ -1,0 +1,31 @@
+import io;
+
+// tuple
+type HttpResponse = { int, bool };
+
+
+fn process_http(url: str): HttpResponse {
+  if(url == "http://www.example.com") {
+    return { 200, true };
+  }
+  
+  return { 401, false };
+}
+
+fn process_http_retry(url: str, retries: int): HttpResponse {
+  let i = 0;
+  for(i = retries; i > 0; i = i - 1) {
+    io.log("Round: ", retries - i + 1);
+    let resp = process_http(url);
+    if(resp.1) {
+      return resp;
+    }
+  }
+
+  return { 500, false };
+}
+
+fn main() {
+  let resp = process_http_retry("http://www.example.com", 10);
+  io.log("Status: ", resp.0, " Success: ", resp.1);
+}

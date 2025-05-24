@@ -111,26 +111,25 @@ export class CodeGenerator extends BaseCodeGenerator {
   }
 
   visitFunctionDefinition(node: NodeFunctionDefinition): void {
-    this.symbolTableReader.enterScope(node.name.value);
-    this.irScopeManager.enterScope(node.name.value);
-    const returnType = this.mapGomTypeToC(
-      node.gomType.returnType as GomPrimitiveTypeOrAlias
-    );
-    const argsType = node.gomType.args.map((arg) =>
-      this.mapGomTypeToC(arg as GomPrimitiveTypeOrAlias)
-    );
-
-    this.writeLine(
-      `${returnType} ${node.name.value}(${argsType
-        .map((type, i) => `${type} ${node.args[i].name.token.value}`)
-        .join(", ")}) {`
-    );
-    this.indent++;
-    node.body.forEach((stmt) => this.visit(stmt));
-    this.indent--;
-    this.writeLine("}");
-    this.symbolTableReader.exitScope();
-    this.irScopeManager.exitScope();
+    // this.symbolTableReader.enterScope(node.name.value);
+    // this.irScopeManager.enterScope(node.name.value);
+    // const returnType = this.mapGomTypeToC(
+    //   node.gomType.returnType as GomPrimitiveTypeOrAlias
+    // );
+    // const argsType = node.gomType.args.map((arg) =>
+    //   this.mapGomTypeToC(arg as GomPrimitiveTypeOrAlias)
+    // );
+    // this.writeLine(
+    //   `${returnType} ${node.name.value}(${argsType
+    //     .map((type, i) => `${type} ${node.args[i].name.token.value}`)
+    //     .join(", ")}) {`
+    // );
+    // this.indent++;
+    // node.body.forEach((stmt) => this.visit(stmt));
+    // this.indent--;
+    // this.writeLine("}");
+    // this.symbolTableReader.exitScope();
+    // this.irScopeManager.exitScope();
   }
 
   visitLetStatement(node: NodeLetStatement): void {

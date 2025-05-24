@@ -1,6 +1,10 @@
+import chalk from "chalk";
+
 export class SyntaxError extends Error {
   constructor({ loc, message }: { loc: [number, number]; message: string }) {
-    super(`SyntaxError at ${loc.join(":")}: ${message}`);
+    super(
+      chalk.bold(`${chalk.red(`SyntaxError at ${loc.join(":")}`)}: ${message}`)
+    );
   }
 }
 

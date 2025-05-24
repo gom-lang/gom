@@ -1,7 +1,7 @@
 import { Lexer, Token } from "../../lexer";
 import { GomToken } from "../../lexer/tokens";
 import { GomErrorManager } from "../../util/error";
-import { GomModule } from "./modules";
+import chalk from "chalk";
 import {
   NodeAccess,
   NodeArgumentItem,
@@ -15,18 +15,23 @@ import {
   NodeForStatement,
   NodeFunctionDefinition,
   NodeFunctionReturnType,
-  NodeGomTypeIdOrArray,
+  NodeGomType,
+  NodeGomTypeComposite,
+  NodeGomTypeId,
   NodeGomTypeStruct,
   NodeGomTypeStructField,
+  NodeGomTypeTuple,
   NodeIfStatement,
   NodeImportDeclaration,
   NodeLetStatement,
+  NodeListLiteral,
   NodeMainFunction,
   NodeProgram,
   NodeReturnStatement,
   NodeStatement,
   NodeStructInit,
   NodeTerm,
+  NodeTupleLiteral,
   NodeTypeDefinition,
 } from "./nodes";
 import { NodeType } from "./tree";
@@ -57,7 +62,9 @@ export class RecursiveDescentParser {
       return matched;
     } else {
       this.errorManager.throwSyntaxError({
-        message: `Unexpected token: ${this.token.value}`,
+        message: `Unexpected token: ${chalk.red(
+          this.token.value
+        )}, expected ${chalk.green(type)}`,
         loc: this.token.start,
       });
     }
@@ -196,17 +203,66 @@ export class RecursiveDescentParser {
     });
   }
 
-  parseGomType(typeName: NodeTerm) {
-    if (this.peek(GomToken.LBRACE)) {
-      return this.parseStructType(typeName);
-    } else if (
-      this.peek(GomToken.IDENTIFIER) ||
-      this.peek(GomToken.BUILT_IN_TYPE)
-    ) {
-      return this.parseTypeIdOrArray();
+  parseGomType(typeName?: NodeTerm): NodeGomType {
+    if (this.peek(GomToken.FN)) {
+      // Function type
+    } else if (this.peek(GomToken.LBRACE)) {
+      this.buffer.push(this.lexer.nextToken(), this.lexer.nextToken());
+      if (
+        this.buffer[this.buffer.length - 1].type === GomToken.COLON &&
+        typeName
+      ) {
+        return this.parseStructType(typeName);
+      } else {
+        return this.parseTupleType();
+      }
+    } else if (this.peek(GomToken.IDENTIFIER)) {
+      this.buffer.push(this.lexer.nextToken());
+      if (this.buffer[this.buffer.length - 1].type === GomToken.LT) {
+        // composite type
+        return this.parseCompositeType();
+      } else {
+        return this.parseTypeId();
+      }
+    } else if (this.peek(GomToken.BUILT_IN_TYPE)) {
+      return this.parseTypeId();
     }
 
     throw new Error(`Unexpected token: ${this.token.value}`);
+  }
+
+  parseCompositeType(): NodeGomTypeComposite {
+    const baseType = this.parseTerm();
+    this.match(GomToken.LT);
+    const fields = this.parseOneOrMore(() => {
+      const type = this.parseGomType(baseType);
+      if (!this.peek(GomToken.GT)) {
+        this.match(GomToken.COMMA);
+      }
+      return type;
+    });
+    this.match(GomToken.GT);
+
+    return new NodeGomTypeComposite({
+      id: baseType,
+      fields,
+      loc: baseType.token.start,
+    });
+  }
+
+  parseTupleType(): NodeGomTypeTuple {
+    const loc = this.token.start;
+    this.match(GomToken.LBRACE);
+    const fields = this.parseZeroOrMore(() => {
+      const type = this.parseGomType();
+      if (!this.peek(GomToken.RBRACE)) {
+        this.match(GomToken.COMMA);
+      }
+      return type;
+    });
+    this.match(GomToken.RBRACE);
+
+    return new NodeGomTypeTuple({ fields, loc });
   }
 
   parseStructType(typeName: NodeTerm) {
@@ -222,7 +278,7 @@ export class RecursiveDescentParser {
     const loc = this.token.start;
     const name = this.match(GomToken.IDENTIFIER);
     this.match(GomToken.COLON);
-    const type = this.parseTypeIdOrArray();
+    const type = this.parseTypeId();
     if (!this.peek(GomToken.RBRACE)) {
       this.match(GomToken.COMMA);
     }
@@ -230,22 +286,12 @@ export class RecursiveDescentParser {
     return new NodeGomTypeStructField({ name, fieldType: type, loc });
   }
 
-  parseTypeIdOrArray() {
-    const baseType = this.parseTerm() as NodeTerm;
+  parseTypeId() {
+    const type = this.parseTerm() as NodeTerm;
 
-    if (this.accept(GomToken.LBRACKET)) {
-      const size = this.parseTerm();
-      this.match(GomToken.RBRACKET);
-      return new NodeGomTypeIdOrArray({
-        id: baseType,
-        arrSize: size,
-        loc: baseType.token.start,
-      });
-    }
-
-    return new NodeGomTypeIdOrArray({
-      id: baseType,
-      loc: baseType.token.start,
+    return new NodeGomTypeId({
+      id: type,
+      loc: type.token.start,
     });
   }
 
@@ -287,8 +333,7 @@ export class RecursiveDescentParser {
   parseFunctionReturnType() {
     const loc = this.token.start;
     this.match(GomToken.COLON);
-    const type = this.match(GomToken.BUILT_IN_TYPE); // can be custom type
-
+    const type = this.parseGomType();
     return new NodeFunctionReturnType({ returnType: type, loc });
   }
 
@@ -414,7 +459,8 @@ export class RecursiveDescentParser {
    * 3. Quot
    * 4. Expo
    * 5. Call
-   * 6. Term
+   * 6. Tuple/list literal
+   * 7. Term
    */
 
   parseExpression(): NodeExpr {
@@ -424,6 +470,10 @@ export class RecursiveDescentParser {
       const expr = this.parseExpression();
       this.match(GomToken.RPAREN);
       return new NodeExprBracketed({ expr, loc });
+    } else if (this.peek(GomToken.LBRACE)) {
+      return this.parseTupleLiteral();
+    } else if (this.peek(GomToken.LBRACKET)) {
+      return this.parseListLiteral();
     } else if (this.peek(GomToken.IDENTIFIER)) {
       this.buffer.push(this.lexer.nextToken());
       if (this.buffer[1].type === GomToken.EQ) {
@@ -434,6 +484,36 @@ export class RecursiveDescentParser {
     } else {
       return this.parseComparison();
     }
+  }
+
+  parseTupleLiteral(): NodeTupleLiteral {
+    const loc = this.token.start;
+    this.match(GomToken.LBRACE);
+    const elements = this.parseZeroOrMore(() => {
+      const expr = this.parseExpression();
+      if (!this.peek(GomToken.RBRACE)) {
+        this.match(GomToken.COMMA);
+      }
+      return expr;
+    });
+    this.match(GomToken.RBRACE);
+
+    return new NodeTupleLiteral({ elements, loc });
+  }
+
+  parseListLiteral(): NodeListLiteral {
+    const loc = this.token.start;
+    this.match(GomToken.LBRACKET);
+    const elements = this.parseZeroOrMore(() => {
+      const expr = this.parseExpression();
+      if (!this.peek(GomToken.RBRACKET)) {
+        this.match(GomToken.COMMA);
+      }
+      return expr;
+    });
+    this.match(GomToken.RBRACKET);
+
+    return new NodeListLiteral({ elements, loc });
   }
 
   parseAssignment(): NodeAssignment {
