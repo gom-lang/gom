@@ -7,7 +7,6 @@
     "gomc": "run.sh"
   },
   "scripts": {
-    "build": "tsc",
     "test": "vitest run",
     "compile": "tsx run.ts",
     "changeset": "changeset",
