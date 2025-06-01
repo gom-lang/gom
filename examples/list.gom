@@ -1,0 +1,12 @@
+import io;
+
+type Numbers = [int];
+
+fn main() {
+  let numbers = Numbers { 1, 2, 3, 4, 5 };
+
+  let i = 0;
+  for(i; i < 5; i = i + 1) {
+    io.log("numbers[", i, "] = ", numbers.i);
+  }
+}

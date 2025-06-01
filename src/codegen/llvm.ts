@@ -5,12 +5,15 @@ import {
   NodeAssignment,
   NodeBinaryOp,
   NodeCall,
+  NodeCollectionInit,
   NodeExpr,
   NodeExprBracketed,
   NodeExpressionStatement,
   NodeForStatement,
   NodeFunctionDefinition,
+  NodeGomTypeList,
   NodeGomTypeStruct,
+  NodeGomTypeTuple,
   NodeIfStatement,
   NodeLetStatement,
   NodeMainFunction,
@@ -25,6 +28,7 @@ import { ScopeManager } from "../semantics/scope";
 import {
   GomCompositeType,
   GomFunctionType,
+  GomListType,
   GomPrimitiveTypeOrAlias,
   GomPrimitiveTypeOrAliasValue,
   GomStructType,
@@ -50,6 +54,8 @@ type ExpressionContext = Partial<{
   pointer: llvm.Value;
 }>;
 
+const LIST_INITIAL_CAPACITY = 16;
+
 /**
  * Generates LLVM IR - todo to use llvm bindings
  */
@@ -63,7 +69,9 @@ export class CodeGenerator extends BaseCodeGenerator {
   private formatStrings: Record<GomPrimitiveTypeOrAliasValue, llvm.Value> = {};
   private globalStringPtrs: Record<string, llvm.Value> = {};
 
-  private structTypes: Record<string, llvm.StructType> = {};
+  private complexTypes: Record<string, llvm.StructType> = {};
+
+  private mallocedPointers: Record<string, llvm.Value> = {};
 
   constructor({
     ast,
@@ -131,12 +139,21 @@ export class CodeGenerator extends BaseCodeGenerator {
   }
 
   private mapGomStructTypeToLLVMType(type: GomStructType) {
-    const structType = this.structTypes[type.name];
+    const structType = this.complexTypes[type.name];
     if (!structType) {
       throw new Error("Unknown type: " + type.name);
     }
 
     return structType;
+  }
+
+  private mapGomListTypeToLLVMType(type: GomListType) {
+    const listType = this.complexTypes[type.name];
+    if (!listType) {
+      throw new Error("Unknown type: " + type.name);
+    }
+
+    return listType;
   }
 
   private mapGomTypeToLLVMType(type: GomType): llvm.Type {
@@ -146,8 +163,9 @@ export class CodeGenerator extends BaseCodeGenerator {
       return this.mapGomStructTypeToLLVMType(type);
     } else if (type instanceof GomTupleType) {
       return this.mapGomTupleTypeToLLVMType(type);
+    } else if (type instanceof GomListType) {
+      return this.mapGomListTypeToLLVMType(type);
     }
-
     throw new Error("Unknown type: " + type.toStr());
   }
 
@@ -201,6 +219,13 @@ export class CodeGenerator extends BaseCodeGenerator {
     );
 
     this.module.getOrInsertFunction("printf", printFnType);
+
+    const mallocFnType = llvm.FunctionType.get(
+      this.builder.getInt8PtrTy(),
+      [this.builder.getInt32Ty()],
+      false
+    );
+    this.module.getOrInsertFunction("malloc", mallocFnType);
   }
 
   override generateAndWriteFile(): void {
@@ -239,7 +264,46 @@ export class CodeGenerator extends BaseCodeGenerator {
       });
       structType.setBody(fields);
 
-      this.structTypes[type.name] = structType;
+      this.complexTypes[type.name] = structType;
+    } else if (node.rhs instanceof NodeGomTypeTuple) {
+      const type = this.symbolTableReader.getType(node.name.token.value);
+      if (!type) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "Unknown type: " + node.name.token.value,
+        });
+      }
+      const tupleType = llvm.StructType.create(
+        this.context,
+        node.name.token.value
+      );
+      const gomType = type.gomType as GomTupleType;
+      const fields = Array.from(gomType.fields).map(([_key, fieldType]) => {
+        return this.mapGomTypeToLLVMType(fieldType);
+      });
+      tupleType.setBody(fields);
+      this.complexTypes[type.name] = tupleType;
+    } else if (node.rhs instanceof NodeGomTypeList) {
+      const type = this.symbolTableReader.getType(node.name.token.value);
+      if (!type) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "Unknown type: " + node.name.token.value,
+        });
+      }
+      const listType = llvm.StructType.create(
+        this.context,
+        node.name.token.value
+      );
+      const gomType = type.gomType as GomListType;
+      const elementType = this.mapGomTypeToLLVMType(gomType.elementType);
+      listType.setBody([
+        llvm.PointerType.get(elementType, 0), // data
+        llvm.Type.getInt32Ty(this.context), // size
+        llvm.Type.getInt32Ty(this.context), // capacity
+      ]);
+
+      this.complexTypes[type.name] = listType;
     }
   }
 
@@ -543,6 +607,8 @@ export class CodeGenerator extends BaseCodeGenerator {
       return this.visitAssignment(expr);
     } else if (expr instanceof NodeStructInit) {
       return this.visitStructInit(expr, context);
+    } else if (expr instanceof NodeCollectionInit) {
+      return this.visitCollectionInit(expr, context);
     } else if (expr instanceof NodeTupleLiteral) {
       return this.visitTupleLiteral(expr, context);
     } else if (expr instanceof NodeExprBracketed) {
@@ -606,6 +672,113 @@ export class CodeGenerator extends BaseCodeGenerator {
       this.builder.CreateStore(fieldVal, fieldPtr);
     });
     return structAlloca;
+  }
+
+  visitCollectionInit(
+    node: NodeCollectionInit,
+    context?: ExpressionContext
+  ): llvm.Value {
+    if (node.resultantType instanceof GomTupleType) {
+      const type = this.mapGomTypeToLLVMType(
+        node.resultantType as GomTupleType
+      );
+      const tuple = this.builder.CreateAlloca(type, null, "tuple");
+      node.elements.forEach((element, i) => {
+        const fieldVal = this.visitExpression(element);
+        const fieldPtr = this.builder.CreateGEP(
+          type,
+          tuple,
+          [this.builder.getInt32(0), this.builder.getInt32(i)],
+          "fieldptr"
+        );
+        this.builder.CreateStore(fieldVal, fieldPtr);
+      });
+      return tuple;
+    } else if (node.resultantType instanceof GomListType) {
+      const gomListType = node.resultantType as GomListType;
+      const listType = this.mapGomTypeToLLVMType(gomListType);
+      // const listPtr = this.builder.CreateAlloca(listType, null, "list_ptr");
+      const listPtr = context?.pointer
+        ? context.pointer
+        : this.builder.CreateAlloca(listType, null, "list_ptr");
+
+      const dataPtrPtr = this.builder.CreateGEP(
+        listType,
+        listPtr,
+        [this.builder.getInt32(0), this.builder.getInt32(0)],
+        "data_ptr_ptr"
+      );
+      const sizePtr = this.builder.CreateGEP(
+        listType,
+        listPtr,
+        [this.builder.getInt32(0), this.builder.getInt32(1)],
+        "size_ptr"
+      );
+      const capacityPtr = this.builder.CreateGEP(
+        listType,
+        listPtr,
+        [this.builder.getInt32(0), this.builder.getInt32(2)],
+        "capacity_ptr"
+      );
+
+      const initialCapacity = this.builder.getInt32(
+        Math.max(LIST_INITIAL_CAPACITY, node.elements.length)
+      );
+      this.builder.CreateStore(initialCapacity, capacityPtr);
+      this.builder.CreateStore(
+        this.builder.getInt32(node.elements.length),
+        sizePtr
+      );
+
+      const elementType = this.mapGomTypeToLLVMType(gomListType.elementType);
+      const sizeOfType = llvm.ConstantInt.get(
+        llvm.Type.getInt32Ty(this.context),
+        this.module.getDataLayout().getTypeAllocSize(elementType)
+      );
+
+      const mallocSize = this.builder.CreateMul(
+        initialCapacity,
+        sizeOfType,
+        "malloc_size"
+      );
+      const mallocFn = this.module.getFunction("malloc");
+      if (!mallocFn) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "malloc function not added globally",
+        });
+      }
+      const mallocCall = this.builder.CreateCall(
+        mallocFn,
+        [mallocSize],
+        "malloc_call"
+      );
+      const dataAlloca = this.builder.CreateBitCast(
+        mallocCall,
+        llvm.PointerType.get(elementType, 0),
+        "data_alloca"
+      );
+      this.builder.CreateStore(dataAlloca, dataPtrPtr);
+
+      // initialize elements
+      node.elements.forEach((element, i) => {
+        const elementVal = this.visitExpression(element);
+        const elementPtr = this.builder.CreateInBoundsGEP(
+          elementType,
+          dataAlloca,
+          [this.builder.getInt32(i)],
+          "element_ptr"
+        );
+        this.builder.CreateStore(elementVal, elementPtr);
+      });
+
+      return listPtr;
+    }
+
+    this.errorManager.throwCodegenError({
+      loc: node.loc,
+      message: "Collection init without tuple or list type",
+    });
   }
 
   visitTupleLiteral(
@@ -707,6 +880,47 @@ export class CodeGenerator extends BaseCodeGenerator {
         this.mapGomTypeToLLVMType(node.rhs.resultantType),
         ptr,
         "fieldload"
+      );
+    } else if (node.lhs.resultantType instanceof GomListType) {
+      const type = node.lhs.resultantType;
+      const listType = this.mapGomTypeToLLVMType(type);
+      const list = this.symbolTableReader.getIdentifier(idName);
+      if (!list) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "Unknown list: " + idName,
+        });
+      }
+      if (!list.allocaInst) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "List not allocated: " + idName,
+        });
+      }
+
+      const indexValue = this.visitExpression(node.rhs);
+      const dataPtrPtr = this.builder.CreateInBoundsGEP(
+        listType,
+        list.allocaInst,
+        [this.builder.getInt32(0), this.builder.getInt32(0)],
+        "data_ptr_ptr"
+      );
+      const dataPtr = this.builder.CreateLoad(
+        llvm.PointerType.get(llvm.Type.getInt32Ty(this.context), 0),
+        dataPtrPtr,
+        "data_ptr"
+      );
+
+      const elementPtr = this.builder.CreateInBoundsGEP(
+        this.mapGomTypeToLLVMType(type.elementType),
+        dataPtr,
+        [indexValue],
+        "element_ptr"
+      );
+      return this.builder.CreateLoad(
+        this.mapGomTypeToLLVMType(type.elementType),
+        elementPtr,
+        "element_load"
       );
     }
 

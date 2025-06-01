@@ -8,6 +8,7 @@ import {
   NodeAssignment,
   NodeBinaryOp,
   NodeCall,
+  NodeCollectionInit,
   NodeConstStatement,
   NodeExpr,
   NodeExprBracketed,
@@ -18,13 +19,13 @@ import {
   NodeGomType,
   NodeGomTypeComposite,
   NodeGomTypeId,
+  NodeGomTypeList,
   NodeGomTypeStruct,
   NodeGomTypeStructField,
   NodeGomTypeTuple,
   NodeIfStatement,
   NodeImportDeclaration,
   NodeLetStatement,
-  NodeListLiteral,
   NodeMainFunction,
   NodeProgram,
   NodeReturnStatement,
@@ -216,6 +217,9 @@ export class RecursiveDescentParser {
       } else {
         return this.parseTupleType();
       }
+    } else if (this.peek(GomToken.LBRACKET) && typeName) {
+      // List type
+      return this.parseListType(typeName);
     } else if (this.peek(GomToken.IDENTIFIER)) {
       this.buffer.push(this.lexer.nextToken());
       if (this.buffer[this.buffer.length - 1].type === GomToken.LT) {
@@ -229,6 +233,19 @@ export class RecursiveDescentParser {
     }
 
     throw new Error(`Unexpected token: ${this.token.value}`);
+  }
+
+  parseListType(typeName: NodeTerm): NodeGomType {
+    const loc = this.token.start;
+    this.match(GomToken.LBRACKET);
+    const baseType = this.parseGomType();
+    this.match(GomToken.RBRACKET);
+
+    return new NodeGomTypeList({
+      name: typeName,
+      elementType: baseType,
+      loc,
+    });
   }
 
   parseCompositeType(): NodeGomTypeComposite {
@@ -472,14 +489,12 @@ export class RecursiveDescentParser {
       return new NodeExprBracketed({ expr, loc });
     } else if (this.peek(GomToken.LBRACE)) {
       return this.parseTupleLiteral();
-    } else if (this.peek(GomToken.LBRACKET)) {
-      return this.parseListLiteral();
     } else if (this.peek(GomToken.IDENTIFIER)) {
       this.buffer.push(this.lexer.nextToken());
       if (this.buffer[1].type === GomToken.EQ) {
         return this.parseAssignment();
       } else {
-        return this.parseStructInit();
+        return this.parseCollectionInit();
       }
     } else {
       return this.parseComparison();
@@ -501,21 +516,6 @@ export class RecursiveDescentParser {
     return new NodeTupleLiteral({ elements, loc });
   }
 
-  parseListLiteral(): NodeListLiteral {
-    const loc = this.token.start;
-    this.match(GomToken.LBRACKET);
-    const elements = this.parseZeroOrMore(() => {
-      const expr = this.parseExpression();
-      if (!this.peek(GomToken.RBRACKET)) {
-        this.match(GomToken.COMMA);
-      }
-      return expr;
-    });
-    this.match(GomToken.RBRACKET);
-
-    return new NodeListLiteral({ elements, loc });
-  }
-
   parseAssignment(): NodeAssignment {
     const loc = this.token.start;
     const lhs = this.parseTerm() as NodeTerm;
@@ -534,25 +534,62 @@ export class RecursiveDescentParser {
     return new NodeAccess({ lhs, rhs, loc });
   }
 
-  parseStructInit(): NodeExpr {
+  parseCollectionInit(): NodeExpr {
     if (this.buffer[1].type === GomToken.LBRACE) {
       const loc = this.token.start;
-      const structTypeName = this.parseTerm();
+      const id = this.parseTerm();
       this.match(GomToken.LBRACE);
-      const fields: [NodeTerm, NodeExpr][] = this.parseOneOrMore(() => {
-        const name = this.parseTerm();
-        this.match(GomToken.COLON);
-        const value = this.parseExpression();
-        if (!this.peek(GomToken.RBRACE)) this.match(GomToken.COMMA);
-        return [name, value];
-      });
-      this.match(GomToken.RBRACE);
-
-      return new NodeStructInit({ structTypeName, fields, loc });
+      // could be struct, tuple or list
+      this.buffer.push(this.lexer.nextToken());
+      // @ts-ignore
+      if (this.buffer[1].type === GomToken.COLON) {
+        const fields: [NodeTerm, NodeExpr][] = this.parseOneOrMore(() => {
+          const name = this.parseTerm();
+          this.match(GomToken.COLON);
+          const value = this.parseExpression();
+          if (!this.peek(GomToken.RBRACE)) this.match(GomToken.COMMA);
+          return [name, value];
+        });
+        this.match(GomToken.RBRACE);
+        return new NodeStructInit({ structTypeName: id, fields, loc });
+      } else {
+        // tuple or list
+        const elements: NodeExpr[] = this.parseZeroOrMore(() => {
+          const expr = this.parseExpression();
+          if (!this.peek(GomToken.RBRACE)) this.match(GomToken.COMMA);
+          return expr;
+        });
+        this.match(GomToken.RBRACE);
+        return new NodeCollectionInit({
+          collectionTypeName: id,
+          elements,
+          loc,
+        });
+      }
     }
 
     return this.parseComparison();
   }
+
+  // parseStructInit(): NodeExpr {
+  //   if (this.buffer[1].type === GomToken.LBRACE) {
+  //     const loc = this.token.start;
+  //     const structTypeName = this.parseTerm();
+  //     this.match(GomToken.LBRACE);
+  //     const fields: [NodeTerm, NodeExpr][] = this.parseOneOrMore(() => {
+  //       const name = this.parseTerm();
+  //       this.match(GomToken.COLON);
+  //       const value = this.parseExpression();
+  //       if (!this.peek(GomToken.RBRACE)) this.match(GomToken.COMMA);
+  //       return [name, value];
+  //     });
+  //     this.match(GomToken.RBRACE);
+
+  //     return new NodeStructInit({ structTypeName, fields, loc });
+  //   }
+
+  //   return this.parseComparison();
+  // }
 
   parseComparison(): NodeExpr {
     const loc = this.token.start;

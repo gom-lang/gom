@@ -1,10 +1,10 @@
 import { Token } from "../../../lexer";
 import { GomToken } from "../../../lexer/tokens";
 import {
-  GomArrayType,
   GomCompositeType,
   GomCompositeTypeKind,
   GomFunctionType,
+  GomListType,
   GomPrimitiveTypeOrAlias,
   GomStructType,
   GomTupleType,
@@ -352,6 +352,7 @@ export class NodeFunctionReturnType extends AbstractNode {
 export type NodeGomType =
   | NodeGomTypeId
   | NodeGomTypeStruct
+  | NodeGomTypeList
   | NodeGomTypeComposite
   | NodeGomTypeTuple;
 export class NodeGomTypeId extends AbstractNode {
@@ -415,6 +416,30 @@ export class NodeGomTypeStruct extends AbstractNode {
   }
 }
 
+export class NodeGomTypeList extends AbstractNode {
+  type: NodeType;
+  elementType: NodeGomType;
+  gomType: GomListType;
+  children: Node[];
+
+  constructor({
+    name,
+    elementType,
+    loc,
+  }: {
+    name: NodeTerm;
+    elementType: NodeGomType;
+    loc: number;
+  }) {
+    super();
+    this.type = NodeType.GOM_TYPE_LIST;
+    this.loc = loc;
+    this.elementType = elementType;
+    this.gomType = new GomListType(name.token.value, elementType.gomType);
+    this.children = formChildrenArray(elementType);
+  }
+}
+
 export class NodeGomTypeComposite extends AbstractNode {
   type: NodeType;
   id: NodeTerm;
@@ -445,8 +470,6 @@ export class NodeGomTypeComposite extends AbstractNode {
 
   static getGomCompositeTypeKind(id: NodeTerm): GomCompositeTypeKind {
     switch (id.token.value) {
-      case "List":
-        return GomCompositeTypeKind.List;
       default:
         return GomCompositeTypeKind._Custom;
     }
@@ -482,12 +505,12 @@ export type NodeExpr = NodeExprBasic | NodeExprBracketed;
 export type NodeExprBasic =
   | NodeAssignment
   | NodeStructInit
+  | NodeCollectionInit
   | NodeAccess
   | NodeIndexedAccess
   | NodeCall
   | NodeBinaryOp
   | NodeTupleLiteral
-  | NodeListLiteral
   | NodeTerm;
 
 export class NodeAssignment extends AbstractNode {
@@ -543,6 +566,34 @@ export class NodeStructInit extends AbstractNode {
       }, new Map<string, GomType>())
     );
     this.children = formChildrenArray(fields.map(([, expr]) => expr));
+  }
+}
+
+export class NodeCollectionInit extends AbstractNode {
+  type: NodeType;
+  collectionTypeName: NodeTerm;
+  elements: NodeExpr[];
+  resultantType: GomType;
+
+  constructor({
+    collectionTypeName,
+    elements,
+    loc,
+  }: {
+    collectionTypeName: NodeTerm;
+    elements: NodeExpr[];
+    loc: number;
+  }) {
+    super();
+    this.type = NodeType.COLLECTION_INIT;
+    this.loc = loc;
+    this.collectionTypeName = collectionTypeName;
+    this.elements = elements;
+    this.resultantType = new GomListType(
+      collectionTypeName.token.value,
+      elements[0].resultantType
+    );
+    this.children = formChildrenArray(elements);
   }
 }
 
@@ -687,26 +738,6 @@ export class NodeTupleLiteral extends AbstractNode {
     this.gomType = new GomTupleType(
       elements.map((elements) => elements.resultantType)
     );
-    this.resultantType = this.gomType;
-  }
-}
-
-export class NodeListLiteral extends AbstractNode {
-  type: NodeType;
-  elements: NodeExpr[];
-  children: Node[];
-  gomType: GomType;
-  resultantType: GomType;
-
-  constructor({ elements, loc }: { elements: NodeExpr[]; loc: number }) {
-    super();
-    this.type = NodeType.LIST_LITERAL;
-    this.loc = loc;
-    this.elements = elements;
-    this.children = elements;
-    this.gomType = new GomCompositeType(GomCompositeTypeKind.List, [
-      elements[0].resultantType,
-    ]);
     this.resultantType = this.gomType;
   }
 }

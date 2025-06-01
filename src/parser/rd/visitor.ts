@@ -4,6 +4,7 @@ import {
   NodeAssignment,
   NodeBinaryOp,
   NodeCall,
+  NodeCollectionInit,
   NodeExprBracketed,
   NodeExpressionStatement,
   NodeForStatement,
@@ -14,7 +15,6 @@ import {
   NodeImportDeclaration,
   NodeIndexedAccess,
   NodeLetStatement,
-  NodeListLiteral,
   NodeMainFunction,
   NodeProgram,
   NodeReturnStatement,
@@ -97,6 +97,9 @@ export class SimpleVisitor<T> implements Visitor<T> {
       case NodeType.STRUCT_INIT:
         this.visitStructInit(node as NodeStructInit);
         return;
+      case NodeType.COLLECTION_INIT:
+        this.visitCollectionInit(node as NodeCollectionInit);
+        return;
       case NodeType.GOM_TYPE_STRUCT_FIELD:
         this.visitStructField(node as NodeGomTypeStructField);
         return;
@@ -123,9 +126,6 @@ export class SimpleVisitor<T> implements Visitor<T> {
         return;
       case NodeType.TUPLE_LITERAL:
         this.visitTupleLiteral(node as NodeTupleLiteral);
-        return;
-      case NodeType.LIST_LITERAL:
-        this.visitListLiteral(node as NodeListLiteral);
         return;
       case NodeType.INDEXED_ACCESS:
         this.visitIndexedAccess(node as NodeIndexedAccess);
@@ -178,6 +178,9 @@ export class SimpleVisitor<T> implements Visitor<T> {
   visitStructInit(node: NodeStructInit) {
     this.visitChildren(node);
   }
+  visitCollectionInit(node: NodeCollectionInit) {
+    this.visitChildren(node);
+  }
   visitStructField(node: NodeGomTypeStructField) {
     this.visitChildren(node);
   }
@@ -200,9 +203,6 @@ export class SimpleVisitor<T> implements Visitor<T> {
     this.visitChildren(node);
   }
   visitTupleLiteral(node: NodeTupleLiteral) {
-    this.visitChildren(node);
-  }
-  visitListLiteral(node: NodeListLiteral) {
     this.visitChildren(node);
   }
   visitIndexedAccess(node: NodeIndexedAccess) {
