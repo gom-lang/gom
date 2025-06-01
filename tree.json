@@ -16,1188 +16,203 @@
   "typeDefinitions": [
     {
       "type": "TYPE_DEFINITION",
-      "loc": 21,
+      "loc": 12,
       "name": {
         "type": "TERM",
-        "loc": 26,
+        "loc": 17,
         "token": {
           "type": "identifier",
-          "value": "HttpResponse",
-          "start": 26,
-          "end": 37
+          "value": "Numbers",
+          "start": 17,
+          "end": 23
         },
         "gomType": {
           "kind": "PrimitiveOrAlias",
-          "typeString": "resolve_type@@HttpResponse"
+          "typeString": "resolve_type@@Numbers"
         },
         "resultantType": {
           "kind": "PrimitiveOrAlias",
-          "typeString": "resolve_type@@HttpResponse"
+          "typeString": "resolve_type@@Numbers"
         }
       },
       "rhs": {
-        "type": "GOM_TYPE_TUPLE",
-        "loc": 41,
-        "fields": [
-          {
-            "type": "GOM_TYPE_ID",
-            "loc": 43,
-            "id": {
-              "type": "TERM",
-              "loc": 43,
-              "token": {
-                "type": "built_in_type",
-                "value": "int",
-                "start": 43,
-                "end": 45
-              },
-              "gomType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "int"
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "int"
-              }
+        "type": "GOM_TYPE_LIST",
+        "loc": 27,
+        "elementType": {
+          "type": "GOM_TYPE_ID",
+          "loc": 28,
+          "id": {
+            "type": "TERM",
+            "loc": 28,
+            "token": {
+              "type": "built_in_type",
+              "value": "int",
+              "start": 28,
+              "end": 30
             },
             "gomType": {
               "kind": "PrimitiveOrAlias",
               "typeString": "int"
+            },
+            "resultantType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "int"
             }
           },
-          {
-            "type": "GOM_TYPE_ID",
-            "loc": 48,
-            "id": {
-              "type": "TERM",
-              "loc": 48,
-              "token": {
-                "type": "built_in_type",
-                "value": "bool",
-                "start": 48,
-                "end": 51
-              },
-              "gomType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "bool"
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "bool"
-              }
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "bool"
-            }
+          "gomType": {
+            "kind": "PrimitiveOrAlias",
+            "typeString": "int"
           }
-        ],
+        },
         "gomType": {
-          "kind": "Tuple",
-          "fields": {}
+          "kind": "List",
+          "name": "Numbers",
+          "elementType": {
+            "kind": "PrimitiveOrAlias",
+            "typeString": "int"
+          }
         }
       }
     }
   ],
   "globalVariables": [],
-  "functionDeclarations": [
-    {
-      "type": "FUNCTION_DEFINITION",
-      "loc": 58,
-      "name": {
-        "type": "identifier",
-        "value": "process_http",
-        "start": 61,
-        "end": 72
-      },
-      "args": [
-        {
-          "type": "ARGUMENT_ITEM",
-          "loc": 74,
-          "name": {
-            "type": "TERM",
-            "loc": 74,
-            "token": {
-              "type": "identifier",
-              "value": "url",
-              "start": 74,
-              "end": 76
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@url"
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@url"
-            }
-          },
-          "expectedType": {
-            "type": "TERM",
-            "loc": 79,
-            "token": {
-              "type": "built_in_type",
-              "value": "str",
-              "start": 79,
-              "end": 81
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "str"
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "str"
-            }
-          },
-          "resultantType": {
-            "kind": "PrimitiveOrAlias",
-            "typeString": "str"
-          }
-        }
-      ],
-      "returnType": {
-        "type": "FUNCTION_RETURN_TYPE",
-        "loc": 83,
-        "returnType": {
-          "type": "GOM_TYPE_ID",
-          "loc": 85,
-          "id": {
-            "type": "TERM",
-            "loc": 85,
-            "token": {
-              "type": "identifier",
-              "value": "HttpResponse",
-              "start": 85,
-              "end": 96
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@HttpResponse"
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@HttpResponse"
-            }
-          },
-          "gomType": {
-            "kind": "PrimitiveOrAlias",
-            "typeString": "resolve_type@@HttpResponse"
-          }
-        }
-      },
-      "body": [
-        {
-          "type": "IF_STATEMENT",
-          "loc": 102,
-          "conditionExpr": {
-            "type": "EXPR_BRACKETED",
-            "loc": 104,
-            "expr": {
-              "type": "COMPARISON",
-              "loc": 105,
-              "lhs": {
-                "type": "TERM",
-                "loc": 105,
-                "token": {
-                  "type": "identifier",
-                  "value": "url",
-                  "start": 105,
-                  "end": 107
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "resolve_type@@url"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "str"
-                }
-              },
-              "op": {
-                "type": "==",
-                "value": "==",
-                "start": 109,
-                "end": 110
-              },
-              "rhs": {
-                "type": "TERM",
-                "loc": 112,
-                "token": {
-                  "type": "strliteral",
-                  "value": "\"http://www.example.com\"",
-                  "start": 112,
-                  "end": 135
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "str"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "str"
-                }
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "bool"
-              }
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "void"
-            }
-          },
-          "body": [
-            {
-              "type": "RETURN_STATEMENT",
-              "loc": 144,
-              "expr": {
-                "type": "TUPLE_LITERAL",
-                "loc": 151,
-                "elements": [
-                  {
-                    "type": "TERM",
-                    "loc": 153,
-                    "token": {
-                      "type": "numliteral",
-                      "value": "200",
-                      "start": 153,
-                      "end": 155
-                    },
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "int"
-                    },
-                    "resultantType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "int"
-                    }
-                  },
-                  {
-                    "type": "TERM",
-                    "loc": 158,
-                    "token": {
-                      "type": "true",
-                      "value": "true",
-                      "start": 158,
-                      "end": 161
-                    },
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "bool"
-                    },
-                    "resultantType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "bool"
-                    }
-                  }
-                ],
-                "gomType": {
-                  "kind": "Tuple",
-                  "fields": {}
-                },
-                "resultantType": {
-                  "kind": "Tuple",
-                  "fields": {}
-                }
-              }
-            }
-          ]
-        },
-        {
-          "type": "RETURN_STATEMENT",
-          "loc": 175,
-          "expr": {
-            "type": "TUPLE_LITERAL",
-            "loc": 182,
-            "elements": [
-              {
-                "type": "TERM",
-                "loc": 184,
-                "token": {
-                  "type": "numliteral",
-                  "value": "401",
-                  "start": 184,
-                  "end": 186
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                }
-              },
-              {
-                "type": "TERM",
-                "loc": 189,
-                "token": {
-                  "type": "false",
-                  "value": "false",
-                  "start": 189,
-                  "end": 193
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "bool"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "bool"
-                }
-              }
-            ],
-            "gomType": {
-              "kind": "Tuple",
-              "fields": {}
-            },
-            "resultantType": {
-              "kind": "Tuple",
-              "fields": {}
-            }
-          }
-        }
-      ],
-      "resultantType": {
-        "kind": "Function",
-        "args": [
-          {
-            "kind": "PrimitiveOrAlias",
-            "typeString": "str"
-          }
-        ],
-        "returnType": {
-          "kind": "Tuple",
-          "fields": {}
-        }
-      }
-    },
-    {
-      "type": "FUNCTION_DEFINITION",
-      "loc": 201,
-      "name": {
-        "type": "identifier",
-        "value": "process_http_retry",
-        "start": 204,
-        "end": 221
-      },
-      "args": [
-        {
-          "type": "ARGUMENT_ITEM",
-          "loc": 223,
-          "name": {
-            "type": "TERM",
-            "loc": 223,
-            "token": {
-              "type": "identifier",
-              "value": "url",
-              "start": 223,
-              "end": 225
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@url"
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@url"
-            }
-          },
-          "expectedType": {
-            "type": "TERM",
-            "loc": 228,
-            "token": {
-              "type": "built_in_type",
-              "value": "str",
-              "start": 228,
-              "end": 230
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "str"
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "str"
-            }
-          },
-          "resultantType": {
-            "kind": "PrimitiveOrAlias",
-            "typeString": "str"
-          }
-        },
-        {
-          "type": "ARGUMENT_ITEM",
-          "loc": 233,
-          "name": {
-            "type": "TERM",
-            "loc": 233,
-            "token": {
-              "type": "identifier",
-              "value": "retries",
-              "start": 233,
-              "end": 239
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@retries"
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@retries"
-            }
-          },
-          "expectedType": {
-            "type": "TERM",
-            "loc": 242,
-            "token": {
-              "type": "built_in_type",
-              "value": "int",
-              "start": 242,
-              "end": 244
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "int"
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "int"
-            }
-          },
-          "resultantType": {
-            "kind": "PrimitiveOrAlias",
-            "typeString": "int"
-          }
-        }
-      ],
-      "returnType": {
-        "type": "FUNCTION_RETURN_TYPE",
-        "loc": 246,
-        "returnType": {
-          "type": "GOM_TYPE_ID",
-          "loc": 248,
-          "id": {
-            "type": "TERM",
-            "loc": 248,
-            "token": {
-              "type": "identifier",
-              "value": "HttpResponse",
-              "start": 248,
-              "end": 259
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@HttpResponse"
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@HttpResponse"
-            }
-          },
-          "gomType": {
-            "kind": "PrimitiveOrAlias",
-            "typeString": "resolve_type@@HttpResponse"
-          }
-        }
-      },
-      "body": [
-        {
-          "type": "LET_STATEMENT",
-          "loc": 265,
-          "decls": [
-            {
-              "type": "ASSIGNMENT",
-              "loc": 269,
-              "lhs": {
-                "type": "TERM",
-                "loc": 269,
-                "token": {
-                  "type": "identifier",
-                  "value": "i",
-                  "start": 269,
-                  "end": 269
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "resolve_type@@i"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                }
-              },
-              "rhs": {
-                "type": "TERM",
-                "loc": 273,
-                "token": {
-                  "type": "numliteral",
-                  "value": "0",
-                  "start": 273,
-                  "end": 273
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                }
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "void"
-              }
-            }
-          ]
-        },
-        {
-          "type": "FOR_STATEMENT",
-          "loc": 278,
-          "initExpr": {
-            "type": "ASSIGNMENT",
-            "loc": 282,
-            "lhs": {
-              "type": "TERM",
-              "loc": 282,
-              "token": {
-                "type": "identifier",
-                "value": "i",
-                "start": 282,
-                "end": 282
-              },
-              "gomType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@i"
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@i"
-              }
-            },
-            "rhs": {
-              "type": "TERM",
-              "loc": 286,
-              "token": {
-                "type": "identifier",
-                "value": "retries",
-                "start": 286,
-                "end": 292
-              },
-              "gomType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@retries"
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@retries"
-              }
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "void"
-            }
-          },
-          "conditionExpr": {
-            "type": "COMPARISON",
-            "loc": 295,
-            "lhs": {
-              "type": "TERM",
-              "loc": 295,
-              "token": {
-                "type": "identifier",
-                "value": "i",
-                "start": 295,
-                "end": 295
-              },
-              "gomType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@i"
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "int"
-              }
-            },
-            "op": {
-              "type": ">",
-              "value": ">",
-              "start": 297,
-              "end": 297
-            },
-            "rhs": {
-              "type": "TERM",
-              "loc": 299,
-              "token": {
-                "type": "numliteral",
-                "value": "0",
-                "start": 299,
-                "end": 299
-              },
-              "gomType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "int"
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "int"
-              }
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "bool"
-            }
-          },
-          "updateExpr": {
-            "type": "ASSIGNMENT",
-            "loc": 302,
-            "lhs": {
-              "type": "TERM",
-              "loc": 302,
-              "token": {
-                "type": "identifier",
-                "value": "i",
-                "start": 302,
-                "end": 302
-              },
-              "gomType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@i"
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@i"
-              }
-            },
-            "rhs": {
-              "type": "SUM",
-              "loc": 306,
-              "lhs": {
-                "type": "TERM",
-                "loc": 306,
-                "token": {
-                  "type": "identifier",
-                  "value": "i",
-                  "start": 306,
-                  "end": 306
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "resolve_type@@i"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                }
-              },
-              "op": {
-                "type": "-",
-                "value": "-",
-                "start": 308,
-                "end": 308
-              },
-              "rhs": {
-                "type": "TERM",
-                "loc": 310,
-                "token": {
-                  "type": "numliteral",
-                  "value": "1",
-                  "start": 310,
-                  "end": 310
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                }
-              },
-              "resultantType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "int"
-              }
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "void"
-            }
-          },
-          "body": [
-            {
-              "type": "EXPRESSION_STATEMENT",
-              "loc": 319,
-              "expr": {
-                "type": "ACCESS",
-                "loc": 319,
-                "lhs": {
-                  "type": "TERM",
-                  "loc": 319,
-                  "token": {
-                    "type": "identifier",
-                    "value": "io",
-                    "start": 319,
-                    "end": 320
-                  },
-                  "gomType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "resolve_type@@io"
-                  },
-                  "resultantType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "resolve_type@@io"
-                  }
-                },
-                "rhs": {
-                  "type": "CALL",
-                  "loc": 322,
-                  "id": {
-                    "type": "TERM",
-                    "loc": 322,
-                    "token": {
-                      "type": "identifier",
-                      "value": "log",
-                      "start": 322,
-                      "end": 324
-                    },
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "resolve_type@@log"
-                    },
-                    "resultantType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "resolve_type@@log"
-                    }
-                  },
-                  "args": [
-                    {
-                      "type": "TERM",
-                      "loc": 326,
-                      "token": {
-                        "type": "strliteral",
-                        "value": "\"Round: \"",
-                        "start": 326,
-                        "end": 334
-                      },
-                      "gomType": {
-                        "kind": "PrimitiveOrAlias",
-                        "typeString": "str"
-                      },
-                      "resultantType": {
-                        "kind": "PrimitiveOrAlias",
-                        "typeString": "str"
-                      }
-                    },
-                    {
-                      "type": "SUM",
-                      "loc": 337,
-                      "lhs": {
-                        "type": "SUM",
-                        "loc": 337,
-                        "lhs": {
-                          "type": "TERM",
-                          "loc": 337,
-                          "token": {
-                            "type": "identifier",
-                            "value": "retries",
-                            "start": 337,
-                            "end": 343
-                          },
-                          "gomType": {
-                            "kind": "PrimitiveOrAlias",
-                            "typeString": "resolve_type@@retries"
-                          },
-                          "resultantType": {
-                            "kind": "PrimitiveOrAlias",
-                            "typeString": "int"
-                          }
-                        },
-                        "op": {
-                          "type": "-",
-                          "value": "-",
-                          "start": 345,
-                          "end": 345
-                        },
-                        "rhs": {
-                          "type": "TERM",
-                          "loc": 347,
-                          "token": {
-                            "type": "identifier",
-                            "value": "i",
-                            "start": 347,
-                            "end": 347
-                          },
-                          "gomType": {
-                            "kind": "PrimitiveOrAlias",
-                            "typeString": "resolve_type@@i"
-                          },
-                          "resultantType": {
-                            "kind": "PrimitiveOrAlias",
-                            "typeString": "int"
-                          }
-                        },
-                        "resultantType": {
-                          "kind": "PrimitiveOrAlias",
-                          "typeString": "int"
-                        }
-                      },
-                      "op": {
-                        "type": "+",
-                        "value": "+",
-                        "start": 349,
-                        "end": 349
-                      },
-                      "rhs": {
-                        "type": "TERM",
-                        "loc": 351,
-                        "token": {
-                          "type": "numliteral",
-                          "value": "1",
-                          "start": 351,
-                          "end": 351
-                        },
-                        "gomType": {
-                          "kind": "PrimitiveOrAlias",
-                          "typeString": "int"
-                        },
-                        "resultantType": {
-                          "kind": "PrimitiveOrAlias",
-                          "typeString": "int"
-                        }
-                      },
-                      "resultantType": {
-                        "kind": "PrimitiveOrAlias",
-                        "typeString": "int"
-                      }
-                    }
-                  ],
-                  "resultantType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "void"
-                  }
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "void"
-                }
-              }
-            },
-            {
-              "type": "LET_STATEMENT",
-              "loc": 359,
-              "decls": [
-                {
-                  "type": "ASSIGNMENT",
-                  "loc": 363,
-                  "lhs": {
-                    "type": "TERM",
-                    "loc": 363,
-                    "token": {
-                      "type": "identifier",
-                      "value": "resp",
-                      "start": 363,
-                      "end": 366
-                    },
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "resolve_type@@resp"
-                    },
-                    "resultantType": {
-                      "kind": "Tuple",
-                      "fields": {}
-                    }
-                  },
-                  "rhs": {
-                    "type": "CALL",
-                    "loc": 370,
-                    "id": {
-                      "type": "TERM",
-                      "loc": 370,
-                      "token": {
-                        "type": "identifier",
-                        "value": "process_http",
-                        "start": 370,
-                        "end": 381
-                      },
-                      "gomType": {
-                        "kind": "PrimitiveOrAlias",
-                        "typeString": "resolve_type@@process_http"
-                      },
-                      "resultantType": {
-                        "kind": "PrimitiveOrAlias",
-                        "typeString": "resolve_type@@process_http"
-                      }
-                    },
-                    "args": [
-                      {
-                        "type": "TERM",
-                        "loc": 383,
-                        "token": {
-                          "type": "identifier",
-                          "value": "url",
-                          "start": 383,
-                          "end": 385
-                        },
-                        "gomType": {
-                          "kind": "PrimitiveOrAlias",
-                          "typeString": "resolve_type@@url"
-                        },
-                        "resultantType": {
-                          "kind": "PrimitiveOrAlias",
-                          "typeString": "str"
-                        }
-                      }
-                    ],
-                    "resultantType": {
-                      "kind": "Tuple",
-                      "fields": {}
-                    }
-                  },
-                  "resultantType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "void"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "IF_STATEMENT",
-              "loc": 393,
-              "conditionExpr": {
-                "type": "EXPR_BRACKETED",
-                "loc": 395,
-                "expr": {
-                  "type": "ACCESS",
-                  "loc": 396,
-                  "lhs": {
-                    "type": "TERM",
-                    "loc": 396,
-                    "token": {
-                      "type": "identifier",
-                      "value": "resp",
-                      "start": 396,
-                      "end": 399
-                    },
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "resolve_type@@resp"
-                    },
-                    "resultantType": {
-                      "kind": "Tuple",
-                      "fields": {}
-                    }
-                  },
-                  "rhs": {
-                    "type": "TERM",
-                    "loc": 401,
-                    "token": {
-                      "type": "numliteral",
-                      "value": "1",
-                      "start": 401,
-                      "end": 401
-                    },
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "int"
-                    },
-                    "resultantType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "bool"
-                    }
-                  },
-                  "resultantType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "bool"
-                  }
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "void"
-                }
-              },
-              "body": [
-                {
-                  "type": "RETURN_STATEMENT",
-                  "loc": 412,
-                  "expr": {
-                    "type": "TERM",
-                    "loc": 419,
-                    "token": {
-                      "type": "identifier",
-                      "value": "resp",
-                      "start": 419,
-                      "end": 422
-                    },
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "resolve_type@@resp"
-                    },
-                    "resultantType": {
-                      "kind": "Tuple",
-                      "fields": {}
-                    }
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "RETURN_STATEMENT",
-          "loc": 438,
-          "expr": {
-            "type": "TUPLE_LITERAL",
-            "loc": 445,
-            "elements": [
-              {
-                "type": "TERM",
-                "loc": 447,
-                "token": {
-                  "type": "numliteral",
-                  "value": "500",
-                  "start": 447,
-                  "end": 449
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                }
-              },
-              {
-                "type": "TERM",
-                "loc": 452,
-                "token": {
-                  "type": "false",
-                  "value": "false",
-                  "start": 452,
-                  "end": 456
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "bool"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "bool"
-                }
-              }
-            ],
-            "gomType": {
-              "kind": "Tuple",
-              "fields": {}
-            },
-            "resultantType": {
-              "kind": "Tuple",
-              "fields": {}
-            }
-          }
-        }
-      ],
-      "resultantType": {
-        "kind": "Function",
-        "args": [
-          {
-            "kind": "PrimitiveOrAlias",
-            "typeString": "str"
-          },
-          {
-            "kind": "PrimitiveOrAlias",
-            "typeString": "int"
-          }
-        ],
-        "returnType": {
-          "kind": "Tuple",
-          "fields": {}
-        }
-      }
-    }
-  ],
+  "functionDeclarations": [],
   "exportStatements": [],
   "mainFunction": {
     "type": "MAIN_FUNCTION",
-    "loc": 467,
+    "loc": 38,
     "body": [
       {
         "type": "LET_STATEMENT",
-        "loc": 478,
+        "loc": 49,
         "decls": [
           {
             "type": "ASSIGNMENT",
-            "loc": 482,
+            "loc": 53,
             "lhs": {
               "type": "TERM",
-              "loc": 482,
+              "loc": 53,
               "token": {
                 "type": "identifier",
-                "value": "resp",
-                "start": 482,
-                "end": 485
+                "value": "numbers",
+                "start": 53,
+                "end": 59
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@resp"
+                "typeString": "resolve_type@@numbers"
               },
               "resultantType": {
-                "kind": "Tuple",
-                "fields": {}
+                "kind": "List",
+                "name": "Numbers",
+                "elementType": {
+                  "kind": "PrimitiveOrAlias",
+                  "typeString": "int"
+                }
               }
             },
             "rhs": {
-              "type": "CALL",
-              "loc": 489,
-              "id": {
+              "type": "COLLECTION_INIT",
+              "loc": 63,
+              "collectionTypeName": {
                 "type": "TERM",
-                "loc": 489,
+                "loc": 63,
                 "token": {
                   "type": "identifier",
-                  "value": "process_http_retry",
-                  "start": 489,
-                  "end": 506
+                  "value": "Numbers",
+                  "start": 63,
+                  "end": 69
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
-                  "typeString": "resolve_type@@process_http_retry"
+                  "typeString": "resolve_type@@Numbers"
                 },
                 "resultantType": {
                   "kind": "PrimitiveOrAlias",
-                  "typeString": "resolve_type@@process_http_retry"
+                  "typeString": "resolve_type@@Numbers"
                 }
               },
-              "args": [
+              "elements": [
                 {
                   "type": "TERM",
-                  "loc": 508,
+                  "loc": 73,
                   "token": {
-                    "type": "strliteral",
-                    "value": "\"http://www.example.com\"",
-                    "start": 508,
-                    "end": 531
+                    "type": "numliteral",
+                    "value": "1",
+                    "start": 73,
+                    "end": 73
                   },
                   "gomType": {
                     "kind": "PrimitiveOrAlias",
-                    "typeString": "str"
+                    "typeString": "int"
                   },
                   "resultantType": {
                     "kind": "PrimitiveOrAlias",
-                    "typeString": "str"
+                    "typeString": "int"
                   }
                 },
                 {
                   "type": "TERM",
-                  "loc": 534,
+                  "loc": 76,
                   "token": {
                     "type": "numliteral",
-                    "value": "10",
-                    "start": 534,
-                    "end": 535
+                    "value": "2",
+                    "start": 76,
+                    "end": 76
+                  },
+                  "gomType": {
+                    "kind": "PrimitiveOrAlias",
+                    "typeString": "int"
+                  },
+                  "resultantType": {
+                    "kind": "PrimitiveOrAlias",
+                    "typeString": "int"
+                  }
+                },
+                {
+                  "type": "TERM",
+                  "loc": 79,
+                  "token": {
+                    "type": "numliteral",
+                    "value": "3",
+                    "start": 79,
+                    "end": 79
+                  },
+                  "gomType": {
+                    "kind": "PrimitiveOrAlias",
+                    "typeString": "int"
+                  },
+                  "resultantType": {
+                    "kind": "PrimitiveOrAlias",
+                    "typeString": "int"
+                  }
+                },
+                {
+                  "type": "TERM",
+                  "loc": 82,
+                  "token": {
+                    "type": "numliteral",
+                    "value": "4",
+                    "start": 82,
+                    "end": 82
+                  },
+                  "gomType": {
+                    "kind": "PrimitiveOrAlias",
+                    "typeString": "int"
+                  },
+                  "resultantType": {
+                    "kind": "PrimitiveOrAlias",
+                    "typeString": "int"
+                  }
+                },
+                {
+                  "type": "TERM",
+                  "loc": 85,
+                  "token": {
+                    "type": "numliteral",
+                    "value": "5",
+                    "start": 85,
+                    "end": 85
                   },
                   "gomType": {
                     "kind": "PrimitiveOrAlias",
@@ -1210,8 +225,12 @@
                 }
               ],
               "resultantType": {
-                "kind": "Tuple",
-                "fields": {}
+                "kind": "List",
+                "name": "Numbers",
+                "elementType": {
+                  "kind": "PrimitiveOrAlias",
+                  "typeString": "int"
+                }
               }
             },
             "resultantType": {
@@ -1222,186 +241,364 @@
         ]
       },
       {
-        "type": "EXPRESSION_STATEMENT",
-        "loc": 541,
-        "expr": {
-          "type": "ACCESS",
-          "loc": 541,
-          "lhs": {
-            "type": "TERM",
-            "loc": 541,
-            "token": {
-              "type": "identifier",
-              "value": "io",
-              "start": 541,
-              "end": 542
-            },
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@io"
-            },
-            "resultantType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "resolve_type@@io"
-            }
-          },
-          "rhs": {
-            "type": "CALL",
-            "loc": 544,
-            "id": {
+        "type": "LET_STATEMENT",
+        "loc": 93,
+        "decls": [
+          {
+            "type": "ASSIGNMENT",
+            "loc": 97,
+            "lhs": {
               "type": "TERM",
-              "loc": 544,
+              "loc": 97,
               "token": {
                 "type": "identifier",
-                "value": "log",
-                "start": 544,
-                "end": 546
+                "value": "i",
+                "start": 97,
+                "end": 97
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@log"
+                "typeString": "resolve_type@@i"
               },
               "resultantType": {
                 "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@log"
+                "typeString": "int"
               }
             },
-            "args": [
-              {
-                "type": "TERM",
-                "loc": 548,
-                "token": {
-                  "type": "strliteral",
-                  "value": "\"Status: \"",
-                  "start": 548,
-                  "end": 557
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "str"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "str"
-                }
+            "rhs": {
+              "type": "TERM",
+              "loc": 101,
+              "token": {
+                "type": "numliteral",
+                "value": "0",
+                "start": 101,
+                "end": 101
               },
-              {
-                "type": "ACCESS",
-                "loc": 560,
-                "lhs": {
-                  "type": "TERM",
-                  "loc": 560,
-                  "token": {
-                    "type": "identifier",
-                    "value": "resp",
-                    "start": 560,
-                    "end": 563
-                  },
-                  "gomType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "resolve_type@@resp"
-                  },
-                  "resultantType": {
-                    "kind": "Tuple",
-                    "fields": {}
-                  }
-                },
-                "rhs": {
-                  "type": "TERM",
-                  "loc": 565,
-                  "token": {
-                    "type": "numliteral",
-                    "value": "0",
-                    "start": 565,
-                    "end": 565
-                  },
-                  "gomType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "int"
-                  },
-                  "resultantType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "int"
-                  }
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                }
+              "gomType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "int"
               },
-              {
-                "type": "TERM",
-                "loc": 568,
-                "token": {
-                  "type": "strliteral",
-                  "value": "\" Success: \"",
-                  "start": 568,
-                  "end": 579
-                },
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "str"
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "str"
-                }
-              },
-              {
-                "type": "ACCESS",
-                "loc": 582,
-                "lhs": {
-                  "type": "TERM",
-                  "loc": 582,
-                  "token": {
-                    "type": "identifier",
-                    "value": "resp",
-                    "start": 582,
-                    "end": 585
-                  },
-                  "gomType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "resolve_type@@resp"
-                  },
-                  "resultantType": {
-                    "kind": "Tuple",
-                    "fields": {}
-                  }
-                },
-                "rhs": {
-                  "type": "TERM",
-                  "loc": 587,
-                  "token": {
-                    "type": "numliteral",
-                    "value": "1",
-                    "start": 587,
-                    "end": 587
-                  },
-                  "gomType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "int"
-                  },
-                  "resultantType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "bool"
-                  }
-                },
-                "resultantType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "bool"
-                }
+              "resultantType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "int"
               }
-            ],
+            },
             "resultantType": {
               "kind": "PrimitiveOrAlias",
               "typeString": "void"
+            }
+          }
+        ]
+      },
+      {
+        "type": "FOR_STATEMENT",
+        "loc": 106,
+        "initExpr": {
+          "type": "TERM",
+          "loc": 110,
+          "token": {
+            "type": "identifier",
+            "value": "i",
+            "start": 110,
+            "end": 110
+          },
+          "gomType": {
+            "kind": "PrimitiveOrAlias",
+            "typeString": "resolve_type@@i"
+          },
+          "resultantType": {
+            "kind": "PrimitiveOrAlias",
+            "typeString": "resolve_type@@i"
+          }
+        },
+        "conditionExpr": {
+          "type": "COMPARISON",
+          "loc": 113,
+          "lhs": {
+            "type": "TERM",
+            "loc": 113,
+            "token": {
+              "type": "identifier",
+              "value": "i",
+              "start": 113,
+              "end": 113
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "resolve_type@@i"
+            },
+            "resultantType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "int"
+            }
+          },
+          "op": {
+            "type": "<",
+            "value": "<",
+            "start": 115,
+            "end": 115
+          },
+          "rhs": {
+            "type": "TERM",
+            "loc": 117,
+            "token": {
+              "type": "numliteral",
+              "value": "5",
+              "start": 117,
+              "end": 117
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "int"
+            },
+            "resultantType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "int"
+            }
+          },
+          "resultantType": {
+            "kind": "PrimitiveOrAlias",
+            "typeString": "bool"
+          }
+        },
+        "updateExpr": {
+          "type": "ASSIGNMENT",
+          "loc": 120,
+          "lhs": {
+            "type": "TERM",
+            "loc": 120,
+            "token": {
+              "type": "identifier",
+              "value": "i",
+              "start": 120,
+              "end": 120
+            },
+            "gomType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "resolve_type@@i"
+            },
+            "resultantType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "resolve_type@@i"
+            }
+          },
+          "rhs": {
+            "type": "SUM",
+            "loc": 124,
+            "lhs": {
+              "type": "TERM",
+              "loc": 124,
+              "token": {
+                "type": "identifier",
+                "value": "i",
+                "start": 124,
+                "end": 124
+              },
+              "gomType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "resolve_type@@i"
+              },
+              "resultantType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "int"
+              }
+            },
+            "op": {
+              "type": "+",
+              "value": "+",
+              "start": 126,
+              "end": 126
+            },
+            "rhs": {
+              "type": "TERM",
+              "loc": 128,
+              "token": {
+                "type": "numliteral",
+                "value": "1",
+                "start": 128,
+                "end": 128
+              },
+              "gomType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "int"
+              },
+              "resultantType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "int"
+              }
+            },
+            "resultantType": {
+              "kind": "PrimitiveOrAlias",
+              "typeString": "int"
             }
           },
           "resultantType": {
             "kind": "PrimitiveOrAlias",
             "typeString": "void"
           }
-        }
+        },
+        "body": [
+          {
+            "type": "EXPRESSION_STATEMENT",
+            "loc": 137,
+            "expr": {
+              "type": "ACCESS",
+              "loc": 137,
+              "lhs": {
+                "type": "TERM",
+                "loc": 137,
+                "token": {
+                  "type": "identifier",
+                  "value": "io",
+                  "start": 137,
+                  "end": 138
+                },
+                "gomType": {
+                  "kind": "PrimitiveOrAlias",
+                  "typeString": "resolve_type@@io"
+                },
+                "resultantType": {
+                  "kind": "PrimitiveOrAlias",
+                  "typeString": "resolve_type@@io"
+                }
+              },
+              "rhs": {
+                "type": "CALL",
+                "loc": 140,
+                "id": {
+                  "type": "TERM",
+                  "loc": 140,
+                  "token": {
+                    "type": "identifier",
+                    "value": "log",
+                    "start": 140,
+                    "end": 142
+                  },
+                  "gomType": {
+                    "kind": "PrimitiveOrAlias",
+                    "typeString": "resolve_type@@log"
+                  },
+                  "resultantType": {
+                    "kind": "PrimitiveOrAlias",
+                    "typeString": "resolve_type@@log"
+                  }
+                },
+                "args": [
+                  {
+                    "type": "TERM",
+                    "loc": 144,
+                    "token": {
+                      "type": "strliteral",
+                      "value": "\"numbers[\"",
+                      "start": 144,
+                      "end": 153
+                    },
+                    "gomType": {
+                      "kind": "PrimitiveOrAlias",
+                      "typeString": "str"
+                    },
+                    "resultantType": {
+                      "kind": "PrimitiveOrAlias",
+                      "typeString": "str"
+                    }
+                  },
+                  {
+                    "type": "TERM",
+                    "loc": 156,
+                    "token": {
+                      "type": "identifier",
+                      "value": "i",
+                      "start": 156,
+                      "end": 156
+                    },
+                    "gomType": {
+                      "kind": "PrimitiveOrAlias",
+                      "typeString": "resolve_type@@i"
+                    },
+                    "resultantType": {
+                      "kind": "PrimitiveOrAlias",
+                      "typeString": "int"
+                    }
+                  },
+                  {
+                    "type": "TERM",
+                    "loc": 159,
+                    "token": {
+                      "type": "strliteral",
+                      "value": "\"] = \"",
+                      "start": 159,
+                      "end": 164
+                    },
+                    "gomType": {
+                      "kind": "PrimitiveOrAlias",
+                      "typeString": "str"
+                    },
+                    "resultantType": {
+                      "kind": "PrimitiveOrAlias",
+                      "typeString": "str"
+                    }
+                  },
+                  {
+                    "type": "ACCESS",
+                    "loc": 167,
+                    "lhs": {
+                      "type": "TERM",
+                      "loc": 167,
+                      "token": {
+                        "type": "identifier",
+                        "value": "numbers",
+                        "start": 167,
+                        "end": 173
+                      },
+                      "gomType": {
+                        "kind": "PrimitiveOrAlias",
+                        "typeString": "resolve_type@@numbers"
+                      },
+                      "resultantType": {
+                        "kind": "List",
+                        "name": "Numbers",
+                        "elementType": {
+                          "kind": "PrimitiveOrAlias",
+                          "typeString": "int"
+                        }
+                      }
+                    },
+                    "rhs": {
+                      "type": "TERM",
+                      "loc": 175,
+                      "token": {
+                        "type": "identifier",
+                        "value": "i",
+                        "start": 175,
+                        "end": 175
+                      },
+                      "gomType": {
+                        "kind": "PrimitiveOrAlias",
+                        "typeString": "resolve_type@@i"
+                      },
+                      "resultantType": {
+                        "kind": "PrimitiveOrAlias",
+                        "typeString": "resolve_type@@i"
+                      }
+                    },
+                    "resultantType": {
+                      "kind": "PrimitiveOrAlias",
+                      "typeString": "int"
+                    }
+                  }
+                ],
+                "resultantType": {
+                  "kind": "PrimitiveOrAlias",
+                  "typeString": "void"
+                }
+              },
+              "resultantType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "void"
+              }
+            }
+          }
+        ]
       }
     ]
   }
