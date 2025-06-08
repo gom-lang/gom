@@ -4,7 +4,7 @@
 
 Here’s a typical hello world program in Gom:
 
-```gom
+```ts
 import io;
 
 fn main() {
@@ -16,7 +16,7 @@ The `main` function is the entry point to the program, similar to other statical
 
 Simple arithmetic and function declaration looks like this:
 
-```gom
+```ts
 import io;
 
 fn add(a: int, b: int): int {
@@ -30,10 +30,10 @@ fn main() {
 
 Defining complex data structures is possible via the `struct` notation (like `struct` in C/Rust/Go). `let` is the variable declaration keyword, it infers type from the expression on the right hand side of `=`.
 
-```gom
+```ts
 import io;
 
-type ArrInt = int[10]; // int | int[10] | {} | Temp[10]
+type Numbers = [int];
 
 type Temperature = {
 	high: int,
@@ -43,7 +43,7 @@ type Temperature = {
 
 fn main() {
 	let a = 1; // type inferred as int
-	io.log("a:", a);
+	io.log("a: ", a);
 
 	let temperature = Temperature {
 		high: 32,
@@ -51,15 +51,35 @@ fn main() {
 		avg: 29
 	};
 
-	io.log("Average temperature:", temperature.avg);
+	io.log("Average temperature: ", temperature.avg);
+
+	let numbers = Numbers { 1, 2, 3, 4, 5 }, i = 0;
+	for(i; i < numbers.size; i = i + 1) {
+		io.log("Number at index ", i, " is ", numbers.i);
+	}
 }
 ```
 
 Apart from the built-in types, custom types can be created using the `type` keyword.
 
-```gom
+```ts
 type Count = int;
 type Name = str;
+
+// Struct
+type Person = {
+	name: Name,
+	age: Count
+};
+
+// Tuple
+type Tuple = { int, bool };
+
+// List
+type Numbers = [int];
+
+// List of structs
+type People = [Person];
 ```
 
 ## Development Status
@@ -72,8 +92,8 @@ type Name = str;
 | Semantic Analysis & preliminary type system | ✅ Done |
 | LLVM IR Generation | ✅ Done |
 | Complex data structures - structs | ✅ Done |
-| Modules | ⚙️ In progress |
-| Complex data structures - arrays | ⏳ Not started |
+| Complex data structures - lists | ⚙️ In progress |
+| Modules | ⏳ Not started |
 
 ## Trying out Gom
 
@@ -86,11 +106,9 @@ npm install
 To compile a Gom program, run:
 
 ```bash
-npm run compile <path-to-gom-file> <target>
-# e.g.
-npm run compile test_2.gom llvm
-# OR target C
-npm run compile test_2.gom c
+npm run compile examples/readme.gom llvm
+# then run the generated executable
+./examples/readme
 ```
 
 ## Updates

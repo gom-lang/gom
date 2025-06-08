@@ -1,0 +1,27 @@
+import io;
+
+type Numbers = [int];
+
+type Temperature = {
+	high: int,
+	low: int,
+	avg: int
+};
+
+fn main() {
+	let a = 1; // type inferred as int
+	io.log("a: ", a);
+
+	let temperature = Temperature {
+		high: 32,
+		low: 26,
+		avg: 29
+	};
+
+	io.log("Average temperature: ", temperature.avg);
+
+	let numbers = Numbers { 1, 2, 3, 4, 5 }, i = 0;
+	for(i; i < numbers.size; i = i + 1) {
+		io.log("Number at index ", i, " is ", numbers.i);
+	}
+}
