@@ -3,7 +3,7 @@ export enum GomToken {
   IMPORT = "import",
   EXPORT = "export",
   TYPE = "type",
-  FN = "fn",
+  FN = "function",
   LET = "let",
   CONST = "const",
   FOR = "for",
@@ -57,7 +57,7 @@ export const GOM_KEYWORDS = new Set([
   "import",
   "export",
   "type",
-  "fn",
+  "function",
   "let",
   "const",
   "for",
@@ -77,7 +77,7 @@ export const getKeywordType = (value: string): GomToken => {
       return GomToken.EXPORT;
     case "type":
       return GomToken.TYPE;
-    case "fn":
+    case "function":
       return GomToken.FN;
     case "let":
       return GomToken.LET;

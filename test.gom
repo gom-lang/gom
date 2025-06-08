@@ -7,25 +7,25 @@ type Point = struct {
 
 let GLOBAL = 1;
 
-fn square(x: i8): i8 {
+function square(x: i8): i8 {
     return x * x;
 }
 
-fn add(a: i8, b: i8): i8 {
+function add(a: i8, b: i8): i8 {
     return a + b;
 }
 
 /*
     Print numbers from 0 to n
 */
-fn print_to_n(n: i8) {
+function print_to_n(n: i8) {
     let i = 0;
     for(; i < n; i = i + 1) {
         io.log("i:", i);
     }
 }
 
-fn main() {
+function main() {
     let a = 1 + 2, b = 2;
 
     io.log("Sum:", add(1, (1 + b / 2)));

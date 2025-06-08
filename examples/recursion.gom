@@ -1,13 +1,13 @@
 import io;
 
-fn power_n(x: int, n: int): int {
+function power_n(x: int, n: int): int {
     if (n == 0) {
         return 1;
     }
     return x * power_n(x, n - 1);
 }
 
-fn main() {
+function main() {
     io.log("Hello, World!");
     io.log("2^3 = ", power_n(2, 3));
 }

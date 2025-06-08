@@ -1,13 +1,13 @@
 # The Gom Programming Language
 
-**Gom** is a statically typed, multi-paradigm programming language based on a subset of the ECMAScript (and Rust) syntax but providing type-safety and concise syntax. It can be interpreted or compiled to C code or LLVM IR. It takes inspiration from AssemblyScript and makes it more approachable to learn compiler construction.
+**Gom** is a statically typed, compiled programming language based on a subset of TypeScript's syntax. Imagine writing TypeScript, but instead of compiling to JavaScript, it compiles to LLVM IR which can then be compiled directly to machine code.
 
 Here’s a typical hello world program in Gom:
 
 ```ts
 import io;
 
-fn main() {
+function main() {
 	io.log("Hello, world!");
 }
 ```
@@ -19,29 +19,31 @@ Simple arithmetic and function declaration looks like this:
 ```ts
 import io;
 
-fn add(a: int, b: int): int {
+function add(a: int, b: int): int {
 	return a + b;
 }
 
-fn main() {
+function main() {
 	io.log("Sum:", add(1, 2)); // Prints "Sum: 3"
 }
 ```
 
-Defining complex data structures is possible via the `struct` notation (like `struct` in C/Rust/Go). `let` is the variable declaration keyword, it infers type from the expression on the right hand side of `=`.
+Defining complex data structures is possible via the `type` keyword. `let` is the variable declaration keyword, it infers type from the expression on the right hand side of `=`.
 
 ```ts
 import io;
 
+// List
 type Numbers = [int];
 
+// Struct
 type Temperature = {
 	high: int,
 	low: int,
 	avg: int
 };
 
-fn main() {
+function main() {
 	let a = 1; // type inferred as int
 	io.log("a: ", a);
 
@@ -60,7 +62,7 @@ fn main() {
 }
 ```
 
-Apart from the built-in types, custom types can be created using the `type` keyword.
+Other types can be defined using the `type` keyword.
 
 ```ts
 type Count = int;

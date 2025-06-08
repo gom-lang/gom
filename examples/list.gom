@@ -8,7 +8,7 @@ type Status = {
 type StatusList = [Status];
 type Pairs = [{ int, int }];
 
-fn main() {
+function main() {
   let numbers = Numbers { 1, 2, 3, 4, 5 };
 
   let i = 0;
