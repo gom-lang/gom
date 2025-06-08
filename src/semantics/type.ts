@@ -4,7 +4,7 @@
  * - Tuple, e.g. (int, bool)
  * - Struct e.g. { x: int, y: int }
  * - Composite, e.g. type IntList = List<int>
- * - Function, e.g. fn add(a: int, b: int): int
+ * - Function, e.g. function add(a: int, b: int): int
  *
  * For now, structs are not supported & custom types can only be aliases to primitives.
  */

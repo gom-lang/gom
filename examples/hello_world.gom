@@ -1,5 +1,5 @@
 import io;
 
-fn main() {
+function main() {
     io.log("Hello, World!");
 }

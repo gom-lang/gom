@@ -6,10 +6,10 @@ typeOrFunctionDefinition = typeDefinition | functionDefinition;
 
 typeDefinition = "type" , identifier , "=" , gomType , ";";
 
-functionDefinition = "fn" , identifier , "(" , argumentItem* , ")" , functionReturnType? ,
+functionDefinition = "function" , identifier , "(" , argumentItem* , ")" , functionReturnType? ,
 	"{" , statement+ , "}";
 
-mainFunction = "fn" , "main" , "(" , argumentItem* , ")" , functionReturnType? , 
+mainFunction = "function" , "main" , "(" , argumentItem* , ")" , functionReturnType? , 
 	"{" , statement+ , "}";
 
 statement = ifStatement

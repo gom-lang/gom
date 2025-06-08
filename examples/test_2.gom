@@ -13,19 +13,19 @@ type Line = {
 
 let GLOBAL = 1;
 
-fn square(x: int): int {
+function square(x: int): int {
     return x * x;
 }
 
-fn add(a: int, b: int): int {
+function add(a: int, b: int): int {
     return a + b;
 }
 
-fn distance(p1: Point, p2: Point): int {
+function distance(p1: Point, p2: Point): int {
     return square(p1.x - p2.x) + square(p1.y - p2.y);
 }
 
-fn main() {
+function main() {
     let p1 = Point { x: 1, y: 2 }, p2 = Point { x: 3, y: 4 };
     let d = distance(p1, p2);
     io.log("Distance between p1 and p2: ", d);
