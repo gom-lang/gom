@@ -391,8 +391,22 @@ export class SymbolTableReader {
     }
   }
 
-  getAllIdentifiers() {
-    return this.currentSymbolTable.getValue().getAllIdentifiers();
+  getAllIdentifiers(recursive = false) {
+    if (!recursive) {
+      return this.currentSymbolTable.getValue().getAllIdentifiers();
+    }
+    const identifiers: IdentifierEntry[] = [];
+    let currentSymbolTable = this.currentSymbolTable;
+    while (currentSymbolTable) {
+      identifiers.push(...currentSymbolTable.getValue().getAllIdentifiers());
+      const parent = currentSymbolTable.getParent();
+      if (parent) {
+        currentSymbolTable = parent;
+      } else {
+        break;
+      }
+    }
+    return identifiers;
   }
 
   getAllTypes() {

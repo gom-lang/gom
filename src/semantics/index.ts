@@ -168,7 +168,7 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
 
     if (node.updateExpr) this.visit(node.updateExpr);
 
-    this.scopeManager.beginScope("for");
+    this.scopeManager.beginScope("for" + node._id);
     node.body.forEach((stmt) => this.visit(stmt));
     this.scopeManager.endScope();
   }
@@ -481,7 +481,20 @@ class TypeResolver extends SimpleVisitor<void> {
         }
       } else if (id.type instanceof GomListType) {
         node.lhs.resultantType = id.type;
-        node.resultantType = id.type.elementType;
+        if (
+          node.rhs instanceof NodeTerm &&
+          GomListType.isBuiltInProperty(node.rhs.token.value)
+        ) {
+          const propertyType = GomListType.builtInPropertyType(
+            node.rhs.token.value
+          );
+          node.rhs.resultantType = propertyType;
+          node.resultantType = propertyType;
+          this.currentType = propertyType;
+        } else {
+          node.resultantType = id.type.elementType;
+          this.currentType = id.type.elementType;
+        }
       } else {
         this.visit(node.rhs);
       }

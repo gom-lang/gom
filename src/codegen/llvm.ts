@@ -427,6 +427,8 @@ export class CodeGenerator extends BaseCodeGenerator {
         pointer: alloca,
       });
 
+      console.log("RHS Value:", rhsValue, "Type:", rhsValue.getType());
+
       if (!type.isStructTy()) {
         this.builder.CreateStore(rhsValue, alloca);
       }
@@ -555,8 +557,8 @@ export class CodeGenerator extends BaseCodeGenerator {
       this.builder.CreateCondBr(condValue, bodyBB, afterBB);
 
       this.builder.SetInsertPoint(bodyBB);
-      this.symbolTableReader.enterScope("for");
-      this.irScopeManager.enterScope("for");
+      this.symbolTableReader.enterScope("for" + node._id);
+      this.irScopeManager.enterScope("for" + node._id);
       node.body.forEach((stmt) => this.visit(stmt));
       this.symbolTableReader.exitScope();
       this.irScopeManager.exitScope();
@@ -582,8 +584,8 @@ export class CodeGenerator extends BaseCodeGenerator {
 
       this.builder.CreateBr(loopBB);
       this.builder.SetInsertPoint(loopBB);
-      this.symbolTableReader.enterScope("for");
-      this.irScopeManager.enterScope("for");
+      this.symbolTableReader.enterScope("for" + node._id);
+      this.irScopeManager.enterScope("for" + node._id);
       node.body.forEach((stmt) => this.visit(stmt));
       this.symbolTableReader.exitScope();
       this.irScopeManager.exitScope();
@@ -596,7 +598,7 @@ export class CodeGenerator extends BaseCodeGenerator {
 
   visitExpression(expr: NodeExpr, context?: ExpressionContext): llvm.Value {
     if (expr instanceof NodeAccess) {
-      return this.visitAccess(expr);
+      return this.visitAccess(expr, context);
     } else if (expr instanceof NodeBinaryOp) {
       return this.visitBinaryOp(expr, context);
     } else if (expr instanceof NodeCall) {
@@ -626,7 +628,7 @@ export class CodeGenerator extends BaseCodeGenerator {
         message: "Unknown identifier: " + node.lhs.token.value,
       });
     }
-
+    console.log(id);
     const rhsValue = this.visitExpression(node.rhs);
     this.builder.CreateStore(rhsValue, id.allocaInst!);
     return rhsValue;
@@ -636,42 +638,56 @@ export class CodeGenerator extends BaseCodeGenerator {
     node: NodeStructInit,
     context?: ExpressionContext
   ): llvm.Value {
-    if (!context?.declLhs) {
-      this.errorManager.throwCodegenError({
-        loc: node.loc,
-        message: "Struct init without declaration",
-      });
-    }
-    const structId = this.symbolTableReader.getIdentifier(
-      context.declLhs.token.value
-    );
-    if (!structId) {
-      this.errorManager.throwCodegenError({
-        loc: node.loc,
-        message: "Unknown struct: " + node.structTypeName.token.value,
-      });
-    }
-
-    if (!structId.allocaInst) {
-      this.errorManager.throwCodegenError({
-        loc: node.loc,
-        message: "Struct not allocated: " + node.structTypeName.token.value,
-      });
-    }
-    const structAlloca = structId.allocaInst;
-    const structType = this.mapGomTypeToLLVMType(node.resultantType);
-    const index0 = this.builder.getInt32(0);
-    node.fields.forEach((field, i) => {
-      const fieldVal = this.visitExpression(field[1]);
-      const fieldPtr = this.builder.CreateGEP(
-        structType,
-        structAlloca,
-        [index0, this.builder.getInt32(i)],
-        "fieldptr"
+    if (context?.declLhs) {
+      const structId = this.symbolTableReader.getIdentifier(
+        context.declLhs.token.value
       );
-      this.builder.CreateStore(fieldVal, fieldPtr);
-    });
-    return structAlloca;
+      if (!structId) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "Unknown struct: " + node.structTypeName.token.value,
+        });
+      }
+
+      if (!structId.allocaInst) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "Struct not allocated: " + node.structTypeName.token.value,
+        });
+      }
+      const structAlloca = structId.allocaInst;
+      const structType = this.mapGomTypeToLLVMType(node.resultantType);
+      const index0 = this.builder.getInt32(0);
+      node.fields.forEach((field, i) => {
+        const fieldVal = this.visitExpression(field[1]);
+        const fieldPtr = this.builder.CreateGEP(
+          structType,
+          structAlloca,
+          [index0, this.builder.getInt32(i)],
+          "fieldptr"
+        );
+        this.builder.CreateStore(fieldVal, fieldPtr);
+      });
+      return structAlloca;
+    } else {
+      const structType = this.mapGomTypeToLLVMType(node.resultantType);
+      const structAlloca = this.builder.CreateAlloca(
+        structType,
+        null,
+        node.structTypeName.token.value + "_instance"
+      );
+      node.fields.forEach((field, i) => {
+        const fieldVal = this.visitExpression(field[1]);
+        const fieldPtr = this.builder.CreateGEP(
+          structType,
+          structAlloca,
+          [this.builder.getInt32(0), this.builder.getInt32(i)],
+          "fieldptr"
+        );
+        this.builder.CreateStore(fieldVal, fieldPtr);
+      });
+      return structAlloca;
+    }
   }
 
   visitCollectionInit(
@@ -731,11 +747,13 @@ export class CodeGenerator extends BaseCodeGenerator {
       );
 
       const elementType = this.mapGomTypeToLLVMType(gomListType.elementType);
+      console.log("Element type:", elementType, gomListType.elementType);
+      const arrayElementType = elementType;
       const sizeOfType = llvm.ConstantInt.get(
         llvm.Type.getInt32Ty(this.context),
         this.module.getDataLayout().getTypeAllocSize(elementType)
       );
-
+      console.log("Size of type:", sizeOfType);
       const mallocSize = this.builder.CreateMul(
         initialCapacity,
         sizeOfType,
@@ -755,16 +773,23 @@ export class CodeGenerator extends BaseCodeGenerator {
       );
       const dataAlloca = this.builder.CreateBitCast(
         mallocCall,
-        llvm.PointerType.get(elementType, 0),
+        llvm.PointerType.get(arrayElementType, 0),
         "data_alloca"
       );
       this.builder.CreateStore(dataAlloca, dataPtrPtr);
 
       // initialize elements
       node.elements.forEach((element, i) => {
-        const elementVal = this.visitExpression(element);
+        let elementVal = this.visitExpression(element);
+        if (elementVal.getType().isPointerTy()) {
+          elementVal = this.builder.CreateLoad(
+            this.mapGomTypeToLLVMType(gomListType.elementType),
+            elementVal,
+            "element_load"
+          );
+        }
         const elementPtr = this.builder.CreateInBoundsGEP(
-          elementType,
+          arrayElementType,
           dataAlloca,
           [this.builder.getInt32(i)],
           "element_ptr"
@@ -801,7 +826,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     return tuple;
   }
 
-  visitAccess(node: NodeAccess): llvm.Value {
+  visitAccess(node: NodeAccess, context?: ExpressionContext): llvm.Value {
     const idName = node.lhs.token.value;
     if (idName === "io" && node.rhs instanceof NodeCall) {
       const fn = this.module.getFunction("printf");
@@ -876,11 +901,15 @@ export class CodeGenerator extends BaseCodeGenerator {
         [this.builder.getInt32(0), index],
         "fieldptr"
       );
-      return this.builder.CreateLoad(
+      const load = this.builder.CreateLoad(
         this.mapGomTypeToLLVMType(node.rhs.resultantType),
         ptr,
         "fieldload"
       );
+      if (context?.pointer) {
+        this.builder.CreateStore(load, context.pointer);
+      }
+      return load;
     } else if (node.lhs.resultantType instanceof GomListType) {
       const type = node.lhs.resultantType;
       const listType = this.mapGomTypeToLLVMType(type);
@@ -898,30 +927,59 @@ export class CodeGenerator extends BaseCodeGenerator {
         });
       }
 
-      const indexValue = this.visitExpression(node.rhs);
-      const dataPtrPtr = this.builder.CreateInBoundsGEP(
-        listType,
-        list.allocaInst,
-        [this.builder.getInt32(0), this.builder.getInt32(0)],
-        "data_ptr_ptr"
-      );
-      const dataPtr = this.builder.CreateLoad(
-        llvm.PointerType.get(llvm.Type.getInt32Ty(this.context), 0),
-        dataPtrPtr,
-        "data_ptr"
-      );
+      // built-in property access
+      if (
+        node.rhs instanceof NodeTerm &&
+        GomListType.isBuiltInProperty(node.rhs.token.value)
+      ) {
+        if (node.rhs.token.value === GomListType.SIZE_PROPERTY) {
+          const sizePtr = this.builder.CreateGEP(
+            listType,
+            list.allocaInst,
+            [this.builder.getInt32(0), this.builder.getInt32(1)],
+            "size_ptr"
+          );
+          const sizeValue = this.builder.CreateLoad(
+            llvm.Type.getInt32Ty(this.context),
+            sizePtr,
+            "size_value"
+          );
+          if (context?.pointer) {
+            this.builder.CreateStore(sizeValue, context.pointer);
+          }
+          return sizeValue;
+        }
+      } else {
+        const indexValue = this.visitExpression(node.rhs);
+        const elementType = this.mapGomTypeToLLVMType(type.elementType);
+        const dataPtrPtr = this.builder.CreateInBoundsGEP(
+          listType,
+          list.allocaInst,
+          [this.builder.getInt32(0), this.builder.getInt32(0)],
+          "data_ptr_ptr"
+        );
+        const dataPtr = this.builder.CreateLoad(
+          llvm.PointerType.get(elementType, 0),
+          dataPtrPtr,
+          "data_ptr"
+        );
 
-      const elementPtr = this.builder.CreateInBoundsGEP(
-        this.mapGomTypeToLLVMType(type.elementType),
-        dataPtr,
-        [indexValue],
-        "element_ptr"
-      );
-      return this.builder.CreateLoad(
-        this.mapGomTypeToLLVMType(type.elementType),
-        elementPtr,
-        "element_load"
-      );
+        const elementPtr = this.builder.CreateInBoundsGEP(
+          elementType,
+          dataPtr,
+          [indexValue],
+          "element_ptr"
+        );
+        const load = this.builder.CreateLoad(
+          elementType,
+          elementPtr,
+          "element_load"
+        );
+        if (context?.pointer) {
+          this.builder.CreateStore(load, context.pointer);
+        }
+        return load;
+      }
     }
 
     return this.builder.getInt32(0);

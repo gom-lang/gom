@@ -1,12 +1,42 @@
 import io;
 
 type Numbers = [int];
+type Status = {
+  code: int,
+  success: bool,
+};
+type StatusList = [Status];
+type Pairs = [{ int, int }];
 
 fn main() {
   let numbers = Numbers { 1, 2, 3, 4, 5 };
 
   let i = 0;
-  for(i; i < 5; i = i + 1) {
+  for(i; i < numbers.size; i = i + 1) {
     io.log("numbers[", i, "] = ", numbers.i);
+  }
+
+  let statusList = StatusList {
+    Status { code: 200, success: true },
+    Status { code: 404, success: false },
+    Status { code: 500, success: false },
+  };
+  let j = 0;
+  for(j; j < statusList.size; j = j + 1) {
+    let status = statusList.j;
+    io.log("statusList[", j, "] = { code: ", status.code, ", success: ", status.success, " }");
+  }
+
+  let pairs = Pairs {
+    { 1, 2 },
+    { 3, 4 },
+    { 5, 6 },
+    { 7, 8 },
+    { 9, 10 },
+  };
+  let k = 0;
+  for(k; k < pairs.size; k = k + 1) {
+    let pair = pairs.k;
+    io.log("pairs[", k, "] = { ", pair.0, ", ", pair.1, " }");
   }
 }

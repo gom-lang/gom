@@ -70,6 +70,7 @@ export class GomListType extends GomType {
   name: string;
   kind: GomTypeKind;
   elementType: GomType;
+  static readonly SIZE_PROPERTY = "size";
 
   constructor(name: string, elementType: GomType) {
     super();
@@ -87,6 +88,19 @@ export class GomListType extends GomType {
 
   toStr(): string {
     return `[${this.elementType.toStr()}]`;
+  }
+
+  static isBuiltInProperty(name: string): boolean {
+    return [GomListType.SIZE_PROPERTY].includes(name);
+  }
+
+  static builtInPropertyType(name: string): GomType {
+    switch (name) {
+      case GomListType.SIZE_PROPERTY:
+        return new GomPrimitiveTypeOrAlias("int");
+      default:
+        throw new Error(`Unknown list property: ${name}`);
+    }
   }
 }
 

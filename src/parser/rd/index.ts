@@ -541,6 +541,7 @@ export class RecursiveDescentParser {
       this.match(GomToken.LBRACE);
       // could be struct, tuple or list
       this.buffer.push(this.lexer.nextToken());
+      console.log(this.buffer);
       // @ts-ignore
       if (this.buffer[1].type === GomToken.COLON) {
         const fields: [NodeTerm, NodeExpr][] = this.parseOneOrMore(() => {

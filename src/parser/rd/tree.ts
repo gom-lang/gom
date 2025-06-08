@@ -9,7 +9,10 @@ export interface Node {
   token?: Token;
 }
 
+let globalNodeIdCounter = 0;
+
 export abstract class AbstractNode implements Node {
+  readonly _id: number;
   type: NodeType;
   loc: number;
   parent?: Node;
@@ -17,6 +20,7 @@ export abstract class AbstractNode implements Node {
   token?: Token;
 
   constructor() {
+    this._id = globalNodeIdCounter++;
     this.type = NodeType.PROGRAM;
     this.loc = 0;
     this.children = [];
