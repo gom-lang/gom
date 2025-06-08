@@ -2,6 +2,7 @@ import {
   NodeAccess,
   NodeBinaryOp,
   NodeCall,
+  NodeCollectionInit,
   NodeExpr,
   NodeForStatement,
   NodeFunctionDefinition,
@@ -24,6 +25,7 @@ import { ScopeManager, SymbolTableReader } from "./scope";
 import { SimpleVisitor } from "../parser/rd/visitor";
 import {
   GomFunctionType,
+  GomListType,
   GomPrimitiveTypeOrAlias,
   GomStructType,
   GomTupleType,
@@ -166,7 +168,7 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
 
     if (node.updateExpr) this.visit(node.updateExpr);
 
-    this.scopeManager.beginScope("for");
+    this.scopeManager.beginScope("for" + node._id);
     node.body.forEach((stmt) => this.visit(stmt));
     this.scopeManager.endScope();
   }
@@ -213,11 +215,6 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
           decl.lhs,
           inferredType,
           decl.rhs
-        );
-        console.log(
-          "let",
-          decl.lhs.token.value,
-          this.scopeManager.getCurrentSymbolTableNode().getName()
         );
       }
     });
@@ -348,6 +345,58 @@ class TypeResolver extends SimpleVisitor<void> {
     this.currentType = gomType;
   }
 
+  visitCollectionInit(node: NodeCollectionInit): void {
+    // tuple or list
+    const collectionType = this.symbolTableReader.getType(
+      node.collectionTypeName.token.value
+    );
+    if (!collectionType) {
+      this.errorManager.throwTypeError({
+        message: `Type ${node.collectionTypeName.token.value} not found`,
+        loc: node.loc,
+      });
+    }
+    const gomType = collectionType.gomType;
+    if (gomType instanceof GomTupleType) {
+      if (node.elements.length !== gomType.fields.size) {
+        this.errorManager.throwTypeError({
+          message: `Element count mismatch: expected ${gomType.fields.size}, got ${node.elements.length}`,
+          loc: node.loc,
+        });
+      }
+
+      node.elements.forEach((element, index) => {
+        this.visit(element);
+        const elementType = this.currentType;
+        if (!elementType?.isEqual(gomType.fields.get(index.toString())!)) {
+          this.errorManager.throwTypeError({
+            message: `Type mismatch: expected ${gomType.fields
+              .get(index.toString())!
+              .toStr()}, got ${elementType?.toStr()}`,
+            loc: element.loc,
+          });
+        }
+      });
+
+      node.resultantType = gomType;
+      this.currentType = gomType;
+    } else if (gomType instanceof GomListType) {
+      node.elements.forEach((element) => {
+        this.visit(element);
+        const elementType = this.currentType;
+        if (!elementType?.isEqual(gomType.elementType)) {
+          this.errorManager.throwTypeError({
+            message: `Type mismatch: expected ${gomType.elementType.toStr()}, got ${elementType?.toStr()}`,
+            loc: element.loc,
+          });
+        }
+      });
+
+      node.resultantType = gomType;
+      this.currentType = gomType;
+    }
+  }
+
   visitTypeDefinition(node: NodeTypeDefinition): void {
     const type = this.symbolTableReader.getType(node.name.token.value);
     if (!type) {
@@ -374,6 +423,24 @@ class TypeResolver extends SimpleVisitor<void> {
           }
         }
       });
+    } else if (gomType instanceof GomListType) {
+      if (gomType.elementType instanceof GomPrimitiveTypeOrAlias) {
+        if (gomType.elementType.typeString.startsWith("resolve_type@@")) {
+          const idName = gomType.elementType.typeString.replace(
+            "resolve_type@@",
+            ""
+          );
+          const id = this.symbolTableReader.getType(idName);
+          if (id) {
+            gomType.elementType = id.gomType;
+          } else {
+            this.errorManager.throwTypeError({
+              message: `Type ${idName} not found`,
+              loc: node.loc,
+            });
+          }
+        }
+      }
     } else if (gomType instanceof GomPrimitiveTypeOrAlias) {
       if (gomType.typeString.startsWith("resolve_type@@")) {
         const idName = gomType.typeString.replace("resolve_type@@", "");
@@ -411,6 +478,22 @@ class TypeResolver extends SimpleVisitor<void> {
               loc: node.rhs.loc,
             });
           }
+        }
+      } else if (id.type instanceof GomListType) {
+        node.lhs.resultantType = id.type;
+        if (
+          node.rhs instanceof NodeTerm &&
+          GomListType.isBuiltInProperty(node.rhs.token.value)
+        ) {
+          const propertyType = GomListType.builtInPropertyType(
+            node.rhs.token.value
+          );
+          node.rhs.resultantType = propertyType;
+          node.resultantType = propertyType;
+          this.currentType = propertyType;
+        } else {
+          node.resultantType = id.type.elementType;
+          this.currentType = id.type.elementType;
         }
       } else {
         this.visit(node.rhs);
@@ -544,7 +627,6 @@ class TypeResolver extends SimpleVisitor<void> {
 
   visitTerm(node: NodeTerm): void {
     const type = node.gomType;
-
     if (type instanceof GomPrimitiveTypeOrAlias) {
       if (type.typeString.startsWith("resolve_type@@")) {
         const idName = type.typeString.replace("resolve_type@@", "");

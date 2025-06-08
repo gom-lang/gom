@@ -13,16 +13,14 @@ import assert from "assert";
 
 export enum GomTypeKind {
   PrimitiveOrAlias = "PrimitiveOrAlias",
-  // Deprecated, use Composite instead
-  Array = "Array",
   Tuple = "Tuple",
   Struct = "Struct",
+  List = "List",
   Composite = "Composite",
   Function = "Function",
 }
 
 export enum GomCompositeTypeKind {
-  List = "List",
   _Custom = "_Custom",
   // Map = "Map",
   // Set = "Set",
@@ -68,32 +66,41 @@ export class GomPrimitiveTypeOrAlias extends GomType {
   }
 }
 
-/**
- * Deprecated, use GomCompositeType instead
- */
-export class GomArrayType extends GomType {
+export class GomListType extends GomType {
+  name: string;
   kind: GomTypeKind;
   elementType: GomType;
-  size: number;
+  static readonly SIZE_PROPERTY = "size";
 
-  constructor(elementType: GomType, size: number) {
+  constructor(name: string, elementType: GomType) {
     super();
-    this.kind = GomTypeKind.Array;
+    this.name = name;
+    this.kind = GomTypeKind.List;
     this.elementType = elementType;
-    this.size = size;
   }
 
-  isEqual(other: GomArrayType): boolean {
-    if (other.kind !== GomTypeKind.Array) {
+  isEqual(other: GomListType): boolean {
+    if (other.kind !== GomTypeKind.List) {
       return false;
     }
-    return (
-      this.size === other.size && this.elementType.isEqual(other.elementType)
-    );
+    return this.elementType.isEqual(other.elementType);
   }
 
   toStr(): string {
-    return `${this.elementType.toStr()}[${this.size}]`;
+    return `[${this.elementType.toStr()}]`;
+  }
+
+  static isBuiltInProperty(name: string): boolean {
+    return [GomListType.SIZE_PROPERTY].includes(name);
+  }
+
+  static builtInPropertyType(name: string): GomType {
+    switch (name) {
+      case GomListType.SIZE_PROPERTY:
+        return new GomPrimitiveTypeOrAlias("int");
+      default:
+        throw new Error(`Unknown list property: ${name}`);
+    }
   }
 }
 

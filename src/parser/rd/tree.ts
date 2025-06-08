@@ -9,7 +9,10 @@ export interface Node {
   token?: Token;
 }
 
+let globalNodeIdCounter = 0;
+
 export abstract class AbstractNode implements Node {
+  readonly _id: number;
   type: NodeType;
   loc: number;
   parent?: Node;
@@ -17,6 +20,7 @@ export abstract class AbstractNode implements Node {
   token?: Token;
 
   constructor() {
+    this._id = globalNodeIdCounter++;
     this.type = NodeType.PROGRAM;
     this.loc = 0;
     this.children = [];
@@ -44,6 +48,7 @@ export enum NodeType {
   GOM_TYPE_TUPLE = "GOM_TYPE_TUPLE",
   GOM_TYPE_STRUCT = "GOM_TYPE_STRUCT",
   GOM_TYPE_STRUCT_FIELD = "GOM_TYPE_STRUCT_FIELD",
+  GOM_TYPE_LIST = "GOM_TYPE_LIST",
   GOM_TYPE_COMPOSITE = "GOM_TYPE_COMPOSITE",
   ARGUMENT_ITEM = "ARGUMENT_ITEM",
   FUNCTION_RETURN_TYPE = "FUNCTION_RETURN_TYPE",
@@ -51,6 +56,7 @@ export enum NodeType {
   EXPR_BRACKETED = "EXPR_BRACKETED",
   ASSIGNMENT = "ASSIGNMENT",
   STRUCT_INIT = "STRUCT_INIT",
+  COLLECTION_INIT = "COLLECTION_INIT",
   ACCESS = "ACCESS",
   CALL = "CALL",
   COMPARISON = "COMPARISON",
