@@ -21,7 +21,7 @@ function main() {
 	io.log("Average temperature: ", temperature.avg);
 
 	let numbers = Numbers { 1, 2, 3, 4, 5 }, i = 0;
-	for(i; i < numbers.size; i = i + 1) {
+	for(i; i < numbers.length; i = i + 1) {
 		io.log("Number at index ", i, " is ", numbers.i);
 	}
 }

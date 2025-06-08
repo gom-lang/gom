@@ -70,7 +70,7 @@ export class GomListType extends GomType {
   name: string;
   kind: GomTypeKind;
   elementType: GomType;
-  static readonly SIZE_PROPERTY = "size";
+  static readonly SIZE_PROPERTY = "length";
 
   constructor(name: string, elementType: GomType) {
     super();

@@ -1015,13 +1015,13 @@
               "loc": 359,
               "token": {
                 "type": "identifier",
-                "value": "size",
+                "value": "length",
                 "start": 359,
-                "end": 362
+                "end": 364
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
-                "typeString": "resolve_type@@size"
+                "typeString": "resolve_type@@length"
               },
               "resultantType": {
                 "kind": "PrimitiveOrAlias",
@@ -1041,16 +1041,16 @@
         "updateExpr": {
           "_id": 72,
           "type": "ASSIGNMENT",
-          "loc": 365,
+          "loc": 367,
           "lhs": {
             "_id": 68,
             "type": "TERM",
-            "loc": 365,
+            "loc": 367,
             "token": {
               "type": "identifier",
               "value": "i",
-              "start": 365,
-              "end": 365
+              "start": 367,
+              "end": 367
             },
             "gomType": {
               "kind": "PrimitiveOrAlias",
@@ -1064,16 +1064,16 @@
           "rhs": {
             "_id": 71,
             "type": "SUM",
-            "loc": 369,
+            "loc": 371,
             "lhs": {
               "_id": 69,
               "type": "TERM",
-              "loc": 369,
+              "loc": 371,
               "token": {
                 "type": "identifier",
                 "value": "i",
-                "start": 369,
-                "end": 369
+                "start": 371,
+                "end": 371
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -1087,18 +1087,18 @@
             "op": {
               "type": "+",
               "value": "+",
-              "start": 371,
-              "end": 371
+              "start": 373,
+              "end": 373
             },
             "rhs": {
               "_id": 70,
               "type": "TERM",
-              "loc": 373,
+              "loc": 375,
               "token": {
                 "type": "numliteral",
                 "value": "1",
-                "start": 373,
-                "end": 373
+                "start": 375,
+                "end": 375
               },
               "gomType": {
                 "kind": "PrimitiveOrAlias",
@@ -1123,20 +1123,20 @@
           {
             "_id": 83,
             "type": "EXPRESSION_STATEMENT",
-            "loc": 380,
+            "loc": 382,
             "expr": {
               "_id": 82,
               "type": "ACCESS",
-              "loc": 380,
+              "loc": 382,
               "lhs": {
                 "_id": 73,
                 "type": "TERM",
-                "loc": 380,
+                "loc": 382,
                 "token": {
                   "type": "identifier",
                   "value": "io",
-                  "start": 380,
-                  "end": 381
+                  "start": 382,
+                  "end": 383
                 },
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
@@ -1150,16 +1150,16 @@
               "rhs": {
                 "_id": 81,
                 "type": "CALL",
-                "loc": 383,
+                "loc": 385,
                 "id": {
                   "_id": 74,
                   "type": "TERM",
-                  "loc": 383,
+                  "loc": 385,
                   "token": {
                     "type": "identifier",
                     "value": "log",
-                    "start": 383,
-                    "end": 385
+                    "start": 385,
+                    "end": 387
                   },
                   "gomType": {
                     "kind": "PrimitiveOrAlias",
@@ -1174,12 +1174,12 @@
                   {
                     "_id": 75,
                     "type": "TERM",
-                    "loc": 387,
+                    "loc": 389,
                     "token": {
                       "type": "strliteral",
                       "value": "\"Number at index \"",
-                      "start": 387,
-                      "end": 404
+                      "start": 389,
+                      "end": 406
                     },
                     "gomType": {
                       "kind": "PrimitiveOrAlias",
@@ -1193,12 +1193,12 @@
                   {
                     "_id": 76,
                     "type": "TERM",
-                    "loc": 407,
+                    "loc": 409,
                     "token": {
                       "type": "identifier",
                       "value": "i",
-                      "start": 407,
-                      "end": 407
+                      "start": 409,
+                      "end": 409
                     },
                     "gomType": {
                       "kind": "PrimitiveOrAlias",
@@ -1212,12 +1212,12 @@
                   {
                     "_id": 77,
                     "type": "TERM",
-                    "loc": 410,
+                    "loc": 412,
                     "token": {
                       "type": "strliteral",
                       "value": "\" is \"",
-                      "start": 410,
-                      "end": 415
+                      "start": 412,
+                      "end": 417
                     },
                     "gomType": {
                       "kind": "PrimitiveOrAlias",
@@ -1231,16 +1231,16 @@
                   {
                     "_id": 80,
                     "type": "ACCESS",
-                    "loc": 418,
+                    "loc": 420,
                     "lhs": {
                       "_id": 78,
                       "type": "TERM",
-                      "loc": 418,
+                      "loc": 420,
                       "token": {
                         "type": "identifier",
                         "value": "numbers",
-                        "start": 418,
-                        "end": 424
+                        "start": 420,
+                        "end": 426
                       },
                       "gomType": {
                         "kind": "PrimitiveOrAlias",
@@ -1258,12 +1258,12 @@
                     "rhs": {
                       "_id": 79,
                       "type": "TERM",
-                      "loc": 426,
+                      "loc": 428,
                       "token": {
                         "type": "identifier",
                         "value": "i",
-                        "start": 426,
-                        "end": 426
+                        "start": 428,
+                        "end": 428
                       },
                       "gomType": {
                         "kind": "PrimitiveOrAlias",
