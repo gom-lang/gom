@@ -1,13 +1,13 @@
 const SegfaultHandler = require("segfault-handler");
 SegfaultHandler.registerHandler("crash.log");
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { Lexer } from "./lexer";
 import { RecursiveDescentParser } from "./parser/rd";
 import { SemanticAnalyzer } from "./semantics";
 import { CodeGenerator as LLVMCodeGenerator } from "./codegen/llvm";
 import { CodeGenerator as CCodeGenerator } from "./codegen/c";
 import { GomErrorManager } from "./util/error";
-import { execSync } from "child_process";
+import { execSync } from "node:child_process";
 
 export const compile = async (
   srcPath: string,

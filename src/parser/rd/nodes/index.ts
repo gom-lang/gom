@@ -3,7 +3,6 @@ import { GomToken } from "../../../lexer/tokens";
 import {
   GomCompositeType,
   GomCompositeTypeKind,
-  GomFunctionType,
   GomListType,
   GomPrimitiveTypeOrAlias,
   GomStructType,

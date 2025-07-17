@@ -9,7 +9,7 @@
  * For now, structs are not supported & custom types can only be aliases to primitives.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 
 export enum GomTypeKind {
   PrimitiveOrAlias = "PrimitiveOrAlias",

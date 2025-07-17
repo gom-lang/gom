@@ -2,7 +2,7 @@
  * Gom code generator to C
  */
 
-import { writeFileSync } from "fs";
+import { writeFileSync } from "node:fs";
 import { BaseCodeGenerator } from "./common";
 import { GomPrimitiveTypeOrAlias } from "../semantics/type";
 import {

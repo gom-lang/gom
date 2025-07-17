@@ -2,21 +2,12 @@ import llvm from "llvm-bindings";
 import {
   NodeExpr,
   NodeFunctionDefinition,
-  NodeGomTypeComposite,
   NodeGomTypeId,
-  NodeGomTypeStruct,
-  NodeGomTypeTuple,
   NodeTerm,
   NodeTypeDefinition,
 } from "../parser/rd/nodes";
 import { GomInternalError, SyntaxError } from "../util/error";
-import {
-  GomPrimitiveTypeOrAlias,
-  GomPrimitiveTypeOrAliasValue,
-  GomStructType,
-  GomTupleType,
-  GomType,
-} from "./type";
+import { GomPrimitiveTypeOrAliasValue, GomType } from "./type";
 import { GOM_BUILT_IN_TYPES, GomToken } from "../lexer/tokens";
 
 class SymbolTableNode<T> {

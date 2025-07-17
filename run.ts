@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 import { runCompile } from "./src/index";
-import { execSync } from "child_process";
+import { execSync } from "node:child_process";
 
 const filePath = process.argv[2];
 const target = (process.argv[3] || "c") as "c" | "llvm";

@@ -1,5 +1,5 @@
 import llvm, { LLVMContext } from "llvm-bindings";
-import { writeFileSync } from "fs";
+import { writeFileSync } from "node:fs";
 import {
   NodeAccess,
   NodeAssignment,
@@ -34,14 +34,11 @@ import {
   GomStructType,
   GomTupleType,
   GomType,
-  GomTypeKind,
 } from "../semantics/type";
 import { GomToken } from "../lexer/tokens";
 import { GomErrorManager } from "../util/error";
 import { Node } from "../parser/rd/tree";
 import { BaseCodeGenerator } from "./common";
-import { match } from "ts-pattern";
-import { instanceOf } from "ts-pattern/dist/patterns";
 
 export enum LLVMType {
   I8 = "int",

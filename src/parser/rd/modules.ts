@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "fs";
-import { RecursiveDescentParser } from ".";
+import { existsSync, readFileSync } from "node:fs";
+import { RecursiveDescentParser } from "./index";
 import { Lexer } from "../../lexer";
 import { GomErrorManager } from "../../util/error";
 import {
@@ -12,7 +12,7 @@ import {
   NodeTypeDefinition,
 } from "./nodes";
 import { Node, NodeType } from "./tree";
-import path from "path";
+import path from "node:path";
 import { GomToken } from "../../lexer/tokens";
 
 const GOM_MODULES_PATH = path.resolve(__dirname, "../../../gom_modules");
