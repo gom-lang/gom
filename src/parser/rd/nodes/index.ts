@@ -161,7 +161,9 @@ export type NodeStatement =
   | NodeForStatement
   | NodeReturnStatement
   | NodeLetStatement
-  | NodeExpressionStatement;
+  | NodeExpressionStatement
+  | NodeBreakStatement
+  | NodeContinueStatement;
 
 export type ExportableNode =
   | NodeFunctionDefinition
@@ -217,7 +219,7 @@ export class NodeIfStatement extends AbstractNode {
 
 export class NodeForStatement extends AbstractNode {
   type: NodeType;
-  initExpr?: NodeExpr;
+  initExpr?: NodeExpr | NodeLetStatement;
   conditionExpr?: NodeExpr;
   updateExpr?: NodeExpr;
   body: NodeStatement[];
@@ -231,7 +233,7 @@ export class NodeForStatement extends AbstractNode {
     body,
   }: {
     loc: number;
-    initExpr?: NodeExpr;
+    initExpr?: NodeExpr | NodeLetStatement;
     conditionExpr?: NodeExpr;
     updateExpr?: NodeExpr;
     body: NodeStatement[];
@@ -305,6 +307,30 @@ export class NodeExpressionStatement extends AbstractNode {
     this.loc = loc;
     this.expr = expr;
     this.children = formChildrenArray(expr);
+  }
+}
+
+export class NodeBreakStatement extends AbstractNode {
+  type: NodeType;
+  children: Node[];
+
+  constructor({ loc }: { loc: number }) {
+    super();
+    this.type = NodeType.BREAK_STATEMENT;
+    this.loc = loc;
+    this.children = [];
+  }
+}
+
+export class NodeContinueStatement extends AbstractNode {
+  type: NodeType;
+  children: Node[];
+
+  constructor({ loc }: { loc: number }) {
+    super();
+    this.type = NodeType.CONTINUE_STATEMENT;
+    this.loc = loc;
+    this.children = [];
   }
 }
 

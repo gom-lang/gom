@@ -3,8 +3,10 @@ import {
   NodeArgumentItem,
   NodeAssignment,
   NodeBinaryOp,
+  NodeBreakStatement,
   NodeCall,
   NodeCollectionInit,
+  NodeContinueStatement,
   NodeExprBracketed,
   NodeExpressionStatement,
   NodeForStatement,
@@ -124,6 +126,12 @@ export class SimpleVisitor<T> implements Visitor<T> {
       case NodeType.EXPRESSION_STATEMENT:
         this.visitExpressionStatement(node as NodeExpressionStatement);
         return;
+      case NodeType.BREAK_STATEMENT:
+        this.visitBreakStatement(node as NodeBreakStatement);
+        return;
+      case NodeType.CONTINUE_STATEMENT:
+        this.visitContinueStatement(node as NodeContinueStatement);
+        return;
       case NodeType.TUPLE_LITERAL:
         this.visitTupleLiteral(node as NodeTupleLiteral);
         return;
@@ -200,6 +208,12 @@ export class SimpleVisitor<T> implements Visitor<T> {
     this.visitChildren(node);
   }
   visitExpressionStatement(node: NodeExpressionStatement) {
+    this.visitChildren(node);
+  }
+  visitBreakStatement(node: NodeBreakStatement) {
+    this.visitChildren(node);
+  }
+  visitContinueStatement(node: NodeContinueStatement) {
     this.visitChildren(node);
   }
   visitTupleLiteral(node: NodeTupleLiteral) {

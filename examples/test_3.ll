@@ -12,6 +12,8 @@ source_filename = "mod"
 
 declare i32 @printf(i8*, ...)
 
+declare i8* @malloc(i32)
+
 define void @process_http({ i32, i1 }* "noalias" "sret" %0, i8* %1) {
 entry:
   %2 = alloca i8*, align 8

@@ -13,8 +13,7 @@ function process_http(url: str): HttpResponse {
 }
 
 function process_http_retry(url: str, retries: int): HttpResponse {
-  let i = 0;
-  for(i = retries; i > 0; i = i - 1) {
+  for (let i = retries; i > 0; i = i - 1) {
     io.log("Round: ", retries - i + 1);
     let resp = process_http(url);
     if(resp.1) {

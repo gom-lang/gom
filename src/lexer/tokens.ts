@@ -14,6 +14,10 @@ export enum GomToken {
   TRUE = "true",
   FALSE = "false",
 
+  // Control flow
+  BREAK = "break",
+  CONTINUE = "continue",
+
   // Primitive type
   BUILT_IN_TYPE = "built_in_type",
 
@@ -67,6 +71,8 @@ export const GOM_KEYWORDS = new Set([
   "main",
   "true",
   "false",
+  "break",
+  "continue",
 ]);
 
 export const getKeywordType = (value: string): GomToken => {
@@ -97,6 +103,10 @@ export const getKeywordType = (value: string): GomToken => {
       return GomToken.TRUE;
     case "false":
       return GomToken.FALSE;
+    case "break":
+      return GomToken.BREAK;
+    case "continue":
+      return GomToken.CONTINUE;
     default:
       return GomToken.IDENTIFIER;
   }

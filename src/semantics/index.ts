@@ -148,6 +148,7 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
   }
 
   visitForStatement(node: NodeForStatement): void {
+    this.scopeManager.beginScope(`for.${node._id}`);
     if (node.initExpr) this.visit(node.initExpr);
     if (node.conditionExpr) {
       this.visit(node.conditionExpr);
@@ -166,7 +167,6 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
 
     if (node.updateExpr) this.visit(node.updateExpr);
 
-    this.scopeManager.beginScope("for" + node._id);
     node.body.forEach((stmt) => this.visit(stmt));
     this.scopeManager.endScope();
   }
@@ -605,6 +605,52 @@ class TypeResolver extends SimpleVisitor<void> {
         node.resultantType = new GomPrimitiveTypeOrAlias("void");
         this.currentType = node.resultantType;
         return;
+      } else if (fnName === "push" || fnName === "pop") {
+        // handle built-in free functions
+        const argTypes = node.args.map((arg) => this.resolveType(arg));
+        if (fnName === "push") {
+          if (argTypes.length !== 2) {
+            this.errorManager.throwTypeError({
+              message: `push function expects 2 arguments, got ${argTypes.length}`,
+              loc: node.loc,
+            });
+          }
+          if (!(argTypes[0] instanceof GomListType)) {
+            this.errorManager.throwTypeError({
+              message: `First argument of push must be a list, got ${
+                argTypes[0]?.toStr() || "unknown"
+              }`,
+              loc: node.loc,
+            });
+          }
+          if (!argTypes[1]) {
+            this.errorManager.throwTypeError({
+              message: `Second argument is required when calling push(list, element)`,
+              loc: node.loc,
+            });
+          }
+          node.resultantType = new GomPrimitiveTypeOrAlias("void");
+          this.currentType = node.resultantType;
+          return;
+        } else if (fnName === "pop") {
+          if (argTypes.length !== 1) {
+            this.errorManager.throwTypeError({
+              message: `pop function expects 1 argument, got ${argTypes.length}`,
+              loc: node.loc,
+            });
+          }
+          if (!(argTypes[0] instanceof GomListType)) {
+            this.errorManager.throwTypeError({
+              message: `Argument of pop must be a list, got ${
+                argTypes[0]?.toStr() || "unknown"
+              }`,
+              loc: node.loc,
+            });
+          }
+          node.resultantType = argTypes[0].elementType;
+          this.currentType = node.resultantType;
+          return;
+        }
       }
       this.errorManager.throwTypeError({
         message: `Function ${fnName} not found`,

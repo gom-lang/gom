@@ -1,8 +1,25 @@
 import io;
 
 function main() {
-    let i = 0;
-    for (i = 0; i < 10; i = i + 1) {
+    for (let i = 0; i < 10; i = i + 1) {
         io.log("i: ", i);
+    }
+
+    // Loop with break
+    for (let j = 0; j < 10; j = j + 1) {
+        if (j == 5) {
+            io.log("Breaking at j: ", j);
+            break;
+        }
+        io.log("j: ", j);
+    }
+
+    // Loop with continue
+    for (let k = 0; k < 10; k = k + 1) {
+        if (k == 5) {
+            io.log("Continuing at k: ", k);
+            continue;
+        }
+        io.log("k: ", k);
     }
 }

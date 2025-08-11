@@ -11,9 +11,8 @@ type Pairs = [{ int, int }];
 function main() {
   let numbers = Numbers { 1, 2, 3, 4, 5 };
 
-  let i = 0;
-  for(i; i < numbers.length; i = i + 1) {
-    io.log("numbers[", i, "] = ", numbers.i);
+  for(let i = 0; i < numbers.length; i = i + 1) {
+    io.log("numbers[", i, "] = ", numbers[i]);
   }
 
   let statusList = StatusList {
@@ -21,9 +20,9 @@ function main() {
     Status { code: 404, success: false },
     Status { code: 500, success: false },
   };
-  let j = 0;
-  for(j; j < statusList.length; j = j + 1) {
-    let status = statusList.j;
+
+  for (let j = 0; j < statusList.length; j = j + 1) {
+    let status = statusList[j];
     io.log("statusList[", j, "] = { code: ", status.code, ", success: ", status.success, " }");
   }
 
@@ -34,9 +33,15 @@ function main() {
     { 7, 8 },
     { 9, 10 },
   };
-  let k = 0;
-  for(k; k < pairs.length; k = k + 1) {
-    let pair = pairs.k;
+
+  for (let k = 0; k < pairs.length; k = k + 1) {
+    let pair = pairs[k];
     io.log("pairs[", k, "] = { ", pair.0, ", ", pair.1, " }");
   }
+
+  push(numbers, 42);
+
+  io.log("After push length: ", numbers.length);
+  pop(numbers);
+  io.log("After pop length: ", numbers.length);
 }

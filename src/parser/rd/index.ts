@@ -7,9 +7,11 @@ import {
   NodeArgumentItem,
   NodeAssignment,
   NodeBinaryOp,
+  NodeBreakStatement,
   NodeCall,
   NodeCollectionInit,
   NodeConstStatement,
+  NodeContinueStatement,
   NodeExpr,
   NodeExprBracketed,
   NodeExpressionStatement,
@@ -423,9 +425,21 @@ export class RecursiveDescentParser {
     } else if (this.accept(GomToken.FOR)) {
       this.match(GomToken.LPAREN);
       const initExpr = this.parseOneOrNone(() => {
-        const expr = this.parseExpression();
-        this.match(GomToken.SEMICOLON);
-        return expr;
+        if (this.peek(GomToken.LET)) {
+          const statement = this.parseStatement();
+          if (statement instanceof NodeLetStatement) {
+            return statement;
+          } else {
+            this.errorManager.throwSyntaxError({
+              message: "Expected a let statement as for loop initializer",
+              loc: statement.loc,
+            });
+          }
+        } else {
+          const expr = this.parseExpression();
+          this.match(GomToken.SEMICOLON);
+          return expr;
+        }
       });
       const conditionExpr = this.parseOneOrNone(() => {
         const expr = this.parseExpression();
@@ -445,8 +459,7 @@ export class RecursiveDescentParser {
         body,
         loc,
       });
-    }
-    if (this.accept(GomToken.IF)) {
+    } else if (this.accept(GomToken.IF)) {
       const conditionExpr = this.parseExpression();
       const body = this.parseOneOrMore(this.parseStatement);
       let elseBody;
@@ -460,6 +473,12 @@ export class RecursiveDescentParser {
         elseBody,
         loc,
       });
+    } else if (this.accept(GomToken.BREAK)) {
+      this.match(GomToken.SEMICOLON);
+      return new NodeBreakStatement({ loc });
+    } else if (this.accept(GomToken.CONTINUE)) {
+      this.match(GomToken.SEMICOLON);
+      return new NodeContinueStatement({ loc });
     } else {
       const expr = this.parseExpression();
       this.match(GomToken.SEMICOLON);
@@ -572,26 +591,6 @@ export class RecursiveDescentParser {
     return this.parseComparison();
   }
 
-  // parseStructInit(): NodeExpr {
-  //   if (this.buffer[1].type === GomToken.LBRACE) {
-  //     const loc = this.token.start;
-  //     const structTypeName = this.parseTerm();
-  //     this.match(GomToken.LBRACE);
-  //     const fields: [NodeTerm, NodeExpr][] = this.parseOneOrMore(() => {
-  //       const name = this.parseTerm();
-  //       this.match(GomToken.COLON);
-  //       const value = this.parseExpression();
-  //       if (!this.peek(GomToken.RBRACE)) this.match(GomToken.COMMA);
-  //       return [name, value];
-  //     });
-  //     this.match(GomToken.RBRACE);
-
-  //     return new NodeStructInit({ structTypeName, fields, loc });
-  //   }
-
-  //   return this.parseComparison();
-  // }
-
   parseComparison(): NodeExpr {
     const loc = this.token.start;
     let lhs = this.parseSum();
@@ -673,10 +672,18 @@ export class RecursiveDescentParser {
   parseCall(): NodeExpr {
     const loc = this.token.start;
     let lhs: NodeExpr = this.parseTerm();
-    while (this.peek(GomToken.LPAREN) || this.peek(GomToken.DOT)) {
+    while (
+      this.peek(GomToken.LPAREN) ||
+      this.peek(GomToken.DOT) ||
+      this.peek(GomToken.LBRACKET)
+    ) {
       if (this.accept(GomToken.DOT)) {
         const rhs = this.parseCall();
         lhs = new NodeAccess({ lhs: lhs as NodeTerm, rhs, loc });
+      } else if (this.accept(GomToken.LBRACKET)) {
+        const index = this.parseExpression();
+        this.match(GomToken.RBRACKET);
+        lhs = new NodeAccess({ lhs: lhs as NodeTerm, rhs: index, loc });
       } else if (this.accept(GomToken.LPAREN)) {
         const args = this.parseZeroOrMore(() => {
           const arg = this.parseExpression();

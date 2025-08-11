@@ -23,10 +23,11 @@ import {
   NodeTerm,
   NodeTupleLiteral,
   NodeTypeDefinition,
+  NodeBreakStatement,
+  NodeContinueStatement,
 } from "../parser/rd/nodes";
 import { ScopeManager } from "../semantics/scope";
 import {
-  GomCompositeType,
   GomFunctionType,
   GomListType,
   GomPrimitiveTypeOrAlias,
@@ -69,6 +70,12 @@ export class CodeGenerator extends BaseCodeGenerator {
   private complexTypes: Record<string, llvm.StructType> = {};
 
   private mallocedPointers: Record<string, llvm.Value> = {};
+
+  // Stack to support nested loops
+  private loopStack: Array<{
+    breakBB: llvm.BasicBlock;
+    continueBB: llvm.BasicBlock;
+  }> = [];
 
   constructor({
     ast,
@@ -223,6 +230,14 @@ export class CodeGenerator extends BaseCodeGenerator {
       false
     );
     this.module.getOrInsertFunction("malloc", mallocFnType);
+
+    // Ensure realloc is available for growth
+    const reallocFnType = llvm.FunctionType.get(
+      this.builder.getInt8PtrTy(),
+      [this.builder.getInt8PtrTy(), this.builder.getInt32Ty()],
+      false
+    );
+    this.module.getOrInsertFunction("realloc", reallocFnType);
   }
 
   override generateAndWriteFile(): void {
@@ -514,6 +529,9 @@ export class CodeGenerator extends BaseCodeGenerator {
   }
 
   visitForStatement(node: NodeForStatement): void {
+    this.symbolTableReader.enterScope(`for.${node._id}`);
+    this.irScopeManager.enterScope(`for.${node._id}`);
+
     const currentFunction = this.currentFunction;
     if (!currentFunction) {
       this.errorManager.throwCodegenError({
@@ -523,7 +541,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     }
 
     if (node.initExpr && node.conditionExpr && node.updateExpr) {
-      // for loop
+      // for(init; cond; update) { body }
       const loopBB = llvm.BasicBlock.Create(
         this.context,
         "loop",
@@ -545,7 +563,11 @@ export class CodeGenerator extends BaseCodeGenerator {
         currentFunction
       );
 
-      this.visitExpression(node.initExpr);
+      if (node.initExpr instanceof NodeLetStatement) {
+        this.visitLetStatement(node.initExpr);
+      } else {
+        this.visitExpression(node.initExpr as unknown as NodeExpr);
+      }
 
       this.builder.CreateBr(loopBB);
       this.builder.SetInsertPoint(loopBB);
@@ -554,11 +576,16 @@ export class CodeGenerator extends BaseCodeGenerator {
       this.builder.CreateCondBr(condValue, bodyBB, afterBB);
 
       this.builder.SetInsertPoint(bodyBB);
-      this.symbolTableReader.enterScope("for" + node._id);
-      this.irScopeManager.enterScope("for" + node._id);
+
+      // push loop targets
+      this.loopStack.push({ breakBB: afterBB, continueBB: updateBB });
+
       node.body.forEach((stmt) => this.visit(stmt));
-      this.symbolTableReader.exitScope();
-      this.irScopeManager.exitScope();
+
+      // pop loop targets
+      this.loopStack.pop();
+
+      // fallthrough from body goes to update
       this.builder.CreateBr(updateBB);
 
       this.builder.SetInsertPoint(updateBB);
@@ -567,7 +594,7 @@ export class CodeGenerator extends BaseCodeGenerator {
 
       this.builder.SetInsertPoint(afterBB);
     } else {
-      // infinite loop
+      // infinite loop: for(;;) { body }
       const loopBB = llvm.BasicBlock.Create(
         this.context,
         "infloop",
@@ -581,16 +608,65 @@ export class CodeGenerator extends BaseCodeGenerator {
 
       this.builder.CreateBr(loopBB);
       this.builder.SetInsertPoint(loopBB);
-      this.symbolTableReader.enterScope("for" + node._id);
-      this.irScopeManager.enterScope("for" + node._id);
+
+      // push loop targets (continue goes to loop head)
+      this.loopStack.push({ breakBB: afterBB, continueBB: loopBB });
+
       node.body.forEach((stmt) => this.visit(stmt));
-      this.symbolTableReader.exitScope();
-      this.irScopeManager.exitScope();
+
+      // pop loop targets
+      this.loopStack.pop();
+
+      // loop back if no break/continue changed the IP
       this.builder.CreateBr(loopBB);
 
       // later for break;
       this.builder.SetInsertPoint(afterBB);
     }
+
+    // NEW: exit loop-wide scope
+    this.irScopeManager.exitScope();
+    this.symbolTableReader.exitScope();
+  }
+
+  // Handle `break;`
+  visitBreakStatement(node: NodeBreakStatement): void {
+    if (this.loopStack.length === 0) {
+      this.errorManager.throwCodegenError({
+        loc: node.loc,
+        message: "break used outside of a loop",
+      });
+    }
+    const { breakBB } = this.loopStack[this.loopStack.length - 1];
+    this.builder.CreateBr(breakBB);
+
+    // Create a fresh block to keep emitting code (it will be unreachable)
+    const after = llvm.BasicBlock.Create(
+      this.context,
+      "after.break",
+      this.currentFunction!
+    );
+    this.builder.SetInsertPoint(after);
+  }
+
+  // Handle `continue;`
+  visitContinueStatement(node: NodeContinueStatement): void {
+    if (this.loopStack.length === 0) {
+      this.errorManager.throwCodegenError({
+        loc: node.loc,
+        message: "continue used outside of a loop",
+      });
+    }
+    const { continueBB } = this.loopStack[this.loopStack.length - 1];
+    this.builder.CreateBr(continueBB);
+
+    // Create a fresh block to keep emitting code (it will be unreachable)
+    const after = llvm.BasicBlock.Create(
+      this.context,
+      "after.continue",
+      this.currentFunction!
+    );
+    this.builder.SetInsertPoint(after);
   }
 
   visitExpression(expr: NodeExpr, context?: ExpressionContext): llvm.Value {
@@ -1028,7 +1104,296 @@ export class CodeGenerator extends BaseCodeGenerator {
     }
   }
 
+  /**
+   * Returns the size in bytes of the given LLVM type.
+   */
+  private sizeofBytes(type: llvm.Type): llvm.ConstantInt {
+    return this.builder.getInt32(
+      this.module.getDataLayout().getTypeAllocSize(type)
+    );
+  }
+
+  private handleBuiltinFreeFunctions(
+    fname: "push" | "pop",
+    node: NodeCall,
+    context?: ExpressionContext
+  ): llvm.Value {
+    const listArg = node.args[0];
+    const listType = listArg.resultantType;
+    if (!(listType instanceof GomListType)) {
+      this.errorManager.throwCodegenError({
+        loc: node.loc,
+        message: `${fname} first argument must be a list`,
+      });
+    }
+
+    // We require the first arg to be an identifier bound to an alloca
+    if (!(listArg instanceof NodeTerm)) {
+      this.errorManager.throwCodegenError({
+        loc: node.loc,
+        message: `${fname} expects the first argument to be a list variable`,
+      });
+    }
+    const listName = listArg.token.value;
+    const listSym = this.symbolTableReader.getIdentifier(listName);
+    if (!listSym || !listSym.allocaInst) {
+      this.errorManager.throwCodegenError({
+        loc: node.loc,
+        message: `List variable '${listName}' not allocated`,
+      });
+    }
+
+    const listLLVMType = this.mapGomTypeToLLVMType(listType);
+    const elemLLVMType = this.mapGomTypeToLLVMType(listType.elementType);
+
+    // Field pointers: { dataPtr, size, capacity }
+    const dataPtrPtr = this.builder.CreateInBoundsGEP(
+      listLLVMType,
+      listSym.allocaInst,
+      [this.builder.getInt32(0), this.builder.getInt32(0)],
+      "list.data.ptrptr"
+    );
+    const sizePtr = this.builder.CreateInBoundsGEP(
+      listLLVMType,
+      listSym.allocaInst,
+      [this.builder.getInt32(0), this.builder.getInt32(1)],
+      "list.size.ptr"
+    );
+    const capPtr = this.builder.CreateInBoundsGEP(
+      listLLVMType,
+      listSym.allocaInst,
+      [this.builder.getInt32(0), this.builder.getInt32(2)],
+      "list.cap.ptr"
+    );
+
+    if (fname === "push") {
+      if (node.args.length !== 2) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "push(list, value) expects exactly 2 arguments",
+        });
+      }
+
+      // Load size and capacity
+      const sizeVal = this.builder.CreateLoad(
+        this.builder.getInt32Ty(),
+        sizePtr,
+        "list.size"
+      );
+      const capVal = this.builder.CreateLoad(
+        this.builder.getInt32Ty(),
+        capPtr,
+        "list.cap"
+      );
+
+      // If cap == 0, set to initial; if size >= cap, grow cap *= 2
+      const currFn = this.currentFunction!;
+      const needInitBB = llvm.BasicBlock.Create(
+        this.context,
+        "list.needinit",
+        currFn
+      );
+      const growthCheckBB = llvm.BasicBlock.Create(
+        this.context,
+        "list.growthcheck",
+        currFn
+      );
+      const growBB = llvm.BasicBlock.Create(this.context, "list.grow", currFn);
+      const contBB = llvm.BasicBlock.Create(this.context, "list.cont", currFn);
+
+      const isZeroCap = this.builder.CreateICmpEQ(
+        capVal,
+        this.builder.getInt32(0),
+        "cap.iszero"
+      );
+      this.builder.CreateCondBr(isZeroCap, needInitBB, growthCheckBB);
+
+      // Initialize with LIST_INITIAL_CAPACITY
+      this.builder.SetInsertPoint(needInitBB);
+      const initCap = this.builder.getInt32(LIST_INITIAL_CAPACITY);
+      const elemSize = this.sizeofBytes(elemLLVMType);
+      const initBytes = this.builder.CreateMul(
+        initCap,
+        elemSize,
+        "list.init.bytes"
+      );
+
+      const mallocFn = this.module.getFunction("malloc");
+      if (!mallocFn) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "malloc not available",
+        });
+      }
+      const newDataI8 = this.builder.CreateCall(
+        mallocFn,
+        [initBytes],
+        "list.init.malloc"
+      );
+      const newDataPtr = this.builder.CreateBitCast(
+        newDataI8,
+        llvm.PointerType.get(elemLLVMType, 0),
+        "list.init.dataptr"
+      );
+      this.builder.CreateStore(newDataPtr, dataPtrPtr);
+      this.builder.CreateStore(initCap, capPtr);
+      this.builder.CreateBr(growthCheckBB);
+
+      // Growth check: if size >= cap, grow => cap *= 2
+      this.builder.SetInsertPoint(growthCheckBB);
+      const sizeReload = this.builder.CreateLoad(
+        this.builder.getInt32Ty(),
+        sizePtr
+      );
+      const capReload = this.builder.CreateLoad(
+        this.builder.getInt32Ty(),
+        capPtr
+      );
+      const needGrow = this.builder.CreateICmpSGE(
+        sizeReload,
+        capReload,
+        "list.needgrow"
+      );
+      this.builder.CreateCondBr(needGrow, growBB, contBB);
+
+      // Grow with realloc
+      this.builder.SetInsertPoint(growBB);
+      const newCap = this.builder.CreateMul(
+        capReload,
+        this.builder.getInt32(2),
+        "list.newcap"
+      );
+      const elemSize2 = this.sizeofBytes(elemLLVMType);
+      const newBytes = this.builder.CreateMul(
+        newCap,
+        elemSize2,
+        "list.newbytes"
+      );
+
+      const reallocFn = this.module.getFunction("realloc");
+      if (!reallocFn) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "realloc not available",
+        });
+      }
+      const oldDataPtr = this.builder.CreateLoad(
+        llvm.PointerType.get(elemLLVMType, 0),
+        dataPtrPtr,
+        "list.olddataptr"
+      );
+      const oldDataI8 = this.builder.CreateBitCast(
+        oldDataPtr,
+        this.builder.getInt8PtrTy(),
+        "list.olddatai8"
+      );
+      const grownI8 = this.builder.CreateCall(
+        reallocFn,
+        [oldDataI8, newBytes],
+        "list.realloc"
+      );
+      const grownPtr = this.builder.CreateBitCast(
+        grownI8,
+        llvm.PointerType.get(elemLLVMType, 0),
+        "list.growndataptr"
+      );
+      this.builder.CreateStore(grownPtr, dataPtrPtr);
+      this.builder.CreateStore(newCap, capPtr);
+      this.builder.CreateBr(contBB);
+
+      // cont: write value at index size; size++
+      this.builder.SetInsertPoint(contBB);
+      const dataPtr = this.builder.CreateLoad(
+        llvm.PointerType.get(elemLLVMType, 0),
+        dataPtrPtr,
+        "list.dataptr"
+      );
+
+      // Evaluate value (arg1)
+      let valueToPush = this.visitExpression(node.args[1]);
+      if (valueToPush.getType().isPointerTy()) {
+        valueToPush = this.builder.CreateLoad(
+          elemLLVMType,
+          valueToPush,
+          "list.push.load"
+        );
+      }
+
+      const elemPtr = this.builder.CreateInBoundsGEP(
+        elemLLVMType,
+        dataPtr,
+        [sizeReload],
+        "list.elem.ptr"
+      );
+      this.builder.CreateStore(valueToPush, elemPtr);
+
+      const sizePlusOne = this.builder.CreateAdd(
+        sizeReload,
+        this.builder.getInt32(1)
+      );
+      this.builder.CreateStore(sizePlusOne, sizePtr);
+
+      // Return dummy i32 (expressions are discarded in statement context)
+      return this.builder.getInt32(0);
+    }
+
+    // pop(list) -> returns last element; size--
+    if (fname === "pop") {
+      if (node.args.length !== 1) {
+        this.errorManager.throwCodegenError({
+          loc: node.loc,
+          message: "pop(list) expects exactly 1 argument",
+        });
+      }
+
+      const sizeVal = this.builder.CreateLoad(
+        this.builder.getInt32Ty(),
+        sizePtr,
+        "list.size"
+      );
+      const one = this.builder.getInt32(1);
+      const newSize = this.builder.CreateSub(sizeVal, one, "list.newsize");
+      this.builder.CreateStore(newSize, sizePtr);
+
+      const dataPtr = this.builder.CreateLoad(
+        llvm.PointerType.get(elemLLVMType, 0),
+        dataPtrPtr,
+        "list.dataptr"
+      );
+      const elemPtr = this.builder.CreateInBoundsGEP(
+        elemLLVMType,
+        dataPtr,
+        [newSize],
+        "list.elem.ptr"
+      );
+      const value = this.builder.CreateLoad(
+        elemLLVMType,
+        elemPtr,
+        "list.pop.value"
+      );
+      if (context?.pointer) {
+        this.builder.CreateStore(value, context.pointer);
+      }
+      return value;
+    }
+
+    this.errorManager.throwCodegenError({
+      loc: node.loc,
+      message: "Unknown function: " + fname,
+    });
+  }
+
   visitCall(node: NodeCall, context?: ExpressionContext): llvm.Value {
+    // Built-in free functions: push(list, x), pop(list)
+    if (node.id instanceof NodeTerm) {
+      const fname = node.id.token.value;
+
+      if ((fname === "push" || fname === "pop") && node.args.length >= 1) {
+        return this.handleBuiltinFreeFunctions(fname, node, context);
+      }
+    }
+
+    // ...fallback to existing call handling (user-defined functions, io.log, etc.)
     const fn = this.module.getFunction(node.id.token!.value);
     const gomFn = this.symbolTableReader.getIdentifier(node.id.token!.value);
     if (!fn || !gomFn) {

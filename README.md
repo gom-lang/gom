@@ -55,9 +55,9 @@ function main() {
 
 	io.log("Average temperature: ", temperature.avg);
 
-	let numbers = Numbers { 1, 2, 3, 4, 5 }, i = 0;
-	for(i; i < numbers.length; i = i + 1) {
-		io.log("Number at index ", i, " is ", numbers.i);
+	let numbers = Numbers { 1, 2, 3, 4, 5 };
+	for (let i = 0; i < numbers.length; i = i + 1) {
+		io.log("Number at index ", i, " is ", numbers[i]);
 	}
 }
 ```
@@ -84,6 +84,28 @@ type Numbers = [int];
 type People = [Person];
 ```
 
+Gom supports a set of global functions that operate on lists.
+
+```ts
+import io;
+
+type Numbers = [int];
+
+function main() {
+	let numbers = Numbers { 1, 2, 3, 4, 5 };
+	io.log("Numbers length: ", numbers.length);
+
+	// Push an element to the list
+	push(numbers, 6);
+	io.log("After push: ", numbers.length);
+
+	// Pop an element from the list
+	let last = pop(numbers);
+	io.log("Popped element: ", last);
+	io.log("After pop: ", numbers.length);
+}
+```
+
 ## Development Status
 
 | Stage | Status |
@@ -94,7 +116,7 @@ type People = [Person];
 | Semantic Analysis & preliminary type system | ✅ Done |
 | LLVM IR Generation | ✅ Done |
 | Complex data structures - structs | ✅ Done |
-| Complex data structures - lists | ⚙️ In progress |
+| Complex data structures - lists | ✅ Done |
 | Modules | ⏳ Not started |
 
 ## Trying out Gom
