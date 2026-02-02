@@ -4,7 +4,7 @@
 
 import { writeFileSync } from "node:fs";
 import { BaseCodeGenerator } from "./common";
-import { GomPrimitiveTypeOrAlias } from "../semantics/type";
+import { GomPrimitiveTypeOrAlias } from "../types";
 import {
   NodeAccess,
   NodeAssignment,
@@ -135,7 +135,7 @@ export class CodeGenerator extends BaseCodeGenerator {
   visitLetStatement(node: NodeLetStatement): void {
     for (const decl of node.decls) {
       const type = this.mapGomTypeToC(
-        decl.lhs.resultantType as GomPrimitiveTypeOrAlias
+        decl.lhs.gomType as GomPrimitiveTypeOrAlias,
       );
       const rhsValue = this.visitExpression(decl.rhs);
 
@@ -183,7 +183,7 @@ export class CodeGenerator extends BaseCodeGenerator {
 
   visitForStatement(node: NodeForStatement): void {
     if (node.initExpr && node.conditionExpr && node.updateExpr) {
-      const initValue = this.visitExpression(node.initExpr);
+      const initValue = this.visitExpression(node.initExpr as NodeExpr);
       const conditionValue = this.visitExpression(node.conditionExpr);
       const updateValue = this.visitExpression(node.updateExpr);
 

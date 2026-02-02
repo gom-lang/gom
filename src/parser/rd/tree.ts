@@ -1,4 +1,5 @@
 import { Token } from "../../lexer";
+import { GomDeferredType, GomType } from "../../types";
 import { Visitor } from "./visitor";
 
 export interface Node {
@@ -18,12 +19,14 @@ export abstract class AbstractNode implements Node {
   parent?: Node;
   children: Node[];
   token?: Token;
+  gomType: GomType;
 
   constructor() {
     this._id = globalNodeIdCounter++;
     this.type = NodeType.PROGRAM;
     this.loc = 0;
     this.children = [];
+    this.gomType = new GomDeferredType("deferred", "unknown");
   }
 
   accept<T>(visitor: Visitor<T>): void {

@@ -1,14 +1,5 @@
 import { Token } from "../../../lexer";
-import { GomToken } from "../../../lexer/tokens";
-import {
-  GomCompositeType,
-  GomCompositeTypeKind,
-  GomListType,
-  GomPrimitiveTypeOrAlias,
-  GomStructType,
-  GomTupleType,
-  GomType,
-} from "../../../semantics/type";
+import { GomCompositeTypeKind } from "../../../types";
 import { AbstractNode, Node, NodeType } from "../tree";
 
 function formChildrenArray(...nodes: (Node | Node[] | undefined)[]): Node[] {
@@ -63,7 +54,7 @@ export class NodeProgram extends AbstractNode {
       typeDefinitions,
       globalVariables,
       functionDeclarations,
-      mainFunction
+      mainFunction,
     );
   }
 }
@@ -103,7 +94,7 @@ export class NodeTypeDefinition extends AbstractNode {
     this.loc = loc;
     this.name = name;
     this.rhs = rhs;
-    this.children = [];
+    this.children = formChildrenArray(name, rhs);
   }
 }
 
@@ -114,7 +105,6 @@ export class NodeFunctionDefinition extends AbstractNode {
   args: NodeArgumentItem[];
   returnType?: NodeFunctionReturnType;
   body: NodeStatement[];
-  resultantType: GomType;
 
   constructor({
     loc,
@@ -137,7 +127,6 @@ export class NodeFunctionDefinition extends AbstractNode {
     this.returnType = returnType;
     this.body = body;
     this.children = formChildrenArray(args, returnType, body);
-    this.resultantType = new GomPrimitiveTypeOrAlias("void");
   }
 }
 
@@ -249,7 +238,7 @@ export class NodeForStatement extends AbstractNode {
       initExpr,
       conditionExpr,
       updateExpr,
-      body
+      body,
     );
   }
 }
@@ -339,7 +328,6 @@ export class NodeArgumentItem extends AbstractNode {
   name: NodeTerm;
   expectedType: NodeTerm;
   children: Node[];
-  resultantType: GomType;
 
   constructor({
     name,
@@ -356,7 +344,6 @@ export class NodeArgumentItem extends AbstractNode {
     this.name = name;
     this.expectedType = expectedType;
     this.children = [];
-    this.resultantType = new GomPrimitiveTypeOrAlias("void");
   }
 }
 
@@ -383,7 +370,6 @@ export type NodeGomType =
 export class NodeGomTypeId extends AbstractNode {
   type: NodeType;
   id: NodeTerm;
-  gomType: GomType;
   children: Node[];
 
   constructor({ id, loc }: { id: NodeTerm; arrSize?: NodeTerm; loc: number }) {
@@ -391,7 +377,6 @@ export class NodeGomTypeId extends AbstractNode {
     this.type = NodeType.GOM_TYPE_ID;
     this.loc = loc;
     this.id = id;
-    this.gomType = id.resultantType;
     this.children = [];
   }
 }
@@ -399,7 +384,6 @@ export class NodeGomTypeId extends AbstractNode {
 export class NodeGomTypeTuple extends AbstractNode {
   type: NodeType;
   fields: NodeGomType[];
-  gomType: GomType;
   children: Node[];
 
   constructor({ fields, loc }: { fields: NodeGomType[]; loc: number }) {
@@ -407,15 +391,14 @@ export class NodeGomTypeTuple extends AbstractNode {
     this.type = NodeType.GOM_TYPE_TUPLE;
     this.loc = loc;
     this.fields = fields;
-    this.gomType = new GomTupleType(fields.map((field) => field.gomType));
     this.children = formChildrenArray(fields);
   }
 }
 
 export class NodeGomTypeStruct extends AbstractNode {
   type: NodeType;
+  name: NodeTerm;
   fields: NodeGomTypeStructField[];
-  gomType: GomStructType;
 
   constructor({
     name,
@@ -429,22 +412,16 @@ export class NodeGomTypeStruct extends AbstractNode {
     super();
     this.type = NodeType.GOM_TYPE_STRUCT;
     this.loc = loc;
+    this.name = name;
     this.fields = fields;
-    this.gomType = new GomStructType(
-      name.token.value,
-      fields.reduce((acc, field) => {
-        acc.set(field.name.value, field.fieldType.gomType);
-        return acc;
-      }, new Map<string, GomType>())
-    );
     this.children = formChildrenArray(fields);
   }
 }
 
 export class NodeGomTypeList extends AbstractNode {
   type: NodeType;
+  name: NodeTerm;
   elementType: NodeGomType;
-  gomType: GomListType;
   children: Node[];
 
   constructor({
@@ -459,8 +436,8 @@ export class NodeGomTypeList extends AbstractNode {
     super();
     this.type = NodeType.GOM_TYPE_LIST;
     this.loc = loc;
+    this.name = name;
     this.elementType = elementType;
-    this.gomType = new GomListType(name.token.value, elementType.gomType);
     this.children = formChildrenArray(elementType);
   }
 }
@@ -469,7 +446,6 @@ export class NodeGomTypeComposite extends AbstractNode {
   type: NodeType;
   id: NodeTerm;
   fields: NodeGomType[];
-  gomType: GomType;
   children: Node[];
 
   constructor({
@@ -486,10 +462,6 @@ export class NodeGomTypeComposite extends AbstractNode {
     this.loc = loc;
     this.id = id;
     this.fields = fields;
-    this.gomType = new GomCompositeType(
-      NodeGomTypeComposite.getGomCompositeTypeKind(id),
-      fields.map((field) => field.gomType)
-    );
     this.children = [];
   }
 
@@ -542,7 +514,6 @@ export class NodeAssignment extends AbstractNode {
   type: NodeType;
   lhs: NodeTerm;
   rhs: NodeExpr;
-  resultantType: GomType;
 
   constructor({
     lhs,
@@ -558,7 +529,6 @@ export class NodeAssignment extends AbstractNode {
     this.loc = loc;
     this.lhs = lhs;
     this.rhs = rhs;
-    this.resultantType = new GomPrimitiveTypeOrAlias("void");
     this.children = formChildrenArray(lhs, rhs);
   }
 }
@@ -567,7 +537,6 @@ export class NodeStructInit extends AbstractNode {
   type: NodeType;
   structTypeName: NodeTerm;
   fields: [NodeTerm, NodeExpr][];
-  resultantType: GomStructType;
 
   constructor({
     structTypeName,
@@ -583,13 +552,6 @@ export class NodeStructInit extends AbstractNode {
     this.loc = loc;
     this.structTypeName = structTypeName;
     this.fields = fields;
-    this.resultantType = new GomStructType(
-      structTypeName.token.value,
-      fields.reduce((acc, [field, expr]) => {
-        acc.set(field.token.value, expr.resultantType);
-        return acc;
-      }, new Map<string, GomType>())
-    );
     this.children = formChildrenArray(fields.map(([, expr]) => expr));
   }
 }
@@ -598,7 +560,6 @@ export class NodeCollectionInit extends AbstractNode {
   type: NodeType;
   collectionTypeName: NodeTerm;
   elements: NodeExpr[];
-  resultantType: GomType;
 
   constructor({
     collectionTypeName,
@@ -614,10 +575,6 @@ export class NodeCollectionInit extends AbstractNode {
     this.loc = loc;
     this.collectionTypeName = collectionTypeName;
     this.elements = elements;
-    this.resultantType = new GomListType(
-      collectionTypeName.token.value,
-      elements[0].resultantType
-    );
     this.children = formChildrenArray(elements);
   }
 }
@@ -627,7 +584,6 @@ export class NodeBinaryOp extends AbstractNode {
   lhs: NodeExpr;
   op: Token;
   rhs: NodeExpr;
-  resultantType: GomPrimitiveTypeOrAlias;
 
   constructor({
     loc,
@@ -648,7 +604,6 @@ export class NodeBinaryOp extends AbstractNode {
     this.lhs = lhs;
     this.op = op;
     this.rhs = rhs;
-    this.resultantType = new GomPrimitiveTypeOrAlias("void");
     this.children = formChildrenArray(lhs, rhs);
   }
 }
@@ -657,7 +612,6 @@ export class NodeAccess extends AbstractNode {
   type: NodeType;
   lhs: NodeTerm;
   rhs: NodeExpr;
-  resultantType: GomType;
   children: Node[];
 
   constructor({
@@ -674,7 +628,6 @@ export class NodeAccess extends AbstractNode {
     this.loc = loc;
     this.lhs = lhs;
     this.rhs = rhs;
-    this.resultantType = new GomPrimitiveTypeOrAlias("void");
     this.children = formChildrenArray(lhs, rhs);
   }
 }
@@ -683,7 +636,6 @@ export class NodeCall extends AbstractNode {
   type: NodeType;
   id: NodeExpr;
   args: NodeExpr[];
-  resultantType: GomType;
   children: Node[];
 
   constructor({
@@ -700,7 +652,6 @@ export class NodeCall extends AbstractNode {
     this.loc = loc;
     this.id = id;
     this.args = args;
-    this.resultantType = new GomPrimitiveTypeOrAlias("void");
     this.children = formChildrenArray(id, args);
   }
 }
@@ -709,14 +660,12 @@ export class NodeExprBracketed extends AbstractNode {
   type: NodeType;
   expr: NodeExpr;
   children: Node[];
-  resultantType: GomType;
 
   constructor({ expr, loc }: { expr: NodeExpr; loc: number }) {
     super();
     this.type = NodeType.EXPR_BRACKETED;
     this.loc = loc;
     this.expr = expr;
-    this.resultantType = new GomPrimitiveTypeOrAlias("void");
     this.children = formChildrenArray(expr);
   }
 }
@@ -726,7 +675,6 @@ export class NodeIndexedAccess extends AbstractNode {
   lhs: NodeExpr;
   index: NodeExpr;
   children: Node[];
-  resultantType: GomType;
 
   constructor({
     lhs,
@@ -743,7 +691,6 @@ export class NodeIndexedAccess extends AbstractNode {
     this.lhs = lhs;
     this.index = index;
     this.children = formChildrenArray(lhs, index);
-    this.resultantType = new GomPrimitiveTypeOrAlias("void");
   }
 }
 
@@ -751,8 +698,6 @@ export class NodeTupleLiteral extends AbstractNode {
   type: NodeType;
   elements: NodeExpr[];
   children: Node[];
-  gomType: GomType;
-  resultantType: GomType;
 
   constructor({ elements, loc }: { elements: NodeExpr[]; loc: number }) {
     super();
@@ -760,10 +705,6 @@ export class NodeTupleLiteral extends AbstractNode {
     this.loc = loc;
     this.elements = elements;
     this.children = elements;
-    this.gomType = new GomTupleType(
-      elements.map((elements) => elements.resultantType)
-    );
-    this.resultantType = this.gomType;
   }
 }
 
@@ -771,8 +712,6 @@ export class NodeTerm extends AbstractNode {
   type: NodeType;
   token: Token;
   children: Node[];
-  gomType: GomType;
-  resultantType: GomType;
 
   constructor(token: Token) {
     super();
@@ -780,25 +719,24 @@ export class NodeTerm extends AbstractNode {
     this.loc = token.start;
     this.token = token;
     this.children = [];
-    this.resultantType = this.gomType = this.getGomType();
   }
 
-  private getGomType() {
-    if (this.token.type === GomToken.IDENTIFIER) {
-      return new GomPrimitiveTypeOrAlias(`resolve_type@@${this.token.value}`);
-    } else if (this.token.type === GomToken.NUMLITERAL) {
-      return new GomPrimitiveTypeOrAlias("int");
-    } else if (this.token.type === GomToken.STRLITERAL) {
-      return new GomPrimitiveTypeOrAlias("str");
-    } else if (
-      this.token.type === GomToken.TRUE ||
-      this.token.type === GomToken.FALSE
-    ) {
-      return new GomPrimitiveTypeOrAlias("bool");
-    } else if (this.token.type === GomToken.BUILT_IN_TYPE) {
-      return new GomPrimitiveTypeOrAlias(this.token.value);
-    }
+  // private getGomType() {
+  //   if (this.token.type === GomToken.IDENTIFIER) {
+  //     return new GomPrimitiveTypeOrAlias(`resolve_type@@${this.token.value}`);
+  //   } else if (this.token.type === GomToken.NUMLITERAL) {
+  //     return new GomPrimitiveTypeOrAlias("int");
+  //   } else if (this.token.type === GomToken.STRLITERAL) {
+  //     return new GomPrimitiveTypeOrAlias("str");
+  //   } else if (
+  //     this.token.type === GomToken.TRUE ||
+  //     this.token.type === GomToken.FALSE
+  //   ) {
+  //     return new GomPrimitiveTypeOrAlias("bool");
+  //   } else if (this.token.type === GomToken.BUILT_IN_TYPE) {
+  //     return new GomPrimitiveTypeOrAlias(this.token.value);
+  //   }
 
-    throw new Error(`Cannot determine type for token: ${this.token.type}`);
-  }
+  //   throw new Error(`Cannot determine type for token: ${this.token.type}`);
+  // }
 }

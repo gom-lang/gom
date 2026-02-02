@@ -13,6 +13,8 @@ declare i32 @printf(i8*, ...)
 
 declare i8* @malloc(i32)
 
+declare i8* @realloc(i8*, i32)
+
 define void @main() {
 entry:
   %i = alloca i32, align 4

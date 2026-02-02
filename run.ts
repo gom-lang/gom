@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import { runCompile } from "./src/index";
 import { execSync } from "node:child_process";
+import { logGreen } from "./src/util/console";
 
 const filePath = process.argv[2];
 const target = (process.argv[3] || "c") as "c" | "llvm";
@@ -12,13 +13,11 @@ runCompile(filePath, target)
       execSync(
         `clang -o ${filePath.replace(".gom", "")} ${filePath.replace(
           ".gom",
-          ".ll"
+          ".ll",
         )}`,
-        { stdio: "inherit" }
+        { stdio: "inherit" },
       );
-      console.log(
-        `✅ Executable generated at: ${filePath.replace(".gom", "")}`
-      );
+      logGreen(`Executable generated at: ${filePath.replace(".gom", "")}`);
     }
   })
   .catch((error) => {

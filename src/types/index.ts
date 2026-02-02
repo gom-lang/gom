@@ -12,6 +12,7 @@
 import assert from "node:assert";
 
 export enum GomTypeKind {
+  Deferred = "Deferred",
   PrimitiveOrAlias = "PrimitiveOrAlias",
   Tuple = "Tuple",
   Struct = "Struct",
@@ -227,5 +228,30 @@ export class GomFunctionType extends GomType {
       this.returnType instanceof GomCompositeType ||
       this.returnType instanceof GomTupleType
     );
+  }
+}
+
+export type GomDeferredTypeMarker =
+  | "deferred"
+  | "resolve_type"
+  | "resolve_custom_type";
+export class GomDeferredType extends GomType {
+  kind: GomTypeKind;
+  marker: GomDeferredTypeMarker;
+  value: string;
+
+  constructor(marker: GomDeferredTypeMarker, value: string) {
+    super();
+    this.kind = GomTypeKind.Deferred;
+    this.marker = marker;
+    this.value = value;
+  }
+
+  toStr(): string {
+    return `${this.marker}(${this.value})`;
+  }
+
+  isEqual(_other: GomDeferredType): boolean {
+    throw new Error("GomDeferredType should not be compared directly");
   }
 }

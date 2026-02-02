@@ -6,67 +6,77 @@ import { RecursiveDescentParser } from "./parser/rd";
 import { SemanticAnalyzer } from "./semantics";
 import { CodeGenerator as LLVMCodeGenerator } from "./codegen/llvm";
 import { CodeGenerator as CCodeGenerator } from "./codegen/c";
-import { GomErrorManager } from "./util/error";
+import { GomError, GomErrorManager } from "./util/error";
 import { execSync } from "node:child_process";
+import { TypeAttacher } from "./types/type-attacher";
+import { logBlue, logGreen } from "./util/console";
+import { NodeProgram } from "./parser/rd/nodes";
 
 export const compile = async (
   srcPath: string,
   src: string,
-  target: "llvm" | "c"
+  target: "llvm" | "c",
 ) => {
   const errorManager = new GomErrorManager(src);
-  console.time("⏰ Compiled in");
-  const lexer = new Lexer(src, errorManager);
+  let program: NodeProgram | null = null;
+  const startTime = performance.now();
+  try {
+    const lexer = new Lexer(src, errorManager);
 
-  const parser = new RecursiveDescentParser(lexer);
+    const parser = new RecursiveDescentParser(lexer);
 
-  const program = parser.parse();
+    program = parser.parse();
 
-  // console.log("Parsed program", program);
+    new TypeAttacher().visit(program);
 
-  const semanticAnalyzer = new SemanticAnalyzer(program, errorManager);
-  semanticAnalyzer.analyze();
+    const semanticAnalyzer = new SemanticAnalyzer(program, errorManager);
+    semanticAnalyzer.analyze();
 
-  const codeGenerator =
-    target === "llvm"
-      ? new LLVMCodeGenerator({
-          ast: program,
-          scopeManager: semanticAnalyzer.scopeManager,
-          errorManager,
-          outputPath: srcPath.replace(".gom", ".ll"),
-        })
-      : new CCodeGenerator({
-          ast: program,
-          scopeManager: semanticAnalyzer.scopeManager,
-          errorManager,
-          outputPath: srcPath.replace(".gom", ".c"),
-        });
-  codeGenerator.generateAndWriteFile();
+    const codeGenerator =
+      target === "llvm"
+        ? new LLVMCodeGenerator({
+            ast: program,
+            scopeManager: semanticAnalyzer.scopeManager,
+            errorManager,
+            outputPath: srcPath.replace(".gom", ".ll"),
+          })
+        : new CCodeGenerator({
+            ast: program,
+            scopeManager: semanticAnalyzer.scopeManager,
+            errorManager,
+            outputPath: srcPath.replace(".gom", ".c"),
+          });
+    codeGenerator.generateAndWriteFile();
+  } catch (e) {
+    if (e instanceof GomError) {
+      e.print();
+      process.exit(1);
+    }
+  }
 
   if (target === "c") {
     // Compile the generated C code
     execSync(
       `clang -S -emit-llvm ${srcPath.replace(
         ".gom",
-        ".c"
+        ".c",
       )} -o ${srcPath.replace(".gom", ".ll")}`,
-      { stdio: "inherit" }
+      { stdio: "inherit" },
     );
     execSync(
       `clang ${srcPath.replace(".gom", ".c")} -o ${srcPath.replace(
         ".gom",
-        ""
+        "",
       )}`,
-      { stdio: "inherit" }
+      { stdio: "inherit" },
     );
-    console.log(
-      `✅ Compiled to out, run with ./${srcPath.replace(".gom", "")}`
-    );
+    logGreen(`Compiled to out, run with ./${srcPath.replace(".gom", "")}`);
   } else {
-    console.log(`✅ Compiled to ${srcPath.replace(".gom", ".ll")}`);
+    logGreen(`Compiled to ${srcPath.replace(".gom", ".ll")}`);
   }
 
-  console.timeEnd("⏰ Compiled in");
+  const endTime = performance.now();
+  logBlue(`Compilation took ${(endTime - startTime).toFixed(2)} ms`);
 
   await writeFile(
     "tree.json",
@@ -78,15 +88,15 @@ export const compile = async (
         }
         return val;
       },
-      2
+      2,
     ),
-    "utf-8"
+    "utf-8",
   );
 };
 
 export const compileAndReturn = async (
   src: string,
-  target: "llvm" | "c" = "llvm"
+  target: "llvm" | "c" = "llvm",
 ) => {
   const errorManager = new GomErrorManager(src);
   const lexer = new Lexer(src, errorManager);
