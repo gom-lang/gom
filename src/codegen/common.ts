@@ -31,7 +31,7 @@ export abstract class BaseCodeGenerator extends SimpleVisitor<void> {
     this.outputPath = outputPath;
     this.errorManager = errorManager;
     this.symbolTableReader = new SymbolTableReader(
-      scopeManager.getCurrentSymbolTableNode()
+      scopeManager.getCurrentSymbolTableNode(),
     );
   }
 

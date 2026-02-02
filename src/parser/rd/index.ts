@@ -66,7 +66,7 @@ export class RecursiveDescentParser {
     } else {
       this.errorManager.throwSyntaxError({
         message: `Unexpected token: ${chalk.red(
-          this.token.value
+          this.token.value,
         )}, expected ${chalk.green(type)}`,
         loc: this.token.start,
       });
@@ -143,10 +143,10 @@ export class RecursiveDescentParser {
 
   parseProgram() {
     const importDeclarations = this.parseZeroOrMore(
-      this.parseImportDeclaration
+      this.parseImportDeclaration,
     );
     const typeGlobalOrFunctionDefinitions = this.parseZeroOrMore(
-      this.parseTypeGlobalOrFunctionDefinition
+      this.parseTypeGlobalOrFunctionDefinition,
     );
     const mainFunction = this.parseMainFunction();
 
@@ -154,14 +154,14 @@ export class RecursiveDescentParser {
       importDeclarations,
       typeDefinitions: typeGlobalOrFunctionDefinitions.filter(
         (def): def is NodeTypeDefinition =>
-          def.type === NodeType.TYPE_DEFINITION
+          def.type === NodeType.TYPE_DEFINITION,
       ),
       globalVariables: typeGlobalOrFunctionDefinitions.filter(
-        (def): def is NodeLetStatement => def.type === NodeType.LET_STATEMENT
+        (def): def is NodeLetStatement => def.type === NodeType.LET_STATEMENT,
       ),
       functionDeclarations: typeGlobalOrFunctionDefinitions.filter(
         (def): def is NodeFunctionDefinition =>
-          def.type === NodeType.FUNCTION_DEFINITION
+          def.type === NodeType.FUNCTION_DEFINITION,
       ),
       exportStatements: [],
       mainFunction,
@@ -560,7 +560,6 @@ export class RecursiveDescentParser {
       this.match(GomToken.LBRACE);
       // could be struct, tuple or list
       this.buffer.push(this.lexer.nextToken());
-      console.log(this.buffer);
       // @ts-ignore
       if (this.buffer[1].type === GomToken.COLON) {
         const fields: [NodeTerm, NodeExpr][] = this.parseOneOrMore(() => {

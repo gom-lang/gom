@@ -12,7 +12,12 @@ import {
   NodeForStatement,
   NodeFunctionDefinition,
   NodeFunctionReturnType,
+  NodeGomTypeComposite,
+  NodeGomTypeId,
+  NodeGomTypeList,
+  NodeGomTypeStruct,
   NodeGomTypeStructField,
+  NodeGomTypeTuple,
   NodeIfStatement,
   NodeImportDeclaration,
   NodeIndexedAccess,
@@ -34,6 +39,12 @@ export interface Visitor<StateType> {
   visitProgram(node: NodeProgram): void;
   visitImportDeclaration(node: NodeImportDeclaration): void;
   visitTypeDefinition(node: NodeTypeDefinition): void;
+  visitGomTypeId(node: NodeGomTypeId): void;
+  visitGomTypeTuple(node: NodeGomTypeTuple): void;
+  visitGomTypeStruct(node: NodeGomTypeStruct): void;
+  visitGomTypeList(node: NodeGomTypeList): void;
+  visitGomTypeComposite(node: NodeGomTypeComposite): void;
+  visitGomTypeStructField(node: NodeGomTypeStructField): void;
   visitFunctionDefinition(node: NodeFunctionDefinition): void;
   visitMainFunction(node: NodeMainFunction): void;
   visitArgumentItem(node: NodeArgumentItem): void;
@@ -49,7 +60,7 @@ export interface Visitor<StateType> {
   visitLetStatement(node: NodeLetStatement): void;
   visitExpressionStatement(
     node: NodeExpressionStatement,
-    state: StateType
+    state: StateType,
   ): void;
   visitTerm(node: NodeTerm): void;
 }
@@ -71,6 +82,24 @@ export class SimpleVisitor<T> implements Visitor<T> {
         return;
       case NodeType.TYPE_DEFINITION:
         this.visitTypeDefinition(node as NodeTypeDefinition);
+        return;
+      case NodeType.GOM_TYPE_ID:
+        this.visitGomTypeId(node as NodeGomTypeId);
+        return;
+      case NodeType.GOM_TYPE_TUPLE:
+        this.visitGomTypeTuple(node as NodeGomTypeTuple);
+        return;
+      case NodeType.GOM_TYPE_STRUCT:
+        this.visitGomTypeStruct(node as NodeGomTypeStruct);
+        return;
+      case NodeType.GOM_TYPE_LIST:
+        this.visitGomTypeList(node as NodeGomTypeList);
+        return;
+      case NodeType.GOM_TYPE_COMPOSITE:
+        this.visitGomTypeComposite(node as NodeGomTypeComposite);
+        return;
+      case NodeType.GOM_TYPE_STRUCT_FIELD:
+        this.visitGomTypeStructField(node as NodeGomTypeStructField);
         return;
       case NodeType.FUNCTION_DEFINITION:
         this.visitFunctionDefinition(node as NodeFunctionDefinition);
@@ -157,6 +186,24 @@ export class SimpleVisitor<T> implements Visitor<T> {
     this.visitChildren(node);
   }
   visitTypeDefinition(node: NodeTypeDefinition) {
+    this.visitChildren(node);
+  }
+  visitGomTypeId(node: NodeGomTypeId) {
+    this.visitChildren(node);
+  }
+  visitGomTypeTuple(node: NodeGomTypeTuple) {
+    this.visitChildren(node);
+  }
+  visitGomTypeStruct(node: NodeGomTypeStruct) {
+    this.visitChildren(node);
+  }
+  visitGomTypeList(node: NodeGomTypeList) {
+    this.visitChildren(node);
+  }
+  visitGomTypeComposite(node: NodeGomTypeComposite) {
+    this.visitChildren(node);
+  }
+  visitGomTypeStructField(node: NodeGomTypeStructField): void {
     this.visitChildren(node);
   }
   visitFunctionDefinition(node: NodeFunctionDefinition) {

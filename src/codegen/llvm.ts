@@ -35,7 +35,7 @@ import {
   GomStructType,
   GomTupleType,
   GomType,
-} from "../semantics/type";
+} from "../types";
 import { GomToken } from "../lexer/tokens";
 import { GomErrorManager } from "../util/error";
 import { Node } from "../parser/rd/tree";
@@ -98,7 +98,7 @@ export class CodeGenerator extends BaseCodeGenerator {
 
     globalVariables.forEach((id) => {
       const type = this.mapGomTypeToLLVMType(
-        id.type as GomPrimitiveTypeOrAlias
+        id.type as GomPrimitiveTypeOrAlias,
       );
       const global = new llvm.GlobalVariable(
         this.module,
@@ -106,7 +106,7 @@ export class CodeGenerator extends BaseCodeGenerator {
         false,
         llvm.Function.LinkageTypes.ExternalLinkage,
         null,
-        id.name
+        id.name,
       );
 
       if (id.valueExpr) {
@@ -137,7 +137,7 @@ export class CodeGenerator extends BaseCodeGenerator {
 
   private mapGomTupleTypeToLLVMType(type: GomTupleType) {
     const types = Array.from(type.fields).map((t) =>
-      this.mapGomTypeToLLVMType(t[1])
+      this.mapGomTypeToLLVMType(t[1]),
     );
     return llvm.StructType.get(this.context, types);
   }
@@ -208,7 +208,7 @@ export class CodeGenerator extends BaseCodeGenerator {
         }[t]);
       this.formatStrings[type] = this.builder.CreateGlobalStringPtr(
         `${typeToFormatString(type) || "%d"}`,
-        `fmt.${type}`
+        `fmt.${type}`,
       );
     }
 
@@ -219,7 +219,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     const printFnType = llvm.FunctionType.get(
       this.builder.getInt32Ty(),
       [llvm.Type.getInt8PtrTy(this.context)],
-      true
+      true,
     );
 
     this.module.getOrInsertFunction("printf", printFnType);
@@ -227,7 +227,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     const mallocFnType = llvm.FunctionType.get(
       this.builder.getInt8PtrTy(),
       [this.builder.getInt32Ty()],
-      false
+      false,
     );
     this.module.getOrInsertFunction("malloc", mallocFnType);
 
@@ -235,7 +235,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     const reallocFnType = llvm.FunctionType.get(
       this.builder.getInt8PtrTy(),
       [this.builder.getInt8PtrTy(), this.builder.getInt32Ty()],
-      false
+      false,
     );
     this.module.getOrInsertFunction("realloc", reallocFnType);
   }
@@ -268,7 +268,7 @@ export class CodeGenerator extends BaseCodeGenerator {
       }
       const structType = llvm.StructType.create(
         this.context,
-        node.name.token.value
+        node.name.token.value,
       );
       const gomType = type.gomType as GomStructType;
       const fields = Array.from(gomType.fields).map(([_key, fieldType]) => {
@@ -287,7 +287,7 @@ export class CodeGenerator extends BaseCodeGenerator {
       }
       const tupleType = llvm.StructType.create(
         this.context,
-        node.name.token.value
+        node.name.token.value,
       );
       const gomType = type.gomType as GomTupleType;
       const fields = Array.from(gomType.fields).map(([_key, fieldType]) => {
@@ -305,7 +305,7 @@ export class CodeGenerator extends BaseCodeGenerator {
       }
       const listType = llvm.StructType.create(
         this.context,
-        node.name.token.value
+        node.name.token.value,
       );
       const gomType = type.gomType as GomListType;
       const elementType = this.mapGomTypeToLLVMType(gomType.elementType);
@@ -322,11 +322,11 @@ export class CodeGenerator extends BaseCodeGenerator {
   visitFunctionDefinition(node: NodeFunctionDefinition): void {
     this.symbolTableReader.enterScope(node.name.value);
     this.irScopeManager.enterScope(node.name.value);
-    const fnType = node.resultantType as GomFunctionType;
+    const fnType = node.gomType as GomFunctionType;
     const returnTypeGom = fnType.returnType;
     const returnType = this.mapGomTypeToLLVMType(returnTypeGom);
-    const argsType = (node.resultantType as GomFunctionType).args.map((arg) =>
-      this.mapGomTypeToLLVMType(arg as GomPrimitiveTypeOrAlias)
+    const argsType = (node.gomType as GomFunctionType).args.map((arg) =>
+      this.mapGomTypeToLLVMType(arg as GomPrimitiveTypeOrAlias),
     );
 
     if (fnType.usesSret()) {
@@ -337,13 +337,13 @@ export class CodeGenerator extends BaseCodeGenerator {
     const funcType = llvm.FunctionType.get(
       fnType.usesSret() ? llvm.Type.getVoidTy(this.context) : returnType,
       argsType,
-      false
+      false,
     );
     const fn = llvm.Function.Create(
       funcType,
       llvm.Function.LinkageTypes.ExternalLinkage,
       node.name.value,
-      this.module
+      this.module,
     );
 
     if (fnType.usesSret()) {
@@ -383,7 +383,7 @@ export class CodeGenerator extends BaseCodeGenerator {
       funcType,
       llvm.Function.LinkageTypes.ExternalLinkage,
       "main",
-      this.module
+      this.module,
     );
 
     const entry = llvm.BasicBlock.Create(this.context, "entry", mainFunction);
@@ -414,7 +414,7 @@ export class CodeGenerator extends BaseCodeGenerator {
             true,
             llvm.GlobalValue.LinkageTypes.PrivateLinkage,
             llvm.ConstantInt.get(type, Number(decl.rhs.token.value)),
-            decl.lhs.token.value
+            decl.lhs.token.value,
           );
         }
         continue;
@@ -422,11 +422,11 @@ export class CodeGenerator extends BaseCodeGenerator {
 
       // this.builder.SetInsertPoint(this.currentFunctionEntry);
 
-      const type = this.mapGomTypeToLLVMType(decl.lhs.resultantType);
+      const type = this.mapGomTypeToLLVMType(decl.lhs.gomType);
       const alloca = this.builder.CreateAlloca(
         type,
         null,
-        decl.lhs.token.value
+        decl.lhs.token.value,
       );
 
       const id = this.symbolTableReader.getIdentifier(decl.lhs.token.value);
@@ -438,8 +438,6 @@ export class CodeGenerator extends BaseCodeGenerator {
         declLhs: decl.lhs,
         pointer: alloca,
       });
-
-      console.log("RHS Value:", rhsValue, "Type:", rhsValue.getType());
 
       if (!type.isStructTy()) {
         this.builder.CreateStore(rhsValue, alloca);
@@ -460,7 +458,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     }
 
     if (node.expr) {
-      if (node.expr.resultantType instanceof GomPrimitiveTypeOrAlias) {
+      if (node.expr.gomType instanceof GomPrimitiveTypeOrAlias) {
         const exprValue = this.visitExpression(node.expr);
         this.builder.CreateRet(exprValue);
       } else {
@@ -489,17 +487,17 @@ export class CodeGenerator extends BaseCodeGenerator {
     const thenBB = llvm.BasicBlock.Create(
       this.context,
       "then",
-      currentFunction
+      currentFunction,
     );
     const elseBB = llvm.BasicBlock.Create(
       this.context,
       "else",
-      currentFunction
+      currentFunction,
     );
     const mergeBB = llvm.BasicBlock.Create(
       this.context,
       "merge",
-      currentFunction
+      currentFunction,
     );
 
     this.builder.CreateCondBr(condValue, thenBB, elseBB);
@@ -545,22 +543,22 @@ export class CodeGenerator extends BaseCodeGenerator {
       const loopBB = llvm.BasicBlock.Create(
         this.context,
         "loop",
-        currentFunction
+        currentFunction,
       );
       const bodyBB = llvm.BasicBlock.Create(
         this.context,
         "loopbody",
-        currentFunction
+        currentFunction,
       );
       const updateBB = llvm.BasicBlock.Create(
         this.context,
         "loopupdate",
-        currentFunction
+        currentFunction,
       );
       const afterBB = llvm.BasicBlock.Create(
         this.context,
         "afterloop",
-        currentFunction
+        currentFunction,
       );
 
       if (node.initExpr instanceof NodeLetStatement) {
@@ -598,12 +596,12 @@ export class CodeGenerator extends BaseCodeGenerator {
       const loopBB = llvm.BasicBlock.Create(
         this.context,
         "infloop",
-        currentFunction
+        currentFunction,
       );
       const afterBB = llvm.BasicBlock.Create(
         this.context,
         "afterinfloop",
-        currentFunction
+        currentFunction,
       );
 
       this.builder.CreateBr(loopBB);
@@ -644,7 +642,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     const after = llvm.BasicBlock.Create(
       this.context,
       "after.break",
-      this.currentFunction!
+      this.currentFunction!,
     );
     this.builder.SetInsertPoint(after);
   }
@@ -664,7 +662,7 @@ export class CodeGenerator extends BaseCodeGenerator {
     const after = llvm.BasicBlock.Create(
       this.context,
       "after.continue",
-      this.currentFunction!
+      this.currentFunction!,
     );
     this.builder.SetInsertPoint(after);
   }
@@ -701,7 +699,6 @@ export class CodeGenerator extends BaseCodeGenerator {
         message: "Unknown identifier: " + node.lhs.token.value,
       });
     }
-    console.log(id);
     const rhsValue = this.visitExpression(node.rhs);
     this.builder.CreateStore(rhsValue, id.allocaInst!);
     return rhsValue;
@@ -709,11 +706,11 @@ export class CodeGenerator extends BaseCodeGenerator {
 
   visitStructInit(
     node: NodeStructInit,
-    context?: ExpressionContext
+    context?: ExpressionContext,
   ): llvm.Value {
     if (context?.declLhs) {
       const structId = this.symbolTableReader.getIdentifier(
-        context.declLhs.token.value
+        context.declLhs.token.value,
       );
       if (!structId) {
         this.errorManager.throwCodegenError({
@@ -729,7 +726,7 @@ export class CodeGenerator extends BaseCodeGenerator {
         });
       }
       const structAlloca = structId.allocaInst;
-      const structType = this.mapGomTypeToLLVMType(node.resultantType);
+      const structType = this.mapGomTypeToLLVMType(node.gomType);
       const index0 = this.builder.getInt32(0);
       node.fields.forEach((field, i) => {
         const fieldVal = this.visitExpression(field[1]);
@@ -737,17 +734,17 @@ export class CodeGenerator extends BaseCodeGenerator {
           structType,
           structAlloca,
           [index0, this.builder.getInt32(i)],
-          "fieldptr"
+          "fieldptr",
         );
         this.builder.CreateStore(fieldVal, fieldPtr);
       });
       return structAlloca;
     } else {
-      const structType = this.mapGomTypeToLLVMType(node.resultantType);
+      const structType = this.mapGomTypeToLLVMType(node.gomType);
       const structAlloca = this.builder.CreateAlloca(
         structType,
         null,
-        node.structTypeName.token.value + "_instance"
+        node.structTypeName.token.value + "_instance",
       );
       node.fields.forEach((field, i) => {
         const fieldVal = this.visitExpression(field[1]);
@@ -755,7 +752,7 @@ export class CodeGenerator extends BaseCodeGenerator {
           structType,
           structAlloca,
           [this.builder.getInt32(0), this.builder.getInt32(i)],
-          "fieldptr"
+          "fieldptr",
         );
         this.builder.CreateStore(fieldVal, fieldPtr);
       });
@@ -765,12 +762,10 @@ export class CodeGenerator extends BaseCodeGenerator {
 
   visitCollectionInit(
     node: NodeCollectionInit,
-    context?: ExpressionContext
+    context?: ExpressionContext,
   ): llvm.Value {
-    if (node.resultantType instanceof GomTupleType) {
-      const type = this.mapGomTypeToLLVMType(
-        node.resultantType as GomTupleType
-      );
+    if (node.gomType instanceof GomTupleType) {
+      const type = this.mapGomTypeToLLVMType(node.gomType as GomTupleType);
       const tuple = this.builder.CreateAlloca(type, null, "tuple");
       node.elements.forEach((element, i) => {
         const fieldVal = this.visitExpression(element);
@@ -778,13 +773,13 @@ export class CodeGenerator extends BaseCodeGenerator {
           type,
           tuple,
           [this.builder.getInt32(0), this.builder.getInt32(i)],
-          "fieldptr"
+          "fieldptr",
         );
         this.builder.CreateStore(fieldVal, fieldPtr);
       });
       return tuple;
-    } else if (node.resultantType instanceof GomListType) {
-      const gomListType = node.resultantType as GomListType;
+    } else if (node.gomType instanceof GomListType) {
+      const gomListType = node.gomType as GomListType;
       const listType = this.mapGomTypeToLLVMType(gomListType);
       // const listPtr = this.builder.CreateAlloca(listType, null, "list_ptr");
       const listPtr = context?.pointer
@@ -795,42 +790,40 @@ export class CodeGenerator extends BaseCodeGenerator {
         listType,
         listPtr,
         [this.builder.getInt32(0), this.builder.getInt32(0)],
-        "data_ptr_ptr"
+        "data_ptr_ptr",
       );
       const sizePtr = this.builder.CreateGEP(
         listType,
         listPtr,
         [this.builder.getInt32(0), this.builder.getInt32(1)],
-        "size_ptr"
+        "size_ptr",
       );
       const capacityPtr = this.builder.CreateGEP(
         listType,
         listPtr,
         [this.builder.getInt32(0), this.builder.getInt32(2)],
-        "capacity_ptr"
+        "capacity_ptr",
       );
 
       const initialCapacity = this.builder.getInt32(
-        Math.max(LIST_INITIAL_CAPACITY, node.elements.length)
+        Math.max(LIST_INITIAL_CAPACITY, node.elements.length),
       );
       this.builder.CreateStore(initialCapacity, capacityPtr);
       this.builder.CreateStore(
         this.builder.getInt32(node.elements.length),
-        sizePtr
+        sizePtr,
       );
 
       const elementType = this.mapGomTypeToLLVMType(gomListType.elementType);
-      console.log("Element type:", elementType, gomListType.elementType);
       const arrayElementType = elementType;
       const sizeOfType = llvm.ConstantInt.get(
         llvm.Type.getInt32Ty(this.context),
-        this.module.getDataLayout().getTypeAllocSize(elementType)
+        this.module.getDataLayout().getTypeAllocSize(elementType),
       );
-      console.log("Size of type:", sizeOfType);
       const mallocSize = this.builder.CreateMul(
         initialCapacity,
         sizeOfType,
-        "malloc_size"
+        "malloc_size",
       );
       const mallocFn = this.module.getFunction("malloc");
       if (!mallocFn) {
@@ -842,12 +835,12 @@ export class CodeGenerator extends BaseCodeGenerator {
       const mallocCall = this.builder.CreateCall(
         mallocFn,
         [mallocSize],
-        "malloc_call"
+        "malloc_call",
       );
       const dataAlloca = this.builder.CreateBitCast(
         mallocCall,
         llvm.PointerType.get(arrayElementType, 0),
-        "data_alloca"
+        "data_alloca",
       );
       this.builder.CreateStore(dataAlloca, dataPtrPtr);
 
@@ -858,14 +851,14 @@ export class CodeGenerator extends BaseCodeGenerator {
           elementVal = this.builder.CreateLoad(
             this.mapGomTypeToLLVMType(gomListType.elementType),
             elementVal,
-            "element_load"
+            "element_load",
           );
         }
         const elementPtr = this.builder.CreateInBoundsGEP(
           arrayElementType,
           dataAlloca,
           [this.builder.getInt32(i)],
-          "element_ptr"
+          "element_ptr",
         );
         this.builder.CreateStore(elementVal, elementPtr);
       });
@@ -881,9 +874,9 @@ export class CodeGenerator extends BaseCodeGenerator {
 
   visitTupleLiteral(
     node: NodeTupleLiteral,
-    context?: ExpressionContext
+    context?: ExpressionContext,
   ): llvm.Value {
-    const type = this.mapGomTypeToLLVMType(node.resultantType as GomTupleType);
+    const type = this.mapGomTypeToLLVMType(node.gomType as GomTupleType);
     const tuple =
       context?.pointer ?? this.builder.CreateAlloca(type, null, "tuple");
     node.elements.forEach((element, i) => {
@@ -892,7 +885,7 @@ export class CodeGenerator extends BaseCodeGenerator {
         type,
         tuple,
         [this.builder.getInt32(0), this.builder.getInt32(i)],
-        "fieldptr"
+        "fieldptr",
       );
       this.builder.CreateStore(fieldVal, fieldPtr);
     });
@@ -923,7 +916,7 @@ export class CodeGenerator extends BaseCodeGenerator {
           this.builder.CreateCall(fn, [arg], key + i);
         } else {
           const formatString = this.getFormatStringLiteralPointer(
-            (currentArg.resultantType as GomPrimitiveTypeOrAlias).typeString
+            (currentArg.gomType as GomPrimitiveTypeOrAlias).typeString,
           );
           this.builder.CreateCall(fn, [formatString, arg], key + i);
         }
@@ -933,19 +926,19 @@ export class CodeGenerator extends BaseCodeGenerator {
       if (!this.globalStringPtrs["newline"]) {
         this.globalStringPtrs["newline"] = this.builder.CreateGlobalStringPtr(
           "\n",
-          "newline"
+          "newline",
         );
       }
       const newline = this.globalStringPtrs["newline"];
       this.builder.CreateCall(fn, [newline], "newline");
       return this.builder.getInt32(0);
     } else if (
-      (node.lhs.resultantType instanceof GomStructType ||
-        node.lhs.resultantType instanceof GomTupleType) &&
+      (node.lhs.gomType instanceof GomStructType ||
+        node.lhs.gomType instanceof GomTupleType) &&
       node.rhs instanceof NodeTerm
     ) {
-      const type = node.lhs.resultantType;
-      const structType = this.mapGomTypeToLLVMType(node.lhs.resultantType);
+      const type = node.lhs.gomType;
+      const structType = this.mapGomTypeToLLVMType(node.lhs.gomType);
       const struct = this.symbolTableReader.getIdentifier(idName);
       if (!struct) {
         this.errorManager.throwCodegenError({
@@ -964,7 +957,7 @@ export class CodeGenerator extends BaseCodeGenerator {
       const index =
         type instanceof GomStructType
           ? this.builder.getInt32(
-              Array.from(type.fields.keys()).indexOf(node.rhs.token.value)
+              Array.from(type.fields.keys()).indexOf(node.rhs.token.value),
             )
           : this.builder.getInt32(Number(node.rhs.token.value));
 
@@ -972,19 +965,19 @@ export class CodeGenerator extends BaseCodeGenerator {
         structType,
         struct.allocaInst,
         [this.builder.getInt32(0), index],
-        "fieldptr"
+        "fieldptr",
       );
       const load = this.builder.CreateLoad(
-        this.mapGomTypeToLLVMType(node.rhs.resultantType),
+        this.mapGomTypeToLLVMType(node.rhs.gomType),
         ptr,
-        "fieldload"
+        "fieldload",
       );
       if (context?.pointer) {
         this.builder.CreateStore(load, context.pointer);
       }
       return load;
-    } else if (node.lhs.resultantType instanceof GomListType) {
-      const type = node.lhs.resultantType;
+    } else if (node.lhs.gomType instanceof GomListType) {
+      const type = node.lhs.gomType;
       const listType = this.mapGomTypeToLLVMType(type);
       const list = this.symbolTableReader.getIdentifier(idName);
       if (!list) {
@@ -1010,12 +1003,12 @@ export class CodeGenerator extends BaseCodeGenerator {
             listType,
             list.allocaInst,
             [this.builder.getInt32(0), this.builder.getInt32(1)],
-            "size_ptr"
+            "size_ptr",
           );
           const sizeValue = this.builder.CreateLoad(
             llvm.Type.getInt32Ty(this.context),
             sizePtr,
-            "size_value"
+            "size_value",
           );
           if (context?.pointer) {
             this.builder.CreateStore(sizeValue, context.pointer);
@@ -1029,24 +1022,24 @@ export class CodeGenerator extends BaseCodeGenerator {
           listType,
           list.allocaInst,
           [this.builder.getInt32(0), this.builder.getInt32(0)],
-          "data_ptr_ptr"
+          "data_ptr_ptr",
         );
         const dataPtr = this.builder.CreateLoad(
           llvm.PointerType.get(elementType, 0),
           dataPtrPtr,
-          "data_ptr"
+          "data_ptr",
         );
 
         const elementPtr = this.builder.CreateInBoundsGEP(
           elementType,
           dataPtr,
           [indexValue],
-          "element_ptr"
+          "element_ptr",
         );
         const load = this.builder.CreateLoad(
           elementType,
           elementPtr,
-          "element_load"
+          "element_load",
         );
         if (context?.pointer) {
           this.builder.CreateStore(load, context.pointer);
@@ -1109,17 +1102,17 @@ export class CodeGenerator extends BaseCodeGenerator {
    */
   private sizeofBytes(type: llvm.Type): llvm.ConstantInt {
     return this.builder.getInt32(
-      this.module.getDataLayout().getTypeAllocSize(type)
+      this.module.getDataLayout().getTypeAllocSize(type),
     );
   }
 
   private handleBuiltinFreeFunctions(
     fname: "push" | "pop",
     node: NodeCall,
-    context?: ExpressionContext
+    context?: ExpressionContext,
   ): llvm.Value {
     const listArg = node.args[0];
-    const listType = listArg.resultantType;
+    const listType = listArg.gomType;
     if (!(listType instanceof GomListType)) {
       this.errorManager.throwCodegenError({
         loc: node.loc,
@@ -1151,19 +1144,19 @@ export class CodeGenerator extends BaseCodeGenerator {
       listLLVMType,
       listSym.allocaInst,
       [this.builder.getInt32(0), this.builder.getInt32(0)],
-      "list.data.ptrptr"
+      "list.data.ptrptr",
     );
     const sizePtr = this.builder.CreateInBoundsGEP(
       listLLVMType,
       listSym.allocaInst,
       [this.builder.getInt32(0), this.builder.getInt32(1)],
-      "list.size.ptr"
+      "list.size.ptr",
     );
     const capPtr = this.builder.CreateInBoundsGEP(
       listLLVMType,
       listSym.allocaInst,
       [this.builder.getInt32(0), this.builder.getInt32(2)],
-      "list.cap.ptr"
+      "list.cap.ptr",
     );
 
     if (fname === "push") {
@@ -1178,12 +1171,12 @@ export class CodeGenerator extends BaseCodeGenerator {
       const sizeVal = this.builder.CreateLoad(
         this.builder.getInt32Ty(),
         sizePtr,
-        "list.size"
+        "list.size",
       );
       const capVal = this.builder.CreateLoad(
         this.builder.getInt32Ty(),
         capPtr,
-        "list.cap"
+        "list.cap",
       );
 
       // If cap == 0, set to initial; if size >= cap, grow cap *= 2
@@ -1191,12 +1184,12 @@ export class CodeGenerator extends BaseCodeGenerator {
       const needInitBB = llvm.BasicBlock.Create(
         this.context,
         "list.needinit",
-        currFn
+        currFn,
       );
       const growthCheckBB = llvm.BasicBlock.Create(
         this.context,
         "list.growthcheck",
-        currFn
+        currFn,
       );
       const growBB = llvm.BasicBlock.Create(this.context, "list.grow", currFn);
       const contBB = llvm.BasicBlock.Create(this.context, "list.cont", currFn);
@@ -1204,7 +1197,7 @@ export class CodeGenerator extends BaseCodeGenerator {
       const isZeroCap = this.builder.CreateICmpEQ(
         capVal,
         this.builder.getInt32(0),
-        "cap.iszero"
+        "cap.iszero",
       );
       this.builder.CreateCondBr(isZeroCap, needInitBB, growthCheckBB);
 
@@ -1215,7 +1208,7 @@ export class CodeGenerator extends BaseCodeGenerator {
       const initBytes = this.builder.CreateMul(
         initCap,
         elemSize,
-        "list.init.bytes"
+        "list.init.bytes",
       );
 
       const mallocFn = this.module.getFunction("malloc");
@@ -1228,12 +1221,12 @@ export class CodeGenerator extends BaseCodeGenerator {
       const newDataI8 = this.builder.CreateCall(
         mallocFn,
         [initBytes],
-        "list.init.malloc"
+        "list.init.malloc",
       );
       const newDataPtr = this.builder.CreateBitCast(
         newDataI8,
         llvm.PointerType.get(elemLLVMType, 0),
-        "list.init.dataptr"
+        "list.init.dataptr",
       );
       this.builder.CreateStore(newDataPtr, dataPtrPtr);
       this.builder.CreateStore(initCap, capPtr);
@@ -1243,16 +1236,16 @@ export class CodeGenerator extends BaseCodeGenerator {
       this.builder.SetInsertPoint(growthCheckBB);
       const sizeReload = this.builder.CreateLoad(
         this.builder.getInt32Ty(),
-        sizePtr
+        sizePtr,
       );
       const capReload = this.builder.CreateLoad(
         this.builder.getInt32Ty(),
-        capPtr
+        capPtr,
       );
       const needGrow = this.builder.CreateICmpSGE(
         sizeReload,
         capReload,
-        "list.needgrow"
+        "list.needgrow",
       );
       this.builder.CreateCondBr(needGrow, growBB, contBB);
 
@@ -1261,13 +1254,13 @@ export class CodeGenerator extends BaseCodeGenerator {
       const newCap = this.builder.CreateMul(
         capReload,
         this.builder.getInt32(2),
-        "list.newcap"
+        "list.newcap",
       );
       const elemSize2 = this.sizeofBytes(elemLLVMType);
       const newBytes = this.builder.CreateMul(
         newCap,
         elemSize2,
-        "list.newbytes"
+        "list.newbytes",
       );
 
       const reallocFn = this.module.getFunction("realloc");
@@ -1280,22 +1273,22 @@ export class CodeGenerator extends BaseCodeGenerator {
       const oldDataPtr = this.builder.CreateLoad(
         llvm.PointerType.get(elemLLVMType, 0),
         dataPtrPtr,
-        "list.olddataptr"
+        "list.olddataptr",
       );
       const oldDataI8 = this.builder.CreateBitCast(
         oldDataPtr,
         this.builder.getInt8PtrTy(),
-        "list.olddatai8"
+        "list.olddatai8",
       );
       const grownI8 = this.builder.CreateCall(
         reallocFn,
         [oldDataI8, newBytes],
-        "list.realloc"
+        "list.realloc",
       );
       const grownPtr = this.builder.CreateBitCast(
         grownI8,
         llvm.PointerType.get(elemLLVMType, 0),
-        "list.growndataptr"
+        "list.growndataptr",
       );
       this.builder.CreateStore(grownPtr, dataPtrPtr);
       this.builder.CreateStore(newCap, capPtr);
@@ -1306,7 +1299,7 @@ export class CodeGenerator extends BaseCodeGenerator {
       const dataPtr = this.builder.CreateLoad(
         llvm.PointerType.get(elemLLVMType, 0),
         dataPtrPtr,
-        "list.dataptr"
+        "list.dataptr",
       );
 
       // Evaluate value (arg1)
@@ -1315,7 +1308,7 @@ export class CodeGenerator extends BaseCodeGenerator {
         valueToPush = this.builder.CreateLoad(
           elemLLVMType,
           valueToPush,
-          "list.push.load"
+          "list.push.load",
         );
       }
 
@@ -1323,13 +1316,13 @@ export class CodeGenerator extends BaseCodeGenerator {
         elemLLVMType,
         dataPtr,
         [sizeReload],
-        "list.elem.ptr"
+        "list.elem.ptr",
       );
       this.builder.CreateStore(valueToPush, elemPtr);
 
       const sizePlusOne = this.builder.CreateAdd(
         sizeReload,
-        this.builder.getInt32(1)
+        this.builder.getInt32(1),
       );
       this.builder.CreateStore(sizePlusOne, sizePtr);
 
@@ -1349,7 +1342,7 @@ export class CodeGenerator extends BaseCodeGenerator {
       const sizeVal = this.builder.CreateLoad(
         this.builder.getInt32Ty(),
         sizePtr,
-        "list.size"
+        "list.size",
       );
       const one = this.builder.getInt32(1);
       const newSize = this.builder.CreateSub(sizeVal, one, "list.newsize");
@@ -1358,18 +1351,18 @@ export class CodeGenerator extends BaseCodeGenerator {
       const dataPtr = this.builder.CreateLoad(
         llvm.PointerType.get(elemLLVMType, 0),
         dataPtrPtr,
-        "list.dataptr"
+        "list.dataptr",
       );
       const elemPtr = this.builder.CreateInBoundsGEP(
         elemLLVMType,
         dataPtr,
         [newSize],
-        "list.elem.ptr"
+        "list.elem.ptr",
       );
       const value = this.builder.CreateLoad(
         elemLLVMType,
         elemPtr,
-        "list.pop.value"
+        "list.pop.value",
       );
       if (context?.pointer) {
         this.builder.CreateStore(value, context.pointer);
@@ -1409,14 +1402,14 @@ export class CodeGenerator extends BaseCodeGenerator {
         this.builder.CreateAlloca(
           this.mapGomTypeToLLVMType(gomFn.type.returnType),
           null,
-          "sret"
+          "sret",
         );
       const args = node.args.map((arg) => this.visitExpression(arg));
       this.builder.CreateCall(fn, [sretPointer, ...args]);
       return sretPointer;
     } else {
       const args = node.args.map((arg) =>
-        this.visitExpression(arg, { pointer: context?.pointer })
+        this.visitExpression(arg, { pointer: context?.pointer }),
       );
       return this.builder.CreateCall(fn, args, "calltmp");
     }
@@ -1455,7 +1448,7 @@ export class CodeGenerator extends BaseCodeGenerator {
         const loadInst = this.builder.CreateLoad(
           this.mapGomTypeToLLVMType(id.type as GomPrimitiveTypeOrAlias),
           id.allocaInst,
-          id.name + ".load"
+          id.name + ".load",
         );
         this.builder.CreateStore(loadInst, pointer);
         return loadInst;
@@ -1495,7 +1488,7 @@ export class CodeGenerator extends BaseCodeGenerator {
         return this.builder.CreateLoad(
           this.mapGomTypeToLLVMType(id.type as GomPrimitiveTypeOrAlias),
           id.allocaInst,
-          id.name + ".load"
+          id.name + ".load",
         );
       } else if (type === GomToken.TRUE) {
         return this.builder.getInt1(true);

@@ -7,7 +7,7 @@ import {
   NodeTypeDefinition,
 } from "../parser/rd/nodes";
 import { GomInternalError, SyntaxError } from "../util/error";
-import { GomPrimitiveTypeOrAliasValue, GomType } from "./type";
+import { GomPrimitiveTypeOrAliasValue, GomType } from "../types";
 import { GOM_BUILT_IN_TYPES, GomToken } from "../lexer/tokens";
 
 class SymbolTableNode<T> {
@@ -16,7 +16,7 @@ class SymbolTableNode<T> {
   constructor(
     private name: string,
     private value: T,
-    private parent?: SymbolTableNode<T>
+    private parent?: SymbolTableNode<T>,
   ) {}
 
   addChild(value: SymbolTableNode<T>) {
@@ -93,7 +93,7 @@ class IdentifierEntry {
     name: string,
     node: NodeTerm | NodeFunctionDefinition,
     type: GomType,
-    valueExpr?: NodeExpr
+    valueExpr?: NodeExpr,
   ) {
     this.name = name;
     this.node = node;
@@ -147,7 +147,7 @@ export class Scope {
     name: string,
     node: NodeTerm | NodeFunctionDefinition,
     type: GomType,
-    valueExpr?: NodeExpr
+    valueExpr?: NodeExpr,
   ) {
     const existingEntry =
       this.entries.types[name] ?? this.entries.identifiers[name];
@@ -162,7 +162,7 @@ export class Scope {
       name,
       node,
       type,
-      valueExpr
+      valueExpr,
     );
   }
 
@@ -196,7 +196,7 @@ export class Scope {
 
   getAllFunctions() {
     return Object.values(this.entries.identifiers).filter((entry) =>
-      entry.isFunction()
+      entry.isFunction(),
     );
   }
 }
@@ -238,7 +238,7 @@ export class ScopeManager {
     const newSymbolTable = new SymbolTableNode(
       name,
       new Scope(),
-      this.currentSymbolTableNode
+      this.currentSymbolTableNode,
     );
     this.currentSymbolTableNode.addChild(newSymbolTable);
     this.currentSymbolTableNode = newSymbolTable;
@@ -271,7 +271,7 @@ export class ScopeManager {
     name: string,
     node: NodeTerm | NodeFunctionDefinition,
     type: GomType,
-    valueExpr?: NodeExpr
+    valueExpr?: NodeExpr,
   ) {
     this.getCurrentScope().putIdentifier(name, node, type, valueExpr);
   }

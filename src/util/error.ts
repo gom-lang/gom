@@ -1,23 +1,36 @@
 import chalk from "chalk";
 
-export class SyntaxError extends Error {
-  constructor({ loc, message }: { loc: [number, number]; message: string }) {
-    super(
-      chalk.bold(`${chalk.red(`SyntaxError at ${loc.join(":")}`)}: ${message}`)
-    );
+export abstract class GomError {
+  name: string = "GomError";
+  message: string = "";
+
+  print() {
+    console.error(this.message);
   }
 }
 
-export class TypeError extends Error {
+export class SyntaxError extends GomError {
+  constructor({ loc, message }: { loc: [number, number]; message: string }) {
+    super();
+    this.message =
+      chalk.bold(chalk.red(`SyntaxError at ${loc.join(":")}`)) + `: ${message}`;
+    this.name = "GomSyntaxError";
+  }
+}
+
+export class TypeError extends GomError {
   constructor({ message, loc }: { message: string; loc: [number, number] }) {
-    super(`TypeError at ${loc.join(":")}: ${message}`);
+    super();
+    this.message =
+      chalk.bold(chalk.red(`TypeError at ${loc.join(":")}`)) + `: ${message}`;
     this.name = "GomTypeError";
   }
 }
 
-export class GomInternalError extends Error {
+export class GomInternalError extends GomError {
   constructor({ message }: { message: string }) {
-    super(`GomInternalError: ${message}`);
+    super();
+    this.message = chalk.bold(chalk.red(`GomInternalError`)) + `: ${message}`;
     this.name = "GomInternalError";
   }
 }
@@ -46,17 +59,25 @@ export class GomErrorManager {
     const { line, column } = this.getLineAndColumn(loc);
     const lines = this.src.split("\n");
     const errorLine = lines[line - 1];
-    return `${line} | ${errorLine}\n${" ".repeat(column)}^`;
+    const lineNum = line.toString().padStart(4, " ");
+    const caretPadding = " ".repeat(lineNum.length + 2 + column - 1);
+    return `\n${lineNum} | ${errorLine.trim()}\n${caretPadding}↑`;
   }
 
   throwSyntaxError({ loc, message }: { loc: number; message: string }): never {
     const { line, column } = this.getLineAndColumn(loc);
-    throw new SyntaxError({ loc: [line, column], message });
+    throw new SyntaxError({
+      loc: [line, column],
+      message: `${message}\n${this.getErrorSrcMessage(loc)}`,
+    });
   }
 
   throwTypeError({ loc, message }: { loc: number; message: string }): never {
     const { line, column } = this.getLineAndColumn(loc);
-    throw new TypeError({ loc: [line, column], message });
+    throw new TypeError({
+      loc: [line, column],
+      message: `${message}\n${this.getErrorSrcMessage(loc)}`,
+    });
   }
 
   throwInternalError(message: string): never {
