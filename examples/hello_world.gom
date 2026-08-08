@@ -1,5 +1,9 @@
 import io;
 
+function square(i: int): int {
+    return i * i;
+}
+
 function main() {
-    io.log("Hello, World!");
+    io.log("Hello, World!", square(5));
 }

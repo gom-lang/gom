@@ -182,12 +182,12 @@ export class SemanticAnalyzer extends SimpleVisitor<void> {
       });
     }
 
-    this.scopeManager.beginScope("if");
+    this.scopeManager.beginScope(`if.${node._id}`);
     node.body.forEach((stmt) => this.visit(stmt));
     this.scopeManager.endScope();
 
     if (node.elseBody) {
-      this.scopeManager.beginScope("else");
+      this.scopeManager.beginScope(`else.${node._id}`);
       node.elseBody.forEach((stmt) => this.visit(stmt));
       this.scopeManager.endScope();
     }

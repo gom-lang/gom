@@ -2,9 +2,10 @@
 import { runCompile } from "./src/index";
 import { execSync } from "node:child_process";
 import { logGreen } from "./src/util/console";
+import type { CodegenTarget } from "./src/index";
 
 const filePath = process.argv[2];
-const target = (process.argv[3] || "c") as "c" | "llvm";
+const target = (process.argv[3] || "llvm") as CodegenTarget;
 
 runCompile(filePath, target)
   .then(() => {

@@ -27,14 +27,10 @@ export enum GomCompositeTypeKind {
   // Set = "Set",
 }
 
-export class GomType {
-  kind: GomTypeKind = GomTypeKind.PrimitiveOrAlias;
-  toStr(): string {
-    return "gomType";
-  }
-  isEqual(other: GomType): boolean {
-    return false;
-  }
+export interface GomType {
+  kind: GomTypeKind;
+  toStr(): string;
+  isEqual(other: GomType): boolean;
 }
 
 export type GomPrimitiveTypeOrAliasValue =
@@ -45,12 +41,11 @@ export type GomPrimitiveTypeOrAliasValue =
   | "void"
   | string;
 
-export class GomPrimitiveTypeOrAlias extends GomType {
+export class GomPrimitiveTypeOrAlias implements GomType {
   kind: GomTypeKind;
   typeString: GomPrimitiveTypeOrAliasValue;
 
   constructor(typeString: GomPrimitiveTypeOrAliasValue) {
-    super();
     this.kind = GomTypeKind.PrimitiveOrAlias;
     this.typeString = typeString;
   }
@@ -67,14 +62,13 @@ export class GomPrimitiveTypeOrAlias extends GomType {
   }
 }
 
-export class GomListType extends GomType {
+export class GomListType implements GomType {
   name: string;
   kind: GomTypeKind;
   elementType: GomType;
   static readonly SIZE_PROPERTY = "length";
 
   constructor(name: string, elementType: GomType) {
-    super();
     this.name = name;
     this.kind = GomTypeKind.List;
     this.elementType = elementType;
@@ -105,12 +99,11 @@ export class GomListType extends GomType {
   }
 }
 
-export class GomTupleType extends GomType {
+export class GomTupleType implements GomType {
   kind: GomTypeKind;
   fields: Map<string, GomType>;
 
   constructor(fields: GomType[]) {
-    super();
     this.kind = GomTypeKind.Tuple;
     this.fields = fields.reduce((acc, field, i) => {
       acc.set(i.toString(), field);
@@ -142,13 +135,12 @@ export class GomTupleType extends GomType {
   }
 }
 
-export class GomStructType extends GomType {
+export class GomStructType implements GomType {
   kind: GomTypeKind;
   name: string;
   fields: Map<string, GomType>;
 
   constructor(name: string, fields: Map<string, GomType>) {
-    super();
     this.name = name;
     this.kind = GomTypeKind.Struct;
     this.fields = fields;
@@ -175,26 +167,33 @@ export class GomStructType extends GomType {
   }
 }
 
-export class GomCompositeType extends GomType {
+export class GomCompositeType implements GomType {
   kind: GomTypeKind;
   compositeKind: GomCompositeTypeKind;
   fieldTypes: GomType[];
 
   constructor(compositeKind: GomCompositeTypeKind, fieldTypes: GomType[]) {
-    super();
     this.kind = GomTypeKind.Composite;
     this.compositeKind = compositeKind;
     this.fieldTypes = fieldTypes;
   }
+
+  toStr(): string {
+    return `composite { ${Object.entries(this.compositeKind)}`
+  }
+
+  isEqual(other: GomType): boolean {
+    // TODO: incomplete
+    return false;
+  }
 }
 
-export class GomFunctionType extends GomType {
+export class GomFunctionType implements GomType {
   kind: GomTypeKind;
   args: GomType[];
   returnType: GomType;
 
   constructor(args: GomType[], returnType: GomType) {
-    super();
     this.kind = GomTypeKind.Function;
     this.args = args;
     this.returnType = returnType;
@@ -235,13 +234,12 @@ export type GomDeferredTypeMarker =
   | "deferred"
   | "resolve_type"
   | "resolve_custom_type";
-export class GomDeferredType extends GomType {
+export class GomDeferredType implements GomType {
   kind: GomTypeKind;
   marker: GomDeferredTypeMarker;
   value: string;
 
   constructor(marker: GomDeferredTypeMarker, value: string) {
-    super();
     this.kind = GomTypeKind.Deferred;
     this.marker = marker;
     this.value = value;

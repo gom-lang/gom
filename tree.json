@@ -1,5 +1,5 @@
 {
-  "_id": 100,
+  "_id": 22,
   "type": "PROGRAM",
   "loc": 0,
   "gomType": {
@@ -25,134 +25,45 @@
       }
     }
   ],
-  "typeDefinitions": [
-    {
-      "_id": 7,
-      "type": "TYPE_DEFINITION",
-      "loc": 21,
-      "gomType": {
-        "kind": "Tuple",
-        "fields": {}
-      },
-      "name": {
-        "_id": 1,
-        "type": "TERM",
-        "loc": 26,
-        "gomType": {
-          "kind": "Deferred",
-          "marker": "resolve_type",
-          "value": "HttpResponse"
-        },
-        "token": {
-          "type": "identifier",
-          "value": "HttpResponse",
-          "start": 26,
-          "end": 37
-        }
-      },
-      "rhs": {
-        "_id": 6,
-        "type": "GOM_TYPE_TUPLE",
-        "loc": 41,
-        "gomType": {
-          "kind": "Tuple",
-          "fields": {}
-        },
-        "fields": [
-          {
-            "_id": 3,
-            "type": "GOM_TYPE_ID",
-            "loc": 43,
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "int"
-            },
-            "id": {
-              "_id": 2,
-              "type": "TERM",
-              "loc": 43,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "deferred",
-                "value": "unknown"
-              },
-              "token": {
-                "type": "built_in_type",
-                "value": "int",
-                "start": 43,
-                "end": 45
-              }
-            }
-          },
-          {
-            "_id": 5,
-            "type": "GOM_TYPE_ID",
-            "loc": 48,
-            "gomType": {
-              "kind": "PrimitiveOrAlias",
-              "typeString": "bool"
-            },
-            "id": {
-              "_id": 4,
-              "type": "TERM",
-              "loc": 48,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "deferred",
-                "value": "unknown"
-              },
-              "token": {
-                "type": "built_in_type",
-                "value": "bool",
-                "start": 48,
-                "end": 51
-              }
-            }
-          }
-        ]
-      }
-    }
-  ],
+  "typeDefinitions": [],
   "globalVariables": [],
   "functionDeclarations": [
     {
-      "_id": 27,
+      "_id": 11,
       "type": "FUNCTION_DEFINITION",
-      "loc": 58,
+      "loc": 12,
       "gomType": {
         "kind": "Function",
         "args": [
           {
-            "kind": "Deferred",
-            "marker": "deferred",
-            "value": "unknown"
+            "kind": "PrimitiveOrAlias",
+            "typeString": "int"
           }
         ],
         "returnType": {
-          "kind": "Tuple",
-          "fields": {}
+          "kind": "PrimitiveOrAlias",
+          "typeString": "int"
         }
       },
       "name": {
         "type": "identifier",
-        "value": "process_http",
-        "start": 67,
-        "end": 78
+        "value": "square",
+        "start": 21,
+        "end": 26
       },
       "args": [
         {
-          "_id": 10,
+          "_id": 3,
           "type": "ARGUMENT_ITEM",
-          "loc": 80,
+          "loc": 28,
           "gomType": {
-            "kind": "Deferred",
-            "marker": "deferred",
-            "value": "unknown"
+            "kind": "PrimitiveOrAlias",
+            "typeString": "int"
           },
           "name": {
-            "_id": 8,
+            "_id": 1,
             "type": "TERM",
-            "loc": 80,
+            "loc": 28,
             "gomType": {
               "kind": "Deferred",
               "marker": "deferred",
@@ -160,326 +71,15 @@
             },
             "token": {
               "type": "identifier",
-              "value": "url",
-              "start": 80,
-              "end": 82
+              "value": "i",
+              "start": 28,
+              "end": 28
             }
           },
           "expectedType": {
-            "_id": 9,
+            "_id": 2,
             "type": "TERM",
-            "loc": 85,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "token": {
-              "type": "built_in_type",
-              "value": "str",
-              "start": 85,
-              "end": 87
-            }
-          }
-        }
-      ],
-      "returnType": {
-        "_id": 13,
-        "type": "FUNCTION_RETURN_TYPE",
-        "loc": 89,
-        "gomType": {
-          "kind": "Deferred",
-          "marker": "deferred",
-          "value": "unknown"
-        },
-        "returnType": {
-          "_id": 12,
-          "type": "GOM_TYPE_ID",
-          "loc": 91,
-          "gomType": {
-            "kind": "Deferred",
-            "marker": "deferred",
-            "value": "unknown"
-          },
-          "id": {
-            "_id": 11,
-            "type": "TERM",
-            "loc": 91,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "token": {
-              "type": "identifier",
-              "value": "HttpResponse",
-              "start": 91,
-              "end": 102
-            }
-          }
-        }
-      },
-      "body": [
-        {
-          "_id": 22,
-          "type": "IF_STATEMENT",
-          "loc": 108,
-          "gomType": {
-            "kind": "Deferred",
-            "marker": "deferred",
-            "value": "unknown"
-          },
-          "conditionExpr": {
-            "_id": 17,
-            "type": "EXPR_BRACKETED",
-            "loc": 110,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "expr": {
-              "_id": 16,
-              "type": "COMPARISON",
-              "loc": 111,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "deferred",
-                "value": "unknown"
-              },
-              "lhs": {
-                "_id": 14,
-                "type": "TERM",
-                "loc": 111,
-                "gomType": {
-                  "kind": "Deferred",
-                  "marker": "deferred",
-                  "value": "unknown"
-                },
-                "token": {
-                  "type": "identifier",
-                  "value": "url",
-                  "start": 111,
-                  "end": 113
-                }
-              },
-              "op": {
-                "type": "==",
-                "value": "==",
-                "start": 115,
-                "end": 116
-              },
-              "rhs": {
-                "_id": 15,
-                "type": "TERM",
-                "loc": 118,
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "str"
-                },
-                "token": {
-                  "type": "strliteral",
-                  "value": "\"http://www.example.com\"",
-                  "start": 118,
-                  "end": 141
-                }
-              }
-            }
-          },
-          "body": [
-            {
-              "_id": 21,
-              "type": "RETURN_STATEMENT",
-              "loc": 150,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "deferred",
-                "value": "unknown"
-              },
-              "expr": {
-                "_id": 20,
-                "type": "TUPLE_LITERAL",
-                "loc": 157,
-                "gomType": {
-                  "kind": "Tuple",
-                  "fields": {}
-                },
-                "elements": [
-                  {
-                    "_id": 18,
-                    "type": "TERM",
-                    "loc": 159,
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "int"
-                    },
-                    "token": {
-                      "type": "numliteral",
-                      "value": "200",
-                      "start": 159,
-                      "end": 161
-                    }
-                  },
-                  {
-                    "_id": 19,
-                    "type": "TERM",
-                    "loc": 164,
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "bool"
-                    },
-                    "token": {
-                      "type": "true",
-                      "value": "true",
-                      "start": 164,
-                      "end": 167
-                    }
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "_id": 26,
-          "type": "RETURN_STATEMENT",
-          "loc": 181,
-          "gomType": {
-            "kind": "Deferred",
-            "marker": "deferred",
-            "value": "unknown"
-          },
-          "expr": {
-            "_id": 25,
-            "type": "TUPLE_LITERAL",
-            "loc": 188,
-            "gomType": {
-              "kind": "Tuple",
-              "fields": {}
-            },
-            "elements": [
-              {
-                "_id": 23,
-                "type": "TERM",
-                "loc": 190,
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                },
-                "token": {
-                  "type": "numliteral",
-                  "value": "401",
-                  "start": 190,
-                  "end": 192
-                }
-              },
-              {
-                "_id": 24,
-                "type": "TERM",
-                "loc": 195,
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "bool"
-                },
-                "token": {
-                  "type": "false",
-                  "value": "false",
-                  "start": 195,
-                  "end": 199
-                }
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "_id": 78,
-      "type": "FUNCTION_DEFINITION",
-      "loc": 207,
-      "gomType": {
-        "kind": "Deferred",
-        "marker": "deferred",
-        "value": "unknown"
-      },
-      "name": {
-        "type": "identifier",
-        "value": "process_http_retry",
-        "start": 216,
-        "end": 233
-      },
-      "args": [
-        {
-          "_id": 30,
-          "type": "ARGUMENT_ITEM",
-          "loc": 235,
-          "gomType": {
-            "kind": "Deferred",
-            "marker": "deferred",
-            "value": "unknown"
-          },
-          "name": {
-            "_id": 28,
-            "type": "TERM",
-            "loc": 235,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "token": {
-              "type": "identifier",
-              "value": "url",
-              "start": 235,
-              "end": 237
-            }
-          },
-          "expectedType": {
-            "_id": 29,
-            "type": "TERM",
-            "loc": 240,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "token": {
-              "type": "built_in_type",
-              "value": "str",
-              "start": 240,
-              "end": 242
-            }
-          }
-        },
-        {
-          "_id": 33,
-          "type": "ARGUMENT_ITEM",
-          "loc": 245,
-          "gomType": {
-            "kind": "Deferred",
-            "marker": "deferred",
-            "value": "unknown"
-          },
-          "name": {
-            "_id": 31,
-            "type": "TERM",
-            "loc": 245,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "token": {
-              "type": "identifier",
-              "value": "retries",
-              "start": 245,
-              "end": 251
-            }
-          },
-          "expectedType": {
-            "_id": 32,
-            "type": "TERM",
-            "loc": 254,
+            "loc": 31,
             "gomType": {
               "kind": "Deferred",
               "marker": "deferred",
@@ -488,613 +88,102 @@
             "token": {
               "type": "built_in_type",
               "value": "int",
-              "start": 254,
-              "end": 256
+              "start": 31,
+              "end": 33
             }
           }
         }
       ],
       "returnType": {
-        "_id": 36,
+        "_id": 6,
         "type": "FUNCTION_RETURN_TYPE",
-        "loc": 258,
+        "loc": 35,
         "gomType": {
           "kind": "Deferred",
           "marker": "deferred",
           "value": "unknown"
         },
         "returnType": {
-          "_id": 35,
+          "_id": 5,
           "type": "GOM_TYPE_ID",
-          "loc": 260,
+          "loc": 37,
           "gomType": {
             "kind": "Deferred",
             "marker": "deferred",
             "value": "unknown"
           },
           "id": {
-            "_id": 34,
+            "_id": 4,
             "type": "TERM",
-            "loc": 260,
+            "loc": 37,
             "gomType": {
               "kind": "Deferred",
               "marker": "deferred",
               "value": "unknown"
             },
             "token": {
-              "type": "identifier",
-              "value": "HttpResponse",
-              "start": 260,
-              "end": 271
+              "type": "built_in_type",
+              "value": "int",
+              "start": 37,
+              "end": 39
             }
           }
         }
       },
       "body": [
         {
-          "_id": 73,
-          "type": "FOR_STATEMENT",
-          "loc": 277,
-          "gomType": {
-            "kind": "Deferred",
-            "marker": "deferred",
-            "value": "unknown"
-          },
-          "initExpr": {
-            "_id": 40,
-            "type": "LET_STATEMENT",
-            "loc": 282,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "decls": [
-              {
-                "_id": 39,
-                "type": "ASSIGNMENT",
-                "loc": 286,
-                "gomType": {
-                  "kind": "Deferred",
-                  "marker": "deferred",
-                  "value": "unknown"
-                },
-                "lhs": {
-                  "_id": 37,
-                  "type": "TERM",
-                  "loc": 286,
-                  "gomType": {
-                    "kind": "Deferred",
-                    "marker": "resolve_type",
-                    "value": "i"
-                  },
-                  "token": {
-                    "type": "identifier",
-                    "value": "i",
-                    "start": 286,
-                    "end": 286
-                  }
-                },
-                "rhs": {
-                  "_id": 38,
-                  "type": "TERM",
-                  "loc": 290,
-                  "gomType": {
-                    "kind": "Deferred",
-                    "marker": "resolve_type",
-                    "value": "retries"
-                  },
-                  "token": {
-                    "type": "identifier",
-                    "value": "retries",
-                    "start": 290,
-                    "end": 296
-                  }
-                }
-              }
-            ]
-          },
-          "conditionExpr": {
-            "_id": 43,
-            "type": "COMPARISON",
-            "loc": 299,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "lhs": {
-              "_id": 41,
-              "type": "TERM",
-              "loc": 299,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "resolve_type",
-                "value": "i"
-              },
-              "token": {
-                "type": "identifier",
-                "value": "i",
-                "start": 299,
-                "end": 299
-              }
-            },
-            "op": {
-              "type": ">",
-              "value": ">",
-              "start": 301,
-              "end": 301
-            },
-            "rhs": {
-              "_id": 42,
-              "type": "TERM",
-              "loc": 303,
-              "gomType": {
-                "kind": "PrimitiveOrAlias",
-                "typeString": "int"
-              },
-              "token": {
-                "type": "numliteral",
-                "value": "0",
-                "start": 303,
-                "end": 303
-              }
-            }
-          },
-          "updateExpr": {
-            "_id": 48,
-            "type": "ASSIGNMENT",
-            "loc": 306,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "lhs": {
-              "_id": 44,
-              "type": "TERM",
-              "loc": 306,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "resolve_type",
-                "value": "i"
-              },
-              "token": {
-                "type": "identifier",
-                "value": "i",
-                "start": 306,
-                "end": 306
-              }
-            },
-            "rhs": {
-              "_id": 47,
-              "type": "SUM",
-              "loc": 310,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "deferred",
-                "value": "unknown"
-              },
-              "lhs": {
-                "_id": 45,
-                "type": "TERM",
-                "loc": 310,
-                "gomType": {
-                  "kind": "Deferred",
-                  "marker": "resolve_type",
-                  "value": "i"
-                },
-                "token": {
-                  "type": "identifier",
-                  "value": "i",
-                  "start": 310,
-                  "end": 310
-                }
-              },
-              "op": {
-                "type": "-",
-                "value": "-",
-                "start": 312,
-                "end": 312
-              },
-              "rhs": {
-                "_id": 46,
-                "type": "TERM",
-                "loc": 314,
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                },
-                "token": {
-                  "type": "numliteral",
-                  "value": "1",
-                  "start": 314,
-                  "end": 314
-                }
-              }
-            }
-          },
-          "body": [
-            {
-              "_id": 59,
-              "type": "EXPRESSION_STATEMENT",
-              "loc": 323,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "deferred",
-                "value": "unknown"
-              },
-              "expr": {
-                "_id": 58,
-                "type": "ACCESS",
-                "loc": 323,
-                "gomType": {
-                  "kind": "Deferred",
-                  "marker": "deferred",
-                  "value": "unknown"
-                },
-                "lhs": {
-                  "_id": 49,
-                  "type": "TERM",
-                  "loc": 323,
-                  "gomType": {
-                    "kind": "Deferred",
-                    "marker": "resolve_type",
-                    "value": "io"
-                  },
-                  "token": {
-                    "type": "identifier",
-                    "value": "io",
-                    "start": 323,
-                    "end": 324
-                  }
-                },
-                "rhs": {
-                  "_id": 57,
-                  "type": "CALL",
-                  "loc": 326,
-                  "gomType": {
-                    "kind": "Deferred",
-                    "marker": "deferred",
-                    "value": "unknown"
-                  },
-                  "id": {
-                    "_id": 50,
-                    "type": "TERM",
-                    "loc": 326,
-                    "gomType": {
-                      "kind": "Deferred",
-                      "marker": "resolve_type",
-                      "value": "log"
-                    },
-                    "token": {
-                      "type": "identifier",
-                      "value": "log",
-                      "start": 326,
-                      "end": 328
-                    }
-                  },
-                  "args": [
-                    {
-                      "_id": 51,
-                      "type": "TERM",
-                      "loc": 330,
-                      "gomType": {
-                        "kind": "PrimitiveOrAlias",
-                        "typeString": "str"
-                      },
-                      "token": {
-                        "type": "strliteral",
-                        "value": "\"Round: \"",
-                        "start": 330,
-                        "end": 338
-                      }
-                    },
-                    {
-                      "_id": 56,
-                      "type": "SUM",
-                      "loc": 341,
-                      "gomType": {
-                        "kind": "Deferred",
-                        "marker": "deferred",
-                        "value": "unknown"
-                      },
-                      "lhs": {
-                        "_id": 54,
-                        "type": "SUM",
-                        "loc": 341,
-                        "gomType": {
-                          "kind": "Deferred",
-                          "marker": "deferred",
-                          "value": "unknown"
-                        },
-                        "lhs": {
-                          "_id": 52,
-                          "type": "TERM",
-                          "loc": 341,
-                          "gomType": {
-                            "kind": "Deferred",
-                            "marker": "resolve_type",
-                            "value": "retries"
-                          },
-                          "token": {
-                            "type": "identifier",
-                            "value": "retries",
-                            "start": 341,
-                            "end": 347
-                          }
-                        },
-                        "op": {
-                          "type": "-",
-                          "value": "-",
-                          "start": 349,
-                          "end": 349
-                        },
-                        "rhs": {
-                          "_id": 53,
-                          "type": "TERM",
-                          "loc": 351,
-                          "gomType": {
-                            "kind": "Deferred",
-                            "marker": "resolve_type",
-                            "value": "i"
-                          },
-                          "token": {
-                            "type": "identifier",
-                            "value": "i",
-                            "start": 351,
-                            "end": 351
-                          }
-                        }
-                      },
-                      "op": {
-                        "type": "+",
-                        "value": "+",
-                        "start": 353,
-                        "end": 353
-                      },
-                      "rhs": {
-                        "_id": 55,
-                        "type": "TERM",
-                        "loc": 355,
-                        "gomType": {
-                          "kind": "PrimitiveOrAlias",
-                          "typeString": "int"
-                        },
-                        "token": {
-                          "type": "numliteral",
-                          "value": "1",
-                          "start": 355,
-                          "end": 355
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "_id": 65,
-              "type": "LET_STATEMENT",
-              "loc": 363,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "deferred",
-                "value": "unknown"
-              },
-              "decls": [
-                {
-                  "_id": 64,
-                  "type": "ASSIGNMENT",
-                  "loc": 367,
-                  "gomType": {
-                    "kind": "Deferred",
-                    "marker": "deferred",
-                    "value": "unknown"
-                  },
-                  "lhs": {
-                    "_id": 60,
-                    "type": "TERM",
-                    "loc": 367,
-                    "gomType": {
-                      "kind": "Deferred",
-                      "marker": "resolve_type",
-                      "value": "resp"
-                    },
-                    "token": {
-                      "type": "identifier",
-                      "value": "resp",
-                      "start": 367,
-                      "end": 370
-                    }
-                  },
-                  "rhs": {
-                    "_id": 63,
-                    "type": "CALL",
-                    "loc": 374,
-                    "gomType": {
-                      "kind": "Deferred",
-                      "marker": "deferred",
-                      "value": "unknown"
-                    },
-                    "id": {
-                      "_id": 61,
-                      "type": "TERM",
-                      "loc": 374,
-                      "gomType": {
-                        "kind": "Deferred",
-                        "marker": "resolve_type",
-                        "value": "process_http"
-                      },
-                      "token": {
-                        "type": "identifier",
-                        "value": "process_http",
-                        "start": 374,
-                        "end": 385
-                      }
-                    },
-                    "args": [
-                      {
-                        "_id": 62,
-                        "type": "TERM",
-                        "loc": 387,
-                        "gomType": {
-                          "kind": "Deferred",
-                          "marker": "resolve_type",
-                          "value": "url"
-                        },
-                        "token": {
-                          "type": "identifier",
-                          "value": "url",
-                          "start": 387,
-                          "end": 389
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "_id": 72,
-              "type": "IF_STATEMENT",
-              "loc": 397,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "deferred",
-                "value": "unknown"
-              },
-              "conditionExpr": {
-                "_id": 69,
-                "type": "EXPR_BRACKETED",
-                "loc": 399,
-                "gomType": {
-                  "kind": "Deferred",
-                  "marker": "deferred",
-                  "value": "unknown"
-                },
-                "expr": {
-                  "_id": 68,
-                  "type": "ACCESS",
-                  "loc": 400,
-                  "gomType": {
-                    "kind": "Deferred",
-                    "marker": "deferred",
-                    "value": "unknown"
-                  },
-                  "lhs": {
-                    "_id": 66,
-                    "type": "TERM",
-                    "loc": 400,
-                    "gomType": {
-                      "kind": "Deferred",
-                      "marker": "resolve_type",
-                      "value": "resp"
-                    },
-                    "token": {
-                      "type": "identifier",
-                      "value": "resp",
-                      "start": 400,
-                      "end": 403
-                    }
-                  },
-                  "rhs": {
-                    "_id": 67,
-                    "type": "TERM",
-                    "loc": 405,
-                    "gomType": {
-                      "kind": "PrimitiveOrAlias",
-                      "typeString": "int"
-                    },
-                    "token": {
-                      "type": "numliteral",
-                      "value": "1",
-                      "start": 405,
-                      "end": 405
-                    }
-                  }
-                }
-              },
-              "body": [
-                {
-                  "_id": 71,
-                  "type": "RETURN_STATEMENT",
-                  "loc": 416,
-                  "gomType": {
-                    "kind": "Deferred",
-                    "marker": "deferred",
-                    "value": "unknown"
-                  },
-                  "expr": {
-                    "_id": 70,
-                    "type": "TERM",
-                    "loc": 423,
-                    "gomType": {
-                      "kind": "Deferred",
-                      "marker": "resolve_type",
-                      "value": "resp"
-                    },
-                    "token": {
-                      "type": "identifier",
-                      "value": "resp",
-                      "start": 423,
-                      "end": 426
-                    }
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "_id": 77,
+          "_id": 10,
           "type": "RETURN_STATEMENT",
-          "loc": 442,
+          "loc": 47,
           "gomType": {
             "kind": "Deferred",
             "marker": "deferred",
             "value": "unknown"
           },
           "expr": {
-            "_id": 76,
-            "type": "TUPLE_LITERAL",
-            "loc": 449,
+            "_id": 9,
+            "type": "QUOT",
+            "loc": 54,
             "gomType": {
-              "kind": "Tuple",
-              "fields": {}
+              "kind": "PrimitiveOrAlias",
+              "typeString": "int"
             },
-            "elements": [
-              {
-                "_id": 74,
-                "type": "TERM",
-                "loc": 451,
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "int"
-                },
-                "token": {
-                  "type": "numliteral",
-                  "value": "500",
-                  "start": 451,
-                  "end": 453
-                }
+            "lhs": {
+              "_id": 7,
+              "type": "TERM",
+              "loc": 54,
+              "gomType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "int"
               },
-              {
-                "_id": 75,
-                "type": "TERM",
-                "loc": 456,
-                "gomType": {
-                  "kind": "PrimitiveOrAlias",
-                  "typeString": "bool"
-                },
-                "token": {
-                  "type": "false",
-                  "value": "false",
-                  "start": 456,
-                  "end": 460
-                }
+              "token": {
+                "type": "identifier",
+                "value": "i",
+                "start": 54,
+                "end": 54
               }
-            ]
+            },
+            "op": {
+              "type": "*",
+              "value": "*",
+              "start": 56,
+              "end": 56
+            },
+            "rhs": {
+              "_id": 8,
+              "type": "TERM",
+              "loc": 58,
+              "gomType": {
+                "kind": "PrimitiveOrAlias",
+                "typeString": "int"
+              },
+              "token": {
+                "type": "identifier",
+                "value": "i",
+                "start": 58,
+                "end": 58
+              }
+            }
           }
         }
       ]
@@ -1102,9 +191,9 @@
   ],
   "exportStatements": [],
   "mainFunction": {
-    "_id": 99,
+    "_id": 21,
     "type": "MAIN_FUNCTION",
-    "loc": 477,
+    "loc": 73,
     "gomType": {
       "kind": "Deferred",
       "marker": "deferred",
@@ -1112,123 +201,27 @@
     },
     "body": [
       {
-        "_id": 85,
-        "type": "LET_STATEMENT",
-        "loc": 488,
-        "gomType": {
-          "kind": "Deferred",
-          "marker": "deferred",
-          "value": "unknown"
-        },
-        "decls": [
-          {
-            "_id": 84,
-            "type": "ASSIGNMENT",
-            "loc": 492,
-            "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
-            },
-            "lhs": {
-              "_id": 79,
-              "type": "TERM",
-              "loc": 492,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "resolve_type",
-                "value": "resp"
-              },
-              "token": {
-                "type": "identifier",
-                "value": "resp",
-                "start": 492,
-                "end": 495
-              }
-            },
-            "rhs": {
-              "_id": 83,
-              "type": "CALL",
-              "loc": 499,
-              "gomType": {
-                "kind": "Deferred",
-                "marker": "deferred",
-                "value": "unknown"
-              },
-              "id": {
-                "_id": 80,
-                "type": "TERM",
-                "loc": 499,
-                "gomType": {
-                  "kind": "Deferred",
-                  "marker": "resolve_type",
-                  "value": "process_http_retry"
-                },
-                "token": {
-                  "type": "identifier",
-                  "value": "process_http_retry",
-                  "start": 499,
-                  "end": 516
-                }
-              },
-              "args": [
-                {
-                  "_id": 81,
-                  "type": "TERM",
-                  "loc": 518,
-                  "gomType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "str"
-                  },
-                  "token": {
-                    "type": "strliteral",
-                    "value": "\"http://www.example.com\"",
-                    "start": 518,
-                    "end": 541
-                  }
-                },
-                {
-                  "_id": 82,
-                  "type": "TERM",
-                  "loc": 544,
-                  "gomType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "int"
-                  },
-                  "token": {
-                    "type": "numliteral",
-                    "value": "10",
-                    "start": 544,
-                    "end": 545
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "_id": 98,
+        "_id": 20,
         "type": "EXPRESSION_STATEMENT",
-        "loc": 551,
+        "loc": 86,
         "gomType": {
           "kind": "Deferred",
           "marker": "deferred",
           "value": "unknown"
         },
         "expr": {
-          "_id": 97,
+          "_id": 19,
           "type": "ACCESS",
-          "loc": 551,
+          "loc": 86,
           "gomType": {
             "kind": "Deferred",
             "marker": "deferred",
             "value": "unknown"
           },
           "lhs": {
-            "_id": 86,
+            "_id": 12,
             "type": "TERM",
-            "loc": 551,
+            "loc": 86,
             "gomType": {
               "kind": "Deferred",
               "marker": "resolve_type",
@@ -1237,23 +230,22 @@
             "token": {
               "type": "identifier",
               "value": "io",
-              "start": 551,
-              "end": 552
+              "start": 86,
+              "end": 87
             }
           },
           "rhs": {
-            "_id": 96,
+            "_id": 18,
             "type": "CALL",
-            "loc": 554,
+            "loc": 89,
             "gomType": {
-              "kind": "Deferred",
-              "marker": "deferred",
-              "value": "unknown"
+              "kind": "PrimitiveOrAlias",
+              "typeString": "void"
             },
             "id": {
-              "_id": 87,
+              "_id": 13,
               "type": "TERM",
-              "loc": 554,
+              "loc": 89,
               "gomType": {
                 "kind": "Deferred",
                 "marker": "resolve_type",
@@ -1262,122 +254,67 @@
               "token": {
                 "type": "identifier",
                 "value": "log",
-                "start": 554,
-                "end": 556
+                "start": 89,
+                "end": 91
               }
             },
             "args": [
               {
-                "_id": 88,
+                "_id": 14,
                 "type": "TERM",
-                "loc": 558,
+                "loc": 93,
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
                   "typeString": "str"
                 },
                 "token": {
                   "type": "strliteral",
-                  "value": "\"Status: \"",
-                  "start": 558,
-                  "end": 567
+                  "value": "\"Hello, World!\"",
+                  "start": 93,
+                  "end": 107
                 }
               },
               {
-                "_id": 91,
-                "type": "ACCESS",
-                "loc": 570,
-                "gomType": {
-                  "kind": "Deferred",
-                  "marker": "deferred",
-                  "value": "unknown"
-                },
-                "lhs": {
-                  "_id": 89,
-                  "type": "TERM",
-                  "loc": 570,
-                  "gomType": {
-                    "kind": "Deferred",
-                    "marker": "resolve_type",
-                    "value": "resp"
-                  },
-                  "token": {
-                    "type": "identifier",
-                    "value": "resp",
-                    "start": 570,
-                    "end": 573
-                  }
-                },
-                "rhs": {
-                  "_id": 90,
-                  "type": "TERM",
-                  "loc": 575,
-                  "gomType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "int"
-                  },
-                  "token": {
-                    "type": "numliteral",
-                    "value": "0",
-                    "start": 575,
-                    "end": 575
-                  }
-                }
-              },
-              {
-                "_id": 92,
-                "type": "TERM",
-                "loc": 578,
+                "_id": 17,
+                "type": "CALL",
+                "loc": 110,
                 "gomType": {
                   "kind": "PrimitiveOrAlias",
-                  "typeString": "str"
+                  "typeString": "int"
                 },
-                "token": {
-                  "type": "strliteral",
-                  "value": "\" Success: \"",
-                  "start": 578,
-                  "end": 589
-                }
-              },
-              {
-                "_id": 95,
-                "type": "ACCESS",
-                "loc": 592,
-                "gomType": {
-                  "kind": "Deferred",
-                  "marker": "deferred",
-                  "value": "unknown"
-                },
-                "lhs": {
-                  "_id": 93,
+                "id": {
+                  "_id": 15,
                   "type": "TERM",
-                  "loc": 592,
+                  "loc": 110,
                   "gomType": {
                     "kind": "Deferred",
                     "marker": "resolve_type",
-                    "value": "resp"
+                    "value": "square"
                   },
                   "token": {
                     "type": "identifier",
-                    "value": "resp",
-                    "start": 592,
-                    "end": 595
+                    "value": "square",
+                    "start": 110,
+                    "end": 115
                   }
                 },
-                "rhs": {
-                  "_id": 94,
-                  "type": "TERM",
-                  "loc": 597,
-                  "gomType": {
-                    "kind": "PrimitiveOrAlias",
-                    "typeString": "int"
-                  },
-                  "token": {
-                    "type": "numliteral",
-                    "value": "1",
-                    "start": 597,
-                    "end": 597
+                "args": [
+                  {
+                    "_id": 16,
+                    "type": "TERM",
+                    "loc": 117,
+                    "gomType": {
+                      "kind": "PrimitiveOrAlias",
+                      "typeString": "int"
+                    },
+                    "token": {
+                      "type": "numliteral",
+                      "value": "5",
+                      "start": 117,
+                      "end": 117
+                    }
                   }
-                }
+                ]
               }
             ]
           }

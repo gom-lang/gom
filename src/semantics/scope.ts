@@ -7,7 +7,11 @@ import {
   NodeTypeDefinition,
 } from "../parser/rd/nodes";
 import { GomInternalError, SyntaxError } from "../util/error";
-import { GomPrimitiveTypeOrAliasValue, GomType } from "../types";
+import {
+  GomPrimitiveTypeOrAlias,
+  GomPrimitiveTypeOrAliasValue,
+  GomType,
+} from "../types";
 import { GOM_BUILT_IN_TYPES, GomToken } from "../lexer/tokens";
 
 class SymbolTableNode<T> {
@@ -53,28 +57,6 @@ class TypeEntry {
 
   private makeGomType() {
     return this.node.rhs.gomType;
-    // if (this.node.rhs instanceof NodeGomTypeStruct) {
-    //   return new GomStructType(
-    //     this.name,
-    //     this.node.rhs.fields.reduce((acc, field) => {
-    //       if (field instanceof NodeGomTypeStruct) {
-    //         throw new SyntaxError({
-    //           message: `Nested structs are not supported`,
-    //           loc: [1, field.loc],
-    //         });
-    //       }
-    //       acc.set(field.name.value, field.fieldType.gomType);
-    //       return acc;
-    //     }, new Map<string, GomType>())
-    //   );
-    // } else if (this.node.rhs instanceof NodeGomTypeTuple) {
-    //   return new GomTupleType(
-    //     this.node.rhs.fields.map((field) => field.gomType)
-    //   );
-    // } else if (this.node.rhs instanceof NodeGomTypeComposite) {
-    // } else {
-    //   return new GomPrimitiveTypeOrAlias(this.node.name.token.value);
-    // }
   }
 
   getValue() {
@@ -212,6 +194,16 @@ export class ScopeManager {
 
   private setPrimitiveTypes() {
     GOM_BUILT_IN_TYPES.forEach((type) => {
+      const rhs = new NodeGomTypeId({
+        id: new NodeTerm({
+          value: type,
+          start: 0,
+          end: 0,
+          type: GomToken.BUILT_IN_TYPE,
+        }),
+        loc: 0,
+      });
+      rhs.gomType = new GomPrimitiveTypeOrAlias(type);
       const fakeNode = new NodeTypeDefinition({
         name: new NodeTerm({
           value: type,
@@ -219,15 +211,7 @@ export class ScopeManager {
           end: 0,
           type: GomToken.BUILT_IN_TYPE,
         }),
-        rhs: new NodeGomTypeId({
-          id: new NodeTerm({
-            value: type,
-            start: 0,
-            end: 0,
-            type: GomToken.BUILT_IN_TYPE,
-          }),
-          loc: 0,
-        }),
+        rhs,
         loc: 0,
       });
       this.primitiveTypes[type] = new TypeEntry(type, fakeNode);
@@ -303,55 +287,28 @@ export class SymbolTableReader {
     return this.currentSymbolTable.getName();
   }
 
-  getIdentifier(name: string) {
-    let currentSymbolTable = this.currentSymbolTable;
-    while (currentSymbolTable) {
-      const entry = currentSymbolTable.getValue().getIdentifier(name);
-      if (entry) {
-        return entry;
-      }
-      const parent = currentSymbolTable.getParent();
-      if (parent) {
-        currentSymbolTable = parent;
-      } else {
-        break;
-      }
+  private lookupInScopeChain<T>(
+    lookupFn: (scope: Scope) => T | null | undefined,
+  ): T | null {
+    let current: SymbolTableNode<Scope> | undefined = this.currentSymbolTable;
+    while (current) {
+      const entry = lookupFn(current.getValue());
+      if (entry) return entry;
+      current = current.getParent();
     }
     return null;
+  }
+
+  getIdentifier(name: string) {
+    return this.lookupInScopeChain((scope) => scope.getIdentifier(name));
   }
 
   getType(name: string) {
-    let currentSymbolTable = this.currentSymbolTable;
-    while (currentSymbolTable) {
-      const entry = currentSymbolTable.getValue().getType(name);
-      if (entry) {
-        return entry;
-      }
-      const parent = currentSymbolTable.getParent();
-      if (parent) {
-        currentSymbolTable = parent;
-      } else {
-        break;
-      }
-    }
-    return null;
+    return this.lookupInScopeChain((scope) => scope.getType(name));
   }
 
   getFunction(name: string) {
-    let currentSymbolTable = this.currentSymbolTable;
-    while (currentSymbolTable) {
-      const entry = currentSymbolTable.getValue().getFunction(name);
-      if (entry) {
-        return entry;
-      }
-      const parent = currentSymbolTable.getParent();
-      if (parent) {
-        currentSymbolTable = parent;
-      } else {
-        break;
-      }
-    }
-    return null;
+    return this.lookupInScopeChain((scope) => scope.getFunction(name));
   }
 
   enterScope(name: string) {
@@ -382,14 +339,23 @@ export class SymbolTableReader {
     }
   }
 
-  getAllIdentifiers(recursive = false) {
+  getAllInScopeChain(
+    lookupFn: (scope: Scope) => (IdentifierEntry | TypeEntry)[],
+    recursive = false,
+  ): (IdentifierEntry | TypeEntry)[] {
     if (!recursive) {
-      return this.currentSymbolTable.getValue().getAllIdentifiers();
+      return lookupFn(this.currentSymbolTable.getValue());
     }
-    const identifiers: IdentifierEntry[] = [];
+    const entries: (IdentifierEntry | TypeEntry)[] = [],
+      seen = new Set<string>();
     let currentSymbolTable = this.currentSymbolTable;
     while (currentSymbolTable) {
-      identifiers.push(...currentSymbolTable.getValue().getAllIdentifiers());
+      lookupFn(currentSymbolTable.getValue()).forEach((entry) => {
+        if (!seen.has(entry.name)) {
+          seen.add(entry.name);
+          entries.push(entry);
+        }
+      });
       const parent = currentSymbolTable.getParent();
       if (parent) {
         currentSymbolTable = parent;
@@ -397,14 +363,27 @@ export class SymbolTableReader {
         break;
       }
     }
-    return identifiers;
+    return entries;
   }
 
-  getAllTypes() {
-    return this.currentSymbolTable.getValue().getAllTypes();
+  getAllIdentifiers(recursive = false) {
+    return this.getAllInScopeChain(
+      (scope) => scope.getAllIdentifiers(),
+      recursive,
+    ) as IdentifierEntry[];
   }
 
-  getAllFunctions() {
-    return this.currentSymbolTable.getValue().getAllFunctions();
+  getAllTypes(recursive = false) {
+    return this.getAllInScopeChain(
+      (scope): TypeEntry[] => scope.getAllTypes(),
+      recursive,
+    ) as TypeEntry[];
+  }
+
+  getAllFunctions(recursive = false) {
+    return this.getAllInScopeChain(
+      (scope) => scope.getAllFunctions(),
+      recursive,
+    ) as IdentifierEntry[];
   }
 }

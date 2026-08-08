@@ -503,8 +503,8 @@ export class CodeGenerator extends BaseCodeGenerator {
     this.builder.CreateCondBr(condValue, thenBB, elseBB);
 
     this.builder.SetInsertPoint(thenBB);
-    this.symbolTableReader.enterScope("if");
-    this.irScopeManager.enterScope("if");
+    this.symbolTableReader.enterScope(`if.${node._id}`);
+    this.irScopeManager.enterScope(`if.${node._id}`);
     node.body.forEach((stmt) => this.visit(stmt));
     this.symbolTableReader.exitScope();
     this.irScopeManager.exitScope();
@@ -512,8 +512,8 @@ export class CodeGenerator extends BaseCodeGenerator {
 
     if (node.elseBody) {
       this.builder.SetInsertPoint(elseBB);
-      this.symbolTableReader.enterScope("else");
-      this.irScopeManager.enterScope("else");
+      this.symbolTableReader.enterScope(`else.${node._id}`);
+      this.irScopeManager.enterScope(`else.${node._id}`);
       node.elseBody.forEach((stmt) => this.visit(stmt));
       this.symbolTableReader.exitScope();
       this.irScopeManager.exitScope();
